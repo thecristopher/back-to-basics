@@ -1,0 +1,14 @@
+{
+  "language": "es",
+  "flavor": "js",
+  "tracks": ["node", "react"],
+  "dailyNew": 2,
+  "dailyReviews": 3,
+  "daysPerWeek": 6,
+  "dailyGoalXp": 40,
+  "theme": "usa a Claire Redfield, Malenia e Inde Navarrete como protagonistas, con un toque romántico suave (notas de amor, citas, aniversarios, playlists compartidas), y a otros personajes de Resident Evil y Elden Ring de apoyo.",
+  "goals": [
+    { "title": "Node de vuelta a la base", "track": "node", "level": 3, "by": "2026-12-15" },
+    { "title": "React de vuelta a la base", "track": "react", "level": 3, "by": "2027-01-31" }
+  ]
+}

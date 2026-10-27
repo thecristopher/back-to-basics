@@ -1,0 +1,61 @@
+{
+  "id": "react",
+  "name": "React",
+  "solutionFile": "solution.jsx",
+  "testFile": "solution.test.jsx",
+  "importHint": "import { Component } from \"./solution.jsx\";",
+  "variants": {
+    "ts": {
+      "name": "React (TypeScript)",
+      "solutionFile": "solution.tsx",
+      "testFile": "solution.test.tsx",
+      "importHint": "import { Component } from \"./solution.tsx\";"
+    }
+  },
+  "runtime": {
+    "ready": "node_modules/vitest/package.json",
+    "files": {
+      "package.json": "{ \"private\": true, \"type\": \"module\" }\n",
+      "vitest.config.mjs": "export default {\n  esbuild: { jsx: \"automatic\" },\n  test: { environment: \"jsdom\", pool: \"threads\", setupFiles: [\"./setup.mjs\"], testTimeout: 5000 },\n};\n",
+      "setup.mjs": "import { cleanup } from \"@testing-library/react\";\nimport { afterEach } from \"vitest\";\n\nafterEach(cleanup);\n"
+    },
+    "setup": [
+      [
+        "npm",
+        "install",
+        "--no-audit",
+        "--no-fund",
+        "--loglevel=error",
+        "vitest@3.2.7",
+        "jsdom@26.1.0",
+        "react@19.1.0",
+        "react-dom@19.1.0",
+        "@testing-library/react@16.3.0",
+        "@testing-library/dom@10.4.0",
+        "@testing-library/user-event@14.6.1"
+      ]
+    ]
+  },
+  "check": [
+    [
+      "npm",
+      "--version"
+    ]
+  ],
+  "test": [
+    "{node}",
+    "node_modules/vitest/vitest.mjs",
+    "run",
+    "--reporter=json",
+    "--outputFile={report}",
+    "{testRel}"
+  ],
+  "report": "vitest-json",
+  "testGuide": "Use vitest (import { test, expect, vi } from \"vitest\") with @testing-library/react (render, screen, within) and @testing-library/user-event (await userEvent.click(...), await userEvent.type(...)). The environment is jsdom and cleanup runs after each test. Query by role, label or text like a user would. Only react, react-dom and those testing libraries are installed. Use vi.useFakeTimers() for time.",
+  "install": "Node.js 22 or newer with npm",
+  "sample": {
+    "solution": "export function Greeting({ name }) {\n  return <p>Hola, {name}</p>;\n}\n",
+    "broken": "export function Greeting() {\n  return null;\n}\n",
+    "test": "import { render, screen } from \"@testing-library/react\";\nimport { expect, test } from \"vitest\";\nimport { Greeting } from \"./solution.jsx\";\n\ntest(\"greets by name\", () => {\n  render(<Greeting name=\"Inde\" />);\n  expect(screen.getByText(\"Hola, Inde\")).toBeTruthy();\n});\n"
+  }
+}

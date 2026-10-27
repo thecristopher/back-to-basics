@@ -1,0 +1,16 @@
+{
+  "title": "React",
+  "language": "react",
+  "focus": "React from the ground up, by hand: JSX, components and props, state and events, lists and keys, forms, effects, custom hooks, context, reducers, performance and testing with Testing Library, up to frontend interview level.",
+  "ladder": [
+    "JSX, components and props",
+    "State and events",
+    "Lists, keys and conditional rendering",
+    "Controlled forms and validation",
+    "Effects, data fetching and cleanup",
+    "Custom hooks",
+    "Context and reducers",
+    "Performance: memo, useMemo, useCallback, avoiding rerenders",
+    "Frontend interview level: building widgets like autocomplete, modal, infinite list"
+  ]
+}

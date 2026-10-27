@@ -1,0 +1,12 @@
+{
+  "title": "Invertir palabras",
+  "level": 1,
+  "minutes": 10,
+  "concepts": ["strings", "split y join", "espacios"],
+  "hints": [
+    "Convierte la frase en un arreglo de palabras, inviértelo y vuelve a unirlo.",
+    "trim() quita los espacios de las orillas.",
+    "split(/\\s+/) corta por uno o más espacios seguidos, así no quedan palabras vacías."
+  ],
+  "files": { "solution": "solution.js", "test": "solution.test.js" }
+}

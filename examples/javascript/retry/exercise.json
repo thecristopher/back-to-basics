@@ -1,0 +1,12 @@
+{
+  "title": "Reintentar",
+  "level": 3,
+  "minutes": 20,
+  "concepts": ["async/await", "try/catch", "bucles con salida temprana"],
+  "hints": [
+    "Haz la función async: así puedes usar await dentro de un for.",
+    "Dentro del for, return await fn() sale en cuanto funciona; el catch guarda el error.",
+    "Al terminar el for sin éxito, lanza (throw) el último error guardado."
+  ],
+  "files": { "solution": "solution.js", "test": "solution.test.js" }
+}

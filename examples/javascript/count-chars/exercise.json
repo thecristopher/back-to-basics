@@ -1,0 +1,12 @@
+{
+  "title": "Contar letras",
+  "level": 1,
+  "minutes": 10,
+  "concepts": ["objetos como diccionario", "strings", "for...of"],
+  "hints": [
+    "Usa un objeto vacío como contador: la letra es la llave, las veces son el valor.",
+    "Pasa el texto a minúsculas una sola vez al principio.",
+    "counts[char] = (counts[char] ?? 0) + 1 suma uno aunque la llave aún no exista."
+  ],
+  "files": { "solution": "solution.js", "test": "solution.test.js" }
+}

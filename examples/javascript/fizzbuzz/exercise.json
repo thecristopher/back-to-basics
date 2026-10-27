@@ -1,0 +1,12 @@
+{
+  "title": "FizzBuzz",
+  "level": 1,
+  "minutes": 10,
+  "concepts": ["bucles", "condicionales", "orden de las condiciones"],
+  "hints": [
+    "Recorre de 1 hasta n incluido y ve llenando un arreglo.",
+    "Revisa primero el caso de 15 (múltiplo de 3 y de 5), si no, nunca llegas a él.",
+    "Para el caso normal convierte el número a string con String(i)."
+  ],
+  "files": { "solution": "solution.js", "test": "solution.test.js" }
+}

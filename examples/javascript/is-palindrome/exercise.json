@@ -1,0 +1,12 @@
+{
+  "title": "Palíndromo",
+  "level": 1,
+  "minutes": 10,
+  "concepts": ["strings", "limpiar texto", "dos punteros"],
+  "hints": [
+    "Primero limpia: minúsculas y quita todo lo que no sea letra o número.",
+    "Una expresión regular como /[^a-z0-9]/g te ayuda a quitar lo que sobra.",
+    "Compara el texto limpio con su reverso, o recórrelo con un índice desde cada orilla."
+  ],
+  "files": { "solution": "solution.js", "test": "solution.test.js" }
+}

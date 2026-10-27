@@ -1,0 +1,12 @@
+{
+  "title": "Debounce",
+  "level": 3,
+  "minutes": 20,
+  "concepts": ["closures", "setTimeout y clearTimeout", "parámetros rest"],
+  "hints": [
+    "Guarda el id del timer en una variable fuera de la función que regresas.",
+    "En cada llamada cancela el timer anterior con clearTimeout y crea uno nuevo.",
+    "cancel es una propiedad de la función regresada: debounced.cancel = () => clearTimeout(timer)."
+  ],
+  "files": { "solution": "solution.js", "test": "solution.test.js" }
+}

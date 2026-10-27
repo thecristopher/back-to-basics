@@ -1,0 +1,16 @@
+{
+  "name": "back-to-basics",
+  "version": "0.1.0",
+  "description": "Daily coding drills in your terminal, from fundamentals to interview level, graded by real tests.",
+  "type": "module",
+  "bin": {
+    "btb": "bin/btb.js"
+  },
+  "scripts": {
+    "test": "node --test \"tests/**/*.test.js\"",
+    "btb": "node bin/btb.js"
+  },
+  "engines": {
+    "node": ">=22"
+  }
+}

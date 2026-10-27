@@ -1,0 +1,12 @@
+{
+  "title": "Contador con closure",
+  "level": 2,
+  "minutes": 15,
+  "concepts": ["closures", "parámetros por defecto", "estado privado"],
+  "hints": [
+    "Declara una variable con let dentro de createCounter: las funciones que regreses la recuerdan.",
+    "Regresa un objeto con cuatro funciones que leen y cambian esa misma variable.",
+    "reset necesita saber el valor inicial, guárdalo también."
+  ],
+  "files": { "solution": "solution.js", "test": "solution.test.js" }
+}

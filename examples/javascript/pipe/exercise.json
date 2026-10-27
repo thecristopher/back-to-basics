@@ -1,0 +1,12 @@
+{
+  "title": "Tubería de funciones",
+  "level": 2,
+  "minutes": 15,
+  "concepts": ["parámetros rest", "reduce", "composición"],
+  "hints": [
+    "...fns junta todas las funciones en un arreglo.",
+    "pipe regresa una función nueva que recibe el valor inicial.",
+    "fns.reduce((value, fn) => fn(value), input) pasa el resultado de una a la siguiente."
+  ],
+  "files": { "solution": "solution.js", "test": "solution.test.js" }
+}

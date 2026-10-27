@@ -1,0 +1,12 @@
+{
+  "title": "Solo una vez",
+  "level": 2,
+  "minutes": 15,
+  "concepts": ["closures", "funciones de orden superior", "this y apply"],
+  "hints": [
+    "Necesitas recordar dos cosas entre llamadas: si ya corrió y qué regresó.",
+    "Regresa una function normal (no flecha) para poder recibir el this de quien la llame.",
+    "fn.apply(this, args) llama a fn con el mismo this y los mismos argumentos."
+  ],
+  "files": { "solution": "solution.js", "test": "solution.test.js" }
+}

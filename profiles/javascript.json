@@ -1,0 +1,35 @@
+{
+  "id": "javascript",
+  "name": "JavaScript (Node.js)",
+  "solutionFile": "solution.js",
+  "testFile": "solution.test.js",
+  "importHint": "import { name } from \"./solution.js\";",
+  "variants": {
+    "ts": {
+      "name": "TypeScript (Node.js)",
+      "solutionFile": "solution.ts",
+      "testFile": "solution.test.ts",
+      "importHint": "import { name } from \"./solution.ts\";"
+    }
+  },
+  "check": [
+    [
+      "{node}",
+      "--version"
+    ]
+  ],
+  "test": [
+    "{node}",
+    "--no-warnings",
+    "--test-reporter={reporter}",
+    "{test}"
+  ],
+  "report": "node-test",
+  "testGuide": "Use node:test (import { test, before, after, mock } from \"node:test\") and node:assert/strict. Fake time with t.mock.timers.enable({ apis: [\"setTimeout\"] }). Only Node built ins, no packages. TypeScript is run by Node with its types stripped, so only use erasable syntax: no enums, no namespaces, no parameter properties.",
+  "install": "Node.js 22 or newer: https://nodejs.org",
+  "sample": {
+    "solution": "export function add(a, b) {\n  return a + b;\n}\n",
+    "broken": "export function add(a, b) {\n  return a - b;\n}\n",
+    "test": "import assert from \"node:assert/strict\";\nimport { test } from \"node:test\";\nimport { add } from \"./solution.js\";\n\ntest(\"adds two numbers\", () => {\n  assert.equal(add(2, 3), 5);\n});\n"
+  }
+}

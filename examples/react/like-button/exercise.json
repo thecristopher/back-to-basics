@@ -1,0 +1,12 @@
+{
+  "title": "Botón de me gusta",
+  "level": 1,
+  "minutes": 15,
+  "concepts": ["useState", "eventos onClick", "props con valor por defecto"],
+  "hints": [
+    "useState(initial) te da el valor y la función para cambiarlo.",
+    "El texto del botón sale del estado: Me gusta (N).",
+    "aria-pressed recibe un booleano: true en cuanto hay al menos un like propio."
+  ],
+  "files": { "solution": "solution.jsx", "test": "solution.test.jsx" }
+}

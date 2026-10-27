@@ -1,0 +1,12 @@
+{
+  "title": "Agrupar por llave",
+  "level": 2,
+  "minutes": 15,
+  "concepts": ["funciones como parámetro", "objetos", "reduce o for...of"],
+  "hints": [
+    "getKey es una función: llámala con cada elemento para saber en qué grupo va.",
+    "Si el grupo aún no existe en el objeto, créalo como arreglo vacío antes de hacer push.",
+    "(groups[key] ??= []).push(item) crea el grupo y agrega en una línea."
+  ],
+  "files": { "solution": "solution.js", "test": "solution.test.js" }
+}

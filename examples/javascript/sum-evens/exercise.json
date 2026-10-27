@@ -1,0 +1,12 @@
+{
+  "title": "Suma de pares",
+  "level": 1,
+  "minutes": 10,
+  "concepts": ["bucles", "condicionales", "operador %"],
+  "hints": [
+    "Un número es par cuando el residuo de dividirlo entre 2 es 0: n % 2 === 0.",
+    "Empieza con un acumulador en 0 y recorre el arreglo con for...of.",
+    "Solo suma al acumulador cuando el número es par, y al final regrésalo."
+  ],
+  "files": { "solution": "solution.js", "test": "solution.test.js" }
+}

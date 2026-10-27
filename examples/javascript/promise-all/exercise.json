@@ -1,0 +1,12 @@
+{
+  "title": "Tu propio Promise.all",
+  "level": 3,
+  "minutes": 20,
+  "concepts": ["new Promise", "contar pendientes", "orden de resultados"],
+  "hints": [
+    "Regresa new Promise((resolve, reject) => ...) y ahí adentro escucha cada valor.",
+    "Promise.resolve(value) convierte valores normales en promesas, así tratas todo igual.",
+    "Guarda cada resultado en su índice (no con push) y resuelve cuando el contador de pendientes llegue a 0. Ojo con el arreglo vacío."
+  ],
+  "files": { "solution": "solution.js", "test": "solution.test.js" }
+}

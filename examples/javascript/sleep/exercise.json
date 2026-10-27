@@ -1,0 +1,12 @@
+{
+  "title": "Dormir un rato",
+  "level": 3,
+  "minutes": 10,
+  "concepts": ["new Promise", "setTimeout", "resolve"],
+  "hints": [
+    "new Promise((resolve) => ...) te da la función resolve para avisar que terminó.",
+    "setTimeout llama una función después de ms milisegundos.",
+    "Pásale resolve directo a setTimeout."
+  ],
+  "files": { "solution": "solution.js", "test": "solution.test.js" }
+}

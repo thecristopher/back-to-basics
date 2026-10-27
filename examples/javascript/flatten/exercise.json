@@ -1,0 +1,12 @@
+{
+  "title": "Aplanar arreglos",
+  "level": 2,
+  "minutes": 15,
+  "concepts": ["recursión", "Array.isArray", "acumuladores"],
+  "hints": [
+    "Array.isArray(x) te dice si un elemento es otro arreglo.",
+    "Si es arreglo, aplánalo con la misma función (recursión) y agrega sus elementos al resultado.",
+    "Si no es arreglo, agrégalo tal cual. El caso base es un elemento que no es arreglo."
+  ],
+  "files": { "solution": "solution.js", "test": "solution.test.js" }
+}
