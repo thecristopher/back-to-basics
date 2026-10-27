@@ -23,7 +23,10 @@ describe("back-to-basics actions", function()
   end)
 
   it("always asks btb for JSON", function()
-    local command = actions.command({ node = "node", root = "/btb" }, { "submit", "node/love-note" })
+    local command = actions.command(
+      { node = "node", root = "/btb" },
+      { "submit", "node/love-note" }
+    )
     assert.are.same({ "node", "/btb/bin/btb.js", "submit", "node/love-note", "--json" }, command)
   end)
 
@@ -105,7 +108,9 @@ describe("back-to-basics actions", function()
     end)
 
     it("stays still when every slot is ready or the placement runs", function()
-      assert.is_nil(actions.forge_target({ queue = { { slot = true, track = "node", ready = true } } }))
+      assert.is_nil(
+        actions.forge_target({ queue = { { slot = true, track = "node", ready = true } } })
+      )
       assert.is_nil(actions.forge_target({ placement = "running", queue = { { slot = true } } }))
       assert.is_nil(actions.forge_target({ error = "offline" }))
     end)

@@ -1,8 +1,9 @@
 // Stands in for `claude -p` in tests: reads the prompt on stdin and answers by its BTB_TASK line.
 import { existsSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
+import { fileURLToPath } from "node:url";
 
-const EXAMPLES = new URL("../../examples/javascript/", import.meta.url).pathname;
+const EXAMPLES = fileURLToPath(new URL("../../examples/javascript/", import.meta.url));
 const prompt = readFileSync(0, "utf8");
 const task = prompt.match(/^BTB_TASK: (\w+)/m)?.[1];
 

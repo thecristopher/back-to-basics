@@ -3,13 +3,14 @@ import { readFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { test } from "node:test";
+import { fileURLToPath } from "node:url";
 import { proveProfile } from "../src/lib/architect.js";
 import { exerciseFiles } from "../src/lib/catalog.js";
 import { listDirs, readJsonIfExists } from "../src/lib/files.js";
 import { loadProfile } from "../src/lib/profiles.js";
 import { runTests } from "../src/lib/runner.js";
 
-const ROOT = new URL("..", import.meta.url).pathname;
+const ROOT = fileURLToPath(new URL("..", import.meta.url));
 // runtimes like React's packages install once and stay cached between runs
 const config = {
   profilesDir: join(ROOT, "profiles"),

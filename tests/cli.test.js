@@ -4,11 +4,12 @@ import { copyFile, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { after, before, test } from "node:test";
+import { fileURLToPath } from "node:url";
 import { promisify } from "node:util";
 
 const run = promisify(execFile);
-const BIN = new URL("../bin/btb.js", import.meta.url).pathname;
-const FAKE_CLAUDE = new URL("./fixtures/fake-claude.js", import.meta.url).pathname;
+const BIN = fileURLToPath(new URL("../bin/btb.js", import.meta.url));
+const FAKE_CLAUDE = fileURLToPath(new URL("./fixtures/fake-claude.js", import.meta.url));
 let sandbox;
 let env;
 
