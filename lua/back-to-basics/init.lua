@@ -37,10 +37,24 @@ local function progress(line)
   notify(line)
 end
 
+-- macOS hands out /var and /private/var for the same folder, so paths are compared with symlinks
+-- resolved. Only the folder is resolved, a new solution file does not exist yet.
+local function real_path(path)
+  local dir = vim.uv.fs_realpath(vim.fs.dirname(path))
+  if not dir then
+    return path
+  end
+  return vim.fs.normalize(dir) .. "/" .. vim.fs.basename(path)
+end
+
+local function exercise_of_buffer(buf)
+  local name = vim.api.nvim_buf_get_name(buf)
+  return actions.exercise_of(real_path(name), real_path(opts.workspace))
+end
+
 local function current_id()
   local buf = vim.api.nvim_get_current_buf()
-  local name = vim.api.nvim_buf_get_name(buf)
-  return vim.b[buf].btb_exercise or actions.exercise_of(name, opts.workspace)
+  return vim.b[buf].btb_exercise or exercise_of_buffer(buf)
 end
 
 ---Turns completion off in a solution buffer and lets the config add its own focus rules.
@@ -214,7 +228,7 @@ local function set_autocmds()
   vim.api.nvim_create_autocmd({ "BufReadPost", "BufNewFile" }, {
     group = group,
     callback = function(event)
-      local id = actions.exercise_of(vim.api.nvim_buf_get_name(event.buf), opts.workspace)
+      local id = exercise_of_buffer(event.buf)
       if id then
         vim.b[event.buf].btb_exercise = id
         M.focus(event.buf)

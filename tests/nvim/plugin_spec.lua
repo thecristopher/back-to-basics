@@ -43,4 +43,19 @@ describe("back-to-basics setup", function()
     assert.are.equal("node/love-note", vim.b.btb_exercise)
     vim.cmd("bwipeout!")
   end)
+
+  it("finds the exercise when the root is reached through a symlink", function()
+    local real = vim.fn.tempname()
+    local file = real .. "/workspace/node/anniversary/solution.js"
+    vim.fn.mkdir(vim.fs.dirname(file), "p")
+    vim.fn.writefile({ "export const anniversary = () => 'Malenia';" }, file)
+    local link = vim.fn.tempname()
+    if not vim.uv.fs_symlink(real, link, { dir = true, junction = true }) then
+      return pending("this system does not allow symlinks")
+    end
+    btb.setup({ root = link, keys = false, forge_ahead = false })
+    vim.cmd.edit(file)
+    assert.are.equal("node/anniversary", vim.b.btb_exercise)
+    vim.cmd("bwipeout!")
+  end)
 end)
