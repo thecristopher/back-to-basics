@@ -54,7 +54,7 @@
       ],
       "failed_again": [
         "Insistes en el mismo error. Detente y piensa antes de volver a atacar.",
-        "Incluso yo pedí ayuda alguna vez. Una pista no te deshonra.",
+        "Incluso yo pedí ayuda alguna vez. Pistas que quedan: {hints}. Una no te deshonra.",
         "Sé lo que es pelear hasta el final. Esto aún no termina."
       ],
       "passed_clean": [
@@ -117,7 +117,7 @@
       ],
       "failed_again": [
         "You repeat the same mistake. Stop and think before you strike again.",
-        "Even I asked for help once. A hint does not dishonor you.",
+        "Even I asked for help once. Hints left: {hints}. One does not dishonor you.",
         "I know what it is to fight until the end. This is not over."
       ],
       "passed_clean": [

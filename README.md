@@ -12,7 +12,7 @@ AI made writing code fast and remembering how to write it optional. This is the 
 - **Every path ends at an onsite.** The last 2 levels of every track are interview levels: multi part problems like the ones in an Amazon, Zillow or Capital One loop, over realistic data, with edge cases and complexity limits the tests enforce.
 - **Node, React, Python and LLM apps at the base, any language on top.** `btb learn rust` has Claude work out how to run Rust tests on your machine. You approve the commands before anything runs.
 - **LLMs on Amazon Bedrock, by hand.** The `llm` track drills the Converse API with boto3, streaming, tool use, pydantic validated output, backoff, RAG, evals and agents. Bedrock is faked with botocore's `Stubber`, so it needs no AWS account and costs nothing. It opens once half of your Python path is done, so you get there with the language in hand.
-- **Spaced review.** Clean solves come back in 3, 7 and 21 days. Struggles come back tomorrow.
+- **Spaced review, without busywork.** Clean solves come back in 3, 7 and 21 days, struggles come back tomorrow. A review of something you already solved shows up as a recap in `btb today` (what it was, its concepts, how it went) instead of asking you to send the same solution again. Only exercises you skipped and never solved go back in the queue.
 - **AI only after the fight.** `btb review` has Claude grade your solution once the tests pass.
 - **Editor friendly.** Every command takes `--json`, progress goes to stderr.
 
@@ -34,7 +34,7 @@ btb                       # today's plan
 ## A day of practice
 
 ```sh
-btb               # what is queued: reviews first, then new exercises per track
+btb               # the recap of what is due, then the new exercises per track
 btb next          # opens the next one, Claude forges it if it does not exist yet
 # edit workspace/<track>/<exercise>/solution.js (or .jsx, .py) in your editor
 btb submit        # runs the tests
@@ -45,7 +45,7 @@ btb review        # Claude reviews your solution once solved
 btb forge         # forge ahead of time so tomorrow's next opens instantly
 ```
 
-A round is **clean** when you pass with no hints and at most one failed submit. A level is passed by solving its target number of exercises clean.
+The pass that ends the day brings its summary: how many you solved, how many clean, what you skipped, failed submits, hints and the concepts worth another look. A round is **clean** when you pass with no hints and at most one failed submit. A level is passed by solving its target number of exercises clean.
 
 ## Learning any language
 
@@ -94,7 +94,7 @@ Every exercise Claude forges comes with a `lesson.md`: the concept behind it, a 
 
 Set `"persona": "claire"` and Claire Redfield keeps you company: she greets you on `btb`, reacts to every submit, hint and skip, and Claude writes `btb review` in her voice. The scores stay as honest as without her. Malenia comes bundled too, and `--persona=malenia` (or `--persona=none`) switches for a single run.
 
-A persona is a JSON file in `personas/`: a `name`, a `voice` that the reviewer reads, an optional `portrait` and lines per language for each moment (`greet`, `ready`, `failed`, `failed_again`, `passed_clean`, `passed_struggled`, `hint`, `skip`, `level_up`, `debrief`). An optional `world` names the persona's franchise, its `supporting` characters and its `places`: the persona is then your partner in every exercise, the soft romance stays between the two of you, and 3 supporting faces drawn from her world get a role, never from another franchise. Claire lives in Resident Evil and Malenia in Elden Ring, so an editor that passes the persona of the day keeps each day in one world, and new exercises forged for the other franchise wait until it comes back. Lines may use `{title}`, `{xp}`, `{time}` and `{level}`, filled from the round that just happened, and a line whose placeholders the round cannot fill is skipped. `btb persona new rennala --from="the Queen of the Full Moon, a patient teacher"` has Claude draft one into `.btb/personas/` for you to read and tweak. With `--json` the line comes in `persona` (`id`, `name`, `portrait`, `moment`, `line`) so an editor can show it its own way.
+A persona is a JSON file in `personas/`: a `name`, a `voice` that the reviewer reads, an optional `portrait` and lines per language for each moment (`greet`, `ready`, `failed`, `failed_again`, `passed_clean`, `passed_struggled`, `hint`, `skip`, `level_up`, `debrief`). An optional `world` names the persona's franchise, its `supporting` characters and its `places`: the persona is then your partner in every exercise, the soft romance stays between the two of you, and 3 supporting faces drawn from her world get a role, never from another franchise. Claire lives in Resident Evil and Malenia in Elden Ring, so an editor that passes the persona of the day keeps each day in one world, and new exercises forged for the other franchise wait until it comes back. Lines may use `{title}`, `{xp}`, `{time}`, `{level}` and `{hints}` (hints left, so a line that offers one is only said when there is one to give), filled from the round that just happened, and a line whose placeholders the round cannot fill is skipped. `btb persona new rennala --from="the Queen of the Full Moon, a patient teacher"` has Claude draft one into `.btb/personas/` for you to read and tweak. With `--json` the line comes in `persona` (`id`, `name`, `portrait`, `moment`, `line`) so an editor can show it its own way.
 
 ## Configuration
 
@@ -137,7 +137,7 @@ This repo is also a Neovim plugin (0.10 or newer). Point lazy.nvim at your clone
 }
 ```
 
-`<leader>kk` starts the lesson: the coach takes the stage with today's plan, briefs the next exercise in their voice (Claude writes the briefing ahead of time, so it opens instantly) and opens it with its statement on the right. Saving the solution runs the tests and the coach reacts in the corner. Completion is off in solution buffers, AI suggestions included, because you are here to fight by hand. When the next new exercise is not forged yet, the plugin has Claude forge it and brief it in the background.
+`<leader>kk` starts the lesson: the coach takes the stage with today's plan, briefs the next exercise in their voice (Claude writes the briefing ahead of time, so it opens instantly) and opens it with its statement on the right. Saving the solution runs the tests. A failure opens with the coach's line on top of it, and a pass takes you straight to the next exercise: the coach briefs it on the stage, or sums up the day when it was the last one. `auto_advance = false` keeps you where you are, `advance_ms` is how long the pass stays on screen before the stage opens. One message per moment: the statement opens on the right with no summary on top, and the coach speaks either on the stage, inside a report or in the corner, never twice. Completion is off in solution buffers, AI suggestions included, because you are here to fight by hand. When the next new exercise is not forged yet, the plugin has Claude forge it and brief it in the background.
 
 ![A Bedrock exercise beside its statement](docs/images/btb_re_exercise.png)
 

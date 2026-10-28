@@ -83,6 +83,16 @@ test("a pass is clean, struggled or a level up", () => {
   assert.equal(momentOf("submit", { ok: true, outcome: "clean", levelUp: 2 }), "level_up");
 });
 
+test("the pass that ends the day is a debrief, unless it also levels up", () => {
+  assert.equal(momentOf("submit", { ok: true, outcome: "clean", day: { solved: 2 } }), "debrief");
+  assert.equal(momentOf("submit", { ok: true, outcome: "clean", levelUp: 2, day: { solved: 2 } }), "level_up");
+});
+
+test("Claire only offers a hint while Inde still has one left", () => {
+  assert.equal(fillLine("Pistas que quedan: {hints}.", { hintsLeft: 2 }), "Pistas que quedan: 2.");
+  assert.equal(fillLine("Pistas que quedan: {hints}.", { hintsLeft: 0 }), null);
+});
+
 test("solving again the same day keeps the persona quiet", () => {
   assert.equal(momentOf("submit", { ok: true, repeat: true }), null);
 });

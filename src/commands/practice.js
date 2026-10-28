@@ -2,6 +2,7 @@ import { existsSync } from "node:fs";
 import { readFile } from "node:fs/promises";
 import { noteResult } from "../actions/aptitude.js";
 import { isUnfinished, nextPending, slotFor, undrawnSlotTrack } from "../actions/queue.js";
+import { daySummary } from "../actions/recap.js";
 import { applyPass, applySkip, awardXp } from "../actions/record.js";
 import { roundOutcome } from "../actions/schedule.js";
 import { HINT_COST, xpFor } from "../actions/xp.js";
@@ -21,6 +22,7 @@ import {
   openExercise,
   openTracks,
   profileOf,
+  recappedToday,
   resolveEntry,
   targetExercise,
   trackOf,
@@ -56,8 +58,31 @@ export async function next(ctx, _args, flags) {
     const exercise = await resolveEntry(ctx, day, entry);
     if (exercise) return openExercise(ctx, exercise);
   }
-  const data = { done: true, xp: day.xp, goal: ctx.config.dailyGoalXp };
-  return { data, text: [ctx.paint.green(ctx.t.allDone(day.xp, data.goal)), ctx.paint.dim(ctx.t.moreHint)] };
+  const summary = summaryOf(ctx, day);
+  return { data: { done: true, ...summary }, text: renderSummary(ctx, summary) };
+}
+
+function summaryOf(ctx, day) {
+  const summary = daySummary(day, ctx.catalog.byId, recappedToday(ctx, day).length);
+  return { ...summary, goal: ctx.config.dailyGoalXp };
+}
+
+function renderSummary({ t, paint }, summary) {
+  const improve = summary.toImprove.length > 0 ? paint.yellow(t.summaryImprove(summary.toImprove)) : paint.green(t.summaryAllClean);
+  return [
+    paint.green(t.allDone(summary.xp, summary.goal)),
+    t.summarySolved(summary.solved, summary.clean, summary.struggled),
+    t.summaryMisses(summary.skipped, summary.failures, summary.hints),
+    ...(summary.recapped > 0 ? [t.summaryRecapped(summary.recapped)] : []),
+    improve,
+    paint.dim(t.moreHint),
+  ];
+}
+
+// the day's rounds, so the summary at the end can tell how each one went
+function logRound(day, id, round) {
+  day.rounds ??= {};
+  day.rounds[id] = round;
 }
 
 /**
@@ -76,7 +101,8 @@ function elapsedSeconds(startedAt) {
 
 function afterFailLine(t, data) {
   if (data.redo) return t.afterFailRedo(data.id);
-  return data.placement ? t.afterFailPlacement : t.afterFail;
+  if (data.placement) return t.afterFailPlacement;
+  return data.hintsLeft > 0 ? t.afterFail : t.afterFailNoHints;
 }
 
 function renderFailure({ t, paint }, data) {
@@ -94,7 +120,8 @@ function renderFailure({ t, paint }, data) {
   return lines;
 }
 
-function failureData(ctx, exercise, result) {
+function failureData(ctx, exercise, result, hintsUsed = 0) {
+  const placement = isPlacementQuestion(ctx.state, exercise.id);
   return {
     id: exercise.id,
     title: exercise.title,
@@ -110,13 +137,14 @@ function failureData(ctx, exercise, result) {
     unsupported: Boolean(result.unsupported),
     unapproved: Boolean(result.unapproved),
     stderr: result.stderr,
-    placement: isPlacementQuestion(ctx.state, exercise.id),
+    placement,
+    hintsLeft: placement ? 0 : Math.max(0, exercise.hints.length - hintsUsed),
   };
 }
 
 function failed(ctx, exercise, record, result) {
   record.round.failures += 1;
-  const data = { ...failureData(ctx, exercise, result), attempt: record.round.failures };
+  const data = { ...failureData(ctx, exercise, result, record.round.hints), attempt: record.round.failures };
   return { code: 1, data, text: renderFailure(ctx, data) };
 }
 
@@ -129,7 +157,7 @@ function redoFinished(ctx, exercise, result) {
     return { data, text: [ctx.paint.green(ctx.t.redoPassed(data.passed, data.total, exercise.title))] };
   }
   ctx.state.redos[exercise.id] = (ctx.state.redos[exercise.id] ?? 0) + 1;
-  const data = { ...failureData(ctx, exercise, result), placement: false, redo: true, attempt: ctx.state.redos[exercise.id] };
+  const data = { ...failureData(ctx, exercise, result), placement: false, redo: true, hintsLeft: 0, attempt: ctx.state.redos[exercise.id] };
   return { code: 1, data, text: renderFailure(ctx, data) };
 }
 
@@ -141,14 +169,21 @@ function timeLine(t, data) {
 function renderPass(ctx, exercise, data, placement) {
   const { t, paint } = ctx;
   const outcome = data.outcome === "clean" ? paint.green(t.clean) : paint.yellow(t.struggled);
+  const after = data.day ? ["", ...renderSummary(ctx, data.day)] : [paint.dim(t.afterPass)];
   return [
     paint.green(t.passed(data.passed, data.total, exercise.title)),
     `${outcome}   +${data.xp} XP   ${timeLine(t, data)}`,
     data.mastered ? paint.green(t.mastered) : t.nextReviewOn(data.dueAt),
     ...(data.levelUp ? [paint.green(t.levelUp(data.levelUp))] : []),
     ...renderPlacementNote(ctx, placement),
-    paint.dim(t.afterPass),
+    ...after,
   ];
+}
+
+// the summary comes with the pass that ends the day, so nobody has to ask for it
+function finishedDay(ctx, day, placement) {
+  if (placement || isPlacementRunning(ctx.state) || !day.queue || nextPending(day.queue, day.done)) return null;
+  return summaryOf(ctx, day);
 }
 
 async function markLevelUp(ctx, track, before) {
@@ -173,6 +208,7 @@ async function passed(ctx, exercise, record, result) {
   const xp = xpFor({ level: Math.max(exercise.level, exercise.difficulty ?? 1), outcome, hints: round.hints });
   applyPass(record, { outcome, seconds, today: ctx.today });
   awardXp(ctx.state, day, exercise.id, xp);
+  logRound(day, exercise.id, { outcome, failures: round.failures, hints: round.hints });
   noteResult(ctx.state.aptitude, exercise, { outcome, failures: round.failures, hints: round.hints, seconds });
   const placement = await notePlacementResult(ctx, exercise.id, outcome);
   const levelUp = placement ? null : await markLevelUp(ctx, track, levelBefore);
@@ -190,6 +226,7 @@ async function passed(ctx, exercise, record, result) {
     mastered: record.mastered,
     levelUp,
     placement,
+    day: finishedDay(ctx, day, placement),
   };
   return { data, text: renderPass(ctx, exercise, data, placement) };
 }
@@ -254,6 +291,7 @@ export async function skip(ctx, [query]) {
   applySkip(record, ctx.today);
   const day = dayOf(ctx.state, ctx.today);
   if (!day.done.includes(exercise.id)) day.done.push(exercise.id);
+  logRound(day, exercise.id, { outcome: "skipped", failures: round.failures, hints: round.hints });
   noteResult(ctx.state.aptitude, exercise, { outcome: "skipped", failures: round.failures, hints: round.hints, seconds: null });
   const placement = await notePlacementResult(ctx, exercise.id, "skipped");
   return {

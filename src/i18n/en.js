@@ -80,6 +80,7 @@ Coach
   tsUnsupported: "✗ This Node version cannot run TypeScript. Use Node 22.6 or newer, or set flavor to js.",
   unapproved: (track) => `✗ The commands of ${track} are not approved yet. Review them with btb setup ${track}.`,
   afterFail: "Adjust and run btb submit again. Hint: btb hint   Not today: btb skip",
+  afterFailNoHints: "Adjust and run btb submit again. Not today: btb skip",
   afterFailPlacement: "Adjust and run btb submit again. If it will not come, btb skip, no shame.",
 
   hintHeader: (shown, total, cost) => `Hint ${shown} of ${total} (-${cost} XP)`,
@@ -134,7 +135,14 @@ Coach
   firstTime: (track) => `First time? btb placement ${track}: Claude measures you in a few minutes and draws your path.`,
   slotTitle: "new, Claude forges it when you open it",
   goNext: "Next: btb next",
-  allDone: (xp, goal) => `Done for today. ${xp}/${goal} XP.`,
+  allDone: (xp, goal) => `Done for today! ${xp}/${goal} XP.`,
+  summarySolved: (solved, clean, struggled) => `Solved: ${solved} (${clean} clean, ${struggled} hard fought)`,
+  summaryMisses: (skipped, failures, hints) => `Skipped: ${skipped}   Failed submits: ${failures}   Hints: ${hints}`,
+  summaryRecapped: (count) => `You recapped ${count} ${count === 1 ? "exercise" : "exercises"} from earlier days.`,
+  summaryImprove: (concepts) => `Worth another look: ${concepts.join(", ")}`,
+  summaryAllClean: "Nothing to shore up today, all clean.",
+  recapHeader: "Recap of what you already fought",
+  recapBack: (date) => `back on ${date}`,
   moreHint: "Hungry for more? btb next --more",
 
   totals: (xp, streak, solved, mastered) => `Total XP ${xp}   streak ${streak}   solved ${solved}   mastered ${mastered}`,

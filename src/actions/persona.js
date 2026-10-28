@@ -21,7 +21,7 @@ function isText(value) {
 }
 
 /** The placeholders a line may carry, filled from the round that just happened. */
-export const PLACEHOLDERS = ["title", "xp", "time", "level"];
+export const PLACEHOLDERS = ["title", "xp", "time", "level", "hints"];
 
 function unknownPlaceholders(line) {
   return [...line.matchAll(/\{(\w+)\}/g)].map((match) => match[1]).filter((name) => !PLACEHOLDERS.includes(name));
@@ -108,10 +108,12 @@ const FILLERS = {
   xp: (data) => (data.xp > 0 ? String(data.xp) : null),
   time: (data) => (Number.isFinite(data.seconds) && data.seconds > 0 ? duration(data.seconds) : null),
   level: (data) => (data.levelUp ? String(data.levelUp) : null),
+  // a line that offers a hint only fits while there is one left to give
+  hints: (data) => (data.hintsLeft > 0 ? String(data.hintsLeft) : null),
 };
 
 /**
- * Fills a line's placeholders ({title}, {xp}, {time}, {level}) from the round that just happened.
+ * Fills a line's placeholders ({title}, {xp}, {time}, {level}, {hints}) from the round that just happened.
  * @param {string} line
  * @param {object} data the report data
  * @returns {string | null} null when the round does not carry what the line asks for
@@ -146,6 +148,7 @@ function submitMoment(data) {
   if (data.redo && data.ok) return "passed_clean";
   if (!data.ok) return data.attempt > 1 ? "failed_again" : "failed";
   if (data.levelUp) return "level_up";
+  if (data.day) return "debrief";
   return data.outcome === "clean" ? "passed_clean" : "passed_struggled";
 }
 

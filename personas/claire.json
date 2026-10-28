@@ -53,7 +53,7 @@
       ],
       "failed_again": [
         "Llevamos varias. Para un segundo y prueba el caso a mano en papel.",
-        "Ok, esto se está poniendo terco. Si quieres una pista, pídela, no pasa nada.",
+        "Ok, esto se está poniendo terco. Pistas que quedan: {hints}. Si quieres una, pídela, no pasa nada.",
         "He visto cosas peores que este bug. Lo vas a tumbar."
       ],
       "passed_clean": [
@@ -118,7 +118,7 @@
       ],
       "failed_again": [
         "That's a few now. Stop for a second and run the case by hand on paper.",
-        "Ok, this one is stubborn. If you want a hint, ask for it, it's fine.",
+        "Ok, this one is stubborn. Hints left: {hints}. If you want one, ask for it, it's fine.",
         "I've seen worse things than this bug. You'll take it down."
       ],
       "passed_clean": [

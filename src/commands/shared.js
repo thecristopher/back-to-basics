@@ -1,5 +1,6 @@
 import { currentLevel, levelProgress } from "../actions/levels.js";
 import { allocateNew, dueReviews, freshExercises, slotFor, slotTrack } from "../actions/queue.js";
+import { applyRecap, isRecap } from "../actions/recap.js";
 import { franchiseOf } from "../actions/cast.js";
 import { waitingFor } from "../actions/unlock.js";
 import { drawPath } from "../lib/architect.js";
@@ -130,23 +131,51 @@ function isOpenSlot(ctx, trackId) {
   return Boolean(track) && !lockOf(ctx, track);
 }
 
+function buildQueue(ctx, day) {
+  const reviews = dueReviews(ctx.catalog.exercises, ctx.state.exercises, ctx.today, ctx.config.dailyReviews);
+  const daysQueued = Object.values(ctx.state.days).filter((logged) => logged.queue).length;
+  const slots = allocateNew(openTracks(ctx), ctx.config.dailyNew, daysQueued).map(slotFor);
+  day.reviews = reviews;
+  return [...reviews, ...slots];
+}
+
+/**
+ * The reviews of the day that were only recapped, never queued to be solved again.
+ * @param {object} ctx
+ * @param {object} day
+ * @returns {string[]} ids
+ */
+export function recappedToday(ctx, day) {
+  return (day.reviews ?? []).filter((id) => ctx.state.exercises[id]?.recappedAt === ctx.today);
+}
+
+// a review already solved before is recapped instead of sent again, a day queued before recaps existed gets them too
+function recapReviews(ctx, day) {
+  for (const id of day.reviews ?? []) {
+    const record = ctx.state.exercises[id];
+    if (day.done.includes(id) || !isRecap(record) || record.recappedAt === ctx.today) continue;
+    applyRecap(record, ctx.today);
+  }
+}
+
+function isQueued(ctx, entry, recapped) {
+  if (slotTrack(entry)) return isOpenSlot(ctx, slotTrack(entry));
+  return Boolean(ctx.catalog.byId[entry]) && !recapped.includes(entry);
+}
+
 /**
  * The day's queue, built on its first use of the day and kept stable after that.
- * New exercises start as slots that Claude forges when they are opened.
+ * New exercises start as slots that Claude forges when they are opened, and reviews of exercises
+ * already solved are recapped rather than queued.
  * @param {object} ctx
  * @param {object} day
  * @returns {string[]}
  */
 export function ensureQueue(ctx, day) {
-  if (day.queue) {
-    day.queue = day.queue.filter((entry) => (slotTrack(entry) ? isOpenSlot(ctx, slotTrack(entry)) : ctx.catalog.byId[entry]));
-    return day.queue;
-  }
-  const reviews = dueReviews(ctx.catalog.exercises, ctx.state.exercises, ctx.today, ctx.config.dailyReviews);
-  const daysQueued = Object.values(ctx.state.days).filter((logged) => logged.queue).length;
-  const slots = allocateNew(openTracks(ctx), ctx.config.dailyNew, daysQueued).map(slotFor);
-  day.queue = [...reviews, ...slots];
-  day.reviews = reviews;
+  day.queue ??= buildQueue(ctx, day);
+  recapReviews(ctx, day);
+  const recapped = recappedToday(ctx, day);
+  day.queue = day.queue.filter((entry) => isQueued(ctx, entry, recapped));
   return day.queue;
 }
 
