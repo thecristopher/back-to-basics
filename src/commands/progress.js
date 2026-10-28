@@ -7,7 +7,8 @@ import { dayOf } from "../lib/state.js";
 import { bar } from "../utils/text.js";
 import { ensureQueue, isPlacementRunning, levelNow, openTracks, trackOf } from "./shared.js";
 
-const GLYPHS = { mastered: "★", due: "↻", solved: "✓", started: "~", new: "·" };
+/** The mark of each exercise state, shared by list and lessons. */
+export const GLYPHS = { mastered: "★", due: "↻", solved: "✓", started: "~", new: "·" };
 
 function trackLevels(ctx) {
   return ctx.catalog.tracks.map((track) => {
@@ -152,7 +153,13 @@ export async function plan(ctx) {
   return { data: { pace, levels, goals }, text: renderPlan(ctx, { pace, levels, goals }) };
 }
 
-function listHeading(ctx, item) {
+/**
+ * The heading an exercise falls under: its track and level, or its track's placement.
+ * @param {object} ctx
+ * @param {{ track: string, level: number, placement: boolean }} item
+ * @returns {string}
+ */
+export function listHeading(ctx, item) {
   const title = trackOf(ctx, item.track)?.title ?? item.track;
   return item.placement ? `${title} ${ctx.t.placementHeading}` : `${title} ${ctx.t.level(item.level)}`;
 }

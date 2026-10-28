@@ -1,7 +1,8 @@
 import { currentLevel, levelProgress } from "../actions/levels.js";
 import { allocateNew, dueReviews, freshExercises, slotFor, slotTrack } from "../actions/queue.js";
 import { drawPath } from "../lib/architect.js";
-import { findExercise } from "../lib/catalog.js";
+import { existsSync } from "node:fs";
+import { exerciseFiles, findExercise } from "../lib/catalog.js";
 import { forgeExercises } from "../lib/forge.js";
 import { loadProfile } from "../lib/profiles.js";
 import { recordOf } from "../lib/state.js";
@@ -103,7 +104,8 @@ export function ensureQueue(ctx, day) {
     return day.queue;
   }
   const reviews = dueReviews(ctx.catalog.exercises, ctx.state.exercises, ctx.today, ctx.config.dailyReviews);
-  const slots = allocateNew(openTracks(ctx), ctx.config.dailyNew).map(slotFor);
+  const daysQueued = Object.values(ctx.state.days).filter((logged) => logged.queue).length;
+  const slots = allocateNew(openTracks(ctx), ctx.config.dailyNew, daysQueued).map(slotFor);
   day.queue = [...reviews, ...slots];
   day.reviews = reviews;
   return day.queue;
@@ -175,6 +177,7 @@ export async function openExercise(ctx, exercise) {
     concepts: exercise.concepts,
     path: solution,
     readme,
+    lesson: existsSync(exerciseFiles(exercise).lesson) ? exerciseFiles(exercise).lesson : null,
     review: Boolean(record.firstSolvedAt),
     placement: isPlacementQuestion(ctx.state, exercise.id),
   };

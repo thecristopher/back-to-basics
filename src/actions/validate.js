@@ -22,7 +22,7 @@ function isCommand(value) {
  * @returns {string[]} empty when the shape is fine
  */
 export function draftProblems(draft) {
-  const problems = missingStrings(draft, ["title", "readme", "starter", "reference", "test"]);
+  const problems = missingStrings(draft, ["title", "readme", "lesson", "starter", "reference", "test"]);
   if (!isList(draft?.hints)) problems.push('"hints" must list at least one hint');
   if (!isList(draft?.concepts)) problems.push('"concepts" must list at least one concept');
   if (!(draft?.minutes > 0)) problems.push('"minutes" must be a positive number');

@@ -22,8 +22,17 @@ describe("back-to-basics actions", function()
     assert.are.equal(actions.MESSAGES.en, actions.messages("fr"))
   end)
 
+  it("names what each command is doing, a plain word for the rest", function()
+    local messages = actions.messages("es")
+    assert.are.equal("Corriendo los tests…", actions.working(messages, "submit"))
+    assert.are.equal("Un momento…", actions.working(messages, "setup"))
+  end)
+
   it("always asks btb for JSON", function()
-    local command = actions.command({ node = "node", root = "/btb" }, { "submit", "node/love-note" })
+    local command = actions.command(
+      { node = "node", root = "/btb" },
+      { "submit", "node/love-note" }
+    )
     assert.are.same({ "node", "/btb/bin/btb.js", "submit", "node/love-note", "--json" }, command)
   end)
 
@@ -63,6 +72,15 @@ describe("back-to-basics actions", function()
       assert.is_nil(actions.exercise_of(workspace .. "/node/solution.js", workspace))
     end)
 
+    it("tells a redo apart from the first solution", function()
+      local id, redo =
+        actions.exercise_of(workspace .. "/node/love-note/redo/solution.js", workspace)
+      assert.are.equal("node/love-note", id)
+      assert.is_true(redo)
+      local _, first = actions.exercise_of(workspace .. "/node/love-note/solution.js", workspace)
+      assert.is_false(first)
+    end)
+
     it("tolerates a trailing slash on the workspace", function()
       local path = workspace .. "/node/retry/solution.ts"
       assert.are.equal("node/retry", actions.exercise_of(path, workspace .. "/"))
@@ -79,17 +97,35 @@ describe("back-to-basics actions", function()
   end)
 
   it("builds the BtbResult payload Claire's config listens to", function()
-    local data = { id = "node/date-night", ok = true, outcome = "clean", xp = 15, levelUp = 1 }
+    local data = {
+      id = "node/date-night",
+      title = "Cita con Inde",
+      ok = true,
+      outcome = "clean",
+      xp = 15,
+      levelUp = 1,
+    }
     data.placement = { finished = true }
     assert.are.same({
       id = "node/date-night",
+      title = "Cita con Inde",
       ok = true,
       outcome = "clean",
       xp = 15,
       level_up = 1,
       mastered = false,
       placement_finished = true,
+      redo = false,
     }, actions.event_data(data))
+  end)
+
+  it("marks a redo in the BtbResult payload so the config can skip the fanfare", function()
+    assert.is_true(actions.event_data({ id = "node/date-night", ok = true, redo = true }).redo)
+  end)
+
+  it("asks btb to grade the redo when the buffer is one", function()
+    assert.are.same({ "submit", "node/retry" }, actions.submit_args("node/retry", false))
+    assert.are.same({ "submit", "node/retry", "--redo" }, actions.submit_args("node/retry", true))
   end)
 
   describe("forge_target", function()
@@ -105,9 +141,17 @@ describe("back-to-basics actions", function()
     end)
 
     it("stays still when every slot is ready or the placement runs", function()
-      assert.is_nil(actions.forge_target({ queue = { { slot = true, track = "node", ready = true } } }))
+      assert.is_nil(
+        actions.forge_target({ queue = { { slot = true, track = "node", ready = true } } })
+      )
       assert.is_nil(actions.forge_target({ placement = "running", queue = { { slot = true } } }))
       assert.is_nil(actions.forge_target({ error = "offline" }))
+    end)
+
+    it("leaves a track with no path for its placement", function()
+      local today =
+        { undrawn = { "react" }, queue = { { slot = true, track = "react", ready = false } } }
+      assert.is_nil(actions.forge_target(today))
     end)
   end)
 

@@ -4,8 +4,17 @@ import { forgeExercises } from "../lib/forge.js";
 import { failure, isPlacementRunning, openExercise, trackOf } from "./shared.js";
 
 function statusOf(ctx) {
-  const { queue, results } = ctx.state.placement;
-  return placementStatus(queue, results, ctx.catalog.byId);
+  const { queue, results, size } = ctx.state.placement;
+  return placementStatus(queue, results, ctx.catalog.byId, size ?? queue.length);
+}
+
+// one probe at a time, harder than the last one answered, so Claude only forges what will be fought
+async function forgeProbe(ctx, track, difficulty) {
+  const size = ctx.state.placement.size;
+  const [probe] = await forgeExercises(ctx, { track, purpose: "placement", count: 1, difficulty, size });
+  if (!probe) return null;
+  ctx.state.placement.queue.push(probe.id);
+  return probe.id;
 }
 
 /**
@@ -42,6 +51,10 @@ async function finish(ctx, track) {
 export async function nextPlacement(ctx) {
   const track = trackOf(ctx, ctx.state.placement.track);
   const status = statusOf(ctx);
+  if (status.forgeDifficulty) {
+    status.next = await forgeProbe(ctx, track, status.forgeDifficulty);
+    if (!status.next) return failure(ctx.t.forgeEmpty);
+  }
   if (!status.next) {
     await finish(ctx, track);
     return { data: { placement: "done", track: track.id, path: track.path }, text: [ctx.paint.green(ctx.t.placementDone), ...renderStart(ctx, track)] };
@@ -86,11 +99,8 @@ function pickTrack(ctx, query) {
   return ctx.catalog.tracks.find((track) => !track.path) ?? ctx.catalog.tracks[0];
 }
 
-async function begin(ctx, track) {
-  const probes = await forgeExercises(ctx, { track, purpose: "placement", count: ctx.config.placementSize });
-  if (probes.length === 0) return false;
-  ctx.state.placement = { status: "running", track: track.id, queue: probes.map((probe) => probe.id), results: {} };
-  return true;
+function begin(ctx, track) {
+  ctx.state.placement = { status: "running", track: track.id, size: ctx.config.placementSize, queue: [], results: {} };
 }
 
 /**
@@ -103,8 +113,8 @@ export async function placement(ctx, [query], flags) {
   const running = isPlacementRunning(ctx.state);
   if (running && ctx.state.placement.track !== track.id && !flags.restart) return failure(ctx.t.placementBusy(ctx.state.placement.track));
   const fresh = flags.restart || !running;
-  if (fresh && !(await begin(ctx, track))) return failure(ctx.t.forgeEmpty);
+  if (fresh) begin(ctx, track);
   const report = await nextPlacement(ctx);
-  if (fresh) report.text.unshift(ctx.t.placementIntro(track.title), "");
+  if (fresh && !report.data.error) report.text.unshift(ctx.t.placementIntro(track.title), "");
   return report;
 }

@@ -7,12 +7,62 @@ M.MESSAGES = {
     running_tests = "Corriendo los tests...",
     no_node = "No pude correr btb: %s",
     no_json = "btb no respondió con JSON: %s",
+    coach = "Coach",
+    still_opening = "Todavía estoy preparando el ejercicio, dame un momento.",
+    working = "Un momento…",
+    working_today = "Revisando tu día…",
+    working_next = "Preparando tu ejercicio…",
+    working_placement = "Preparando tu evaluación…",
+    working_submit = "Corriendo los tests…",
+    working_brief = "Tu coach prepara la lección…",
+    working_review = "Claude revisa tu solución…",
+    working_lessons = "Abriendo tus lecciones…",
+    ready = "Listo",
+    forging_ahead = "Claude forja tu siguiente ejercicio en segundo plano…",
+    briefing_ahead = "Tu coach prepara la lección del siguiente ejercicio…",
+    coach_on = "El coach vuelve.",
+    coach_off = "El coach se queda callado.",
+    stage_keys = "<CR> sigue · h atrás · q cierra",
+    stage_start = "Cuando quieras, <CR> y abrimos el ejercicio.",
+    library_title = "Lecciones",
+    library_lesson = "Leer la lección",
+    library_brief = "Que el coach me la explique",
+    library_start = "Abrir el ejercicio",
+    library_solution = "Abrir mi solución",
+    library_review = "Ver la revisión de Claude",
+    library_reveal = "Ver la referencia",
+    library_redo = "Resolverlo otra vez",
   },
   en = {
     not_exercise = "This buffer is not a back-to-basics exercise.",
     running_tests = "Running the tests...",
     no_node = "Could not run btb: %s",
     no_json = "btb did not answer with JSON: %s",
+    coach = "Coach",
+    still_opening = "Still getting the exercise ready, give me a moment.",
+    working = "One moment…",
+    working_today = "Checking your day…",
+    working_next = "Getting your exercise ready…",
+    working_placement = "Getting your placement ready…",
+    working_submit = "Running the tests…",
+    working_brief = "Your coach gets the lesson ready…",
+    working_review = "Claude reviews your solution…",
+    working_lessons = "Opening your lessons…",
+    ready = "Ready",
+    forging_ahead = "Claude forges your next exercise in the background…",
+    briefing_ahead = "Your coach gets the next lesson ready…",
+    coach_on = "The coach is back.",
+    coach_off = "The coach goes quiet.",
+    stage_keys = "<CR> next · h back · q close",
+    stage_start = "When you are ready, <CR> and we open the exercise.",
+    library_title = "Lessons",
+    library_lesson = "Read the lesson",
+    library_brief = "Have the coach walk me through it",
+    library_start = "Open the exercise",
+    library_solution = "Open my solution",
+    library_review = "See Claude's review",
+    library_reveal = "See the reference",
+    library_redo = "Solve it again",
   },
 }
 
@@ -21,6 +71,14 @@ M.MESSAGES = {
 ---@return table<string, string>
 function M.messages(language)
   return M.MESSAGES[language] or M.MESSAGES.en
+end
+
+---What the progress bar says while a btb command works.
+---@param messages table<string, string>
+---@param command string
+---@return string
+function M.working(messages, command)
+  return messages["working_" .. command] or messages.working
 end
 
 ---What the plugin needs from btb.config.json: the language and where solutions live.
@@ -83,17 +141,31 @@ end
 ---The exercise id of a solution file under the workspace, nil for any other file.
 ---@param path string absolute
 ---@param workspace string absolute
----@return string|nil
+---@return string|nil id
+---@return boolean redo the file is a redo, under the exercise's redo folder
 function M.exercise_of(path, workspace)
   local prefix = workspace:gsub("/+$", "") .. "/"
   if path:sub(1, #prefix) ~= prefix then
-    return nil
+    return nil, false
   end
-  local track, slug, file = path:sub(#prefix + 1):match("^([^/]+)/([^/]+)/([^/]+)$")
+  local relative = path:sub(#prefix + 1)
+  local track, slug, file = relative:match("^([^/]+)/([^/]+)/redo/([^/]+)$")
+  local redo = track ~= nil
+  if not redo then
+    track, slug, file = relative:match("^([^/]+)/([^/]+)/([^/]+)$")
+  end
   if not track or not file:match("^solution%.") then
-    return nil
+    return nil, false
   end
-  return track .. "/" .. slug
+  return track .. "/" .. slug, redo
+end
+
+---The btb arguments of a submit, with --redo for a redo.
+---@param id string
+---@param redo boolean|nil
+---@return string[]
+function M.submit_args(id, redo)
+  return redo and { "submit", id, "--redo" } or { "submit", id }
 end
 
 ---How a submit went.
@@ -111,29 +183,33 @@ end
 
 ---Payload of the User BtbResult event, so the rest of the config can react to a submit.
 ---@param data table btb submit --json
----@return { id: string, ok: boolean, outcome: string|nil, xp: number, level_up: number|nil, mastered: boolean, placement_finished: boolean }
+---@return { id: string, title: string|nil, ok: boolean, outcome: string|nil, xp: number, level_up: number|nil, mastered: boolean, placement_finished: boolean, redo: boolean }
 function M.event_data(data)
   local placement = type(data.placement) == "table" and data.placement or {}
   return {
     id = data.id,
+    title = data.title,
     ok = data.ok == true,
     outcome = data.outcome,
     xp = data.xp or 0,
     level_up = data.levelUp,
     mastered = data.mastered == true,
     placement_finished = placement.finished == true,
+    redo = data.redo == true,
   }
 end
 
 ---The track to forge for ahead of time: the first slot of the day with nothing forged yet.
+---A track with no path waits for its placement, forging would draw one blind.
 ---@param today table btb today --json
 ---@return string|nil
 function M.forge_target(today)
   if today.error or today.placement == "running" then
     return nil
   end
+  local undrawn = today.undrawn or {}
   for _, item in ipairs(today.queue or {}) do
-    if item.slot and not item.ready then
+    if item.slot and not item.ready and not vim.tbl_contains(undrawn, item.track) then
       return item.track
     end
   end

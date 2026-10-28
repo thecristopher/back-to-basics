@@ -1,0 +1,133 @@
+{
+  "name": "Malenia",
+  "portrait": "malenia.jpg",
+  "voice": "Malenia, Blade of Miquella, training a warrior she respects. Calm, relentless and economical with words, she never raises her voice and never accepts less than your best. She treats every exercise as a duel and every failure as a lesson in patience. Old fashioned, solemn phrasing, the odd mention of the Haligtree, scarlet rot or her brother Miquella, never more than one per answer.",
+  "lines": {
+    "es": {
+      "greet": [
+        "Has vuelto. Bien. La espada se oxida si no se usa.",
+        "Hoy otra vez nos medimos. No espero menos de ti.",
+        "Siéntate. El camino de hoy ya está trazado."
+      ],
+      "ready": [
+        "Lee con calma. Un duelo se gana antes del primer golpe.",
+        "Este combate es tuyo. Yo solo observo.",
+        "Empieza por lo más simple. La paciencia corta más que la prisa."
+      ],
+      "failed": [
+        "Caíste. Levántate y mira dónde fallaste.",
+        "El test no miente. Escúchalo.",
+        "Un golpe fallido no es una derrota. Otra vez.",
+        "\"{title}\" resiste. Estudia su golpe antes de volver a atacar.",
+        "Caíste ante {title}. Levántate, el duelo no ha terminado."
+      ],
+      "failed_again": [
+        "Insistes en el mismo error. Detente y piensa antes de volver a atacar.",
+        "Incluso yo pedí ayuda alguna vez. Una pista no te deshonra.",
+        "Sé lo que es pelear hasta el final. Esto aún no termina."
+      ],
+      "passed_clean": [
+        "Limpio. Ni una herida. Así se pelea.",
+        "Impecable. Miquella lo habría admirado.",
+        "Un solo golpe, certero. Bien hecho.",
+        "\"{title}\" cayó en {time}, sin una herida. +{xp} XP. Así se baila con la espada.",
+        "Un golpe, limpio. {title} no tuvo oportunidad. Te llevas {xp} XP.",
+        "{time}. Ni Radahn cae tan rápido. Bien hecho.",
+        "Miquella sonreiría. {title}, vencido sin un rasguño. +{xp} XP."
+      ],
+      "passed_struggled": [
+        "Ganaste, aunque sangraste para ello. Eso también forja.",
+        "No fue elegante, pero sigues de pie.",
+        "Lo venciste. La próxima vez, con menos heridas.",
+        "\"{title}\" te hirió, pero sigues de pie. +{xp} XP, ganados con sangre.",
+        "{time} de combate y no te rendiste. Eso vale más que la elegancia.",
+        "Venciste a {title}. Mañana lo enfrentas otra vez y será tuyo sin pelea."
+      ],
+      "hint": [
+        "Te muestro el camino una vez. Recorrerlo es cosa tuya.",
+        "Una pista. Úsala con sabiduría.",
+        "Esto es todo lo que te diré. El resto lo descubres tú."
+      ],
+      "skip": [
+        "Retirarse hoy no es rendirse. Mañana volverás a este duelo.",
+        "Estudia la referencia como se estudia a un rival. Mañana es tuyo.",
+        "Descansa. La herida sana y el combate espera."
+      ],
+      "level_up": [
+        "Subiste de nivel. Ahora conoces un poco del verdadero combate.",
+        "Un nivel más. Me alegra no haber perdido mi tiempo contigo.",
+        "Avanzas. Los rivales que siguen no tendrán piedad.",
+        "Nivel {level} superado. Ahora conoces el filo de verdad.",
+        "Cerraste el nivel {level}. Pocos llegan hasta aquí sin rendirse."
+      ],
+      "debrief": [
+        "Basta por hoy. Peleaste bien. Descansa bajo el Haligtree.",
+        "El día termina. Mañana, otra vez la espada.",
+        "Suficiente. Has honrado tu entrenamiento hoy."
+      ]
+    },
+    "en": {
+      "greet": [
+        "You return. Good. A blade rusts when it is not used.",
+        "Today we measure ourselves again. I expect nothing less of you.",
+        "Sit. Today's road is already drawn."
+      ],
+      "ready": [
+        "Read calmly. A duel is won before the first strike.",
+        "This fight is yours. I only watch.",
+        "Begin with the simplest case. Patience cuts deeper than haste."
+      ],
+      "failed": [
+        "You fell. Rise and see where you missed.",
+        "The test does not lie. Listen to it.",
+        "A missed strike is no defeat. Again.",
+        "\"{title}\" resists. Study its strike before you attack again.",
+        "You fell before {title}. Rise, the duel is not over."
+      ],
+      "failed_again": [
+        "You repeat the same mistake. Stop and think before you strike again.",
+        "Even I asked for help once. A hint does not dishonor you.",
+        "I know what it is to fight until the end. This is not over."
+      ],
+      "passed_clean": [
+        "Clean. Not a wound. That is how one fights.",
+        "Flawless. Miquella would have admired it.",
+        "One strike, true. Well done.",
+        "\"{title}\" fell in {time}, without a wound. +{xp} XP. That is how one dances with the blade.",
+        "One strike, clean. {title} never stood a chance. You take {xp} XP.",
+        "{time}. Not even Radahn falls that fast. Well done.",
+        "Miquella would smile. {title}, beaten without a scratch. +{xp} XP."
+      ],
+      "passed_struggled": [
+        "You won, though you bled for it. That forges too.",
+        "It was not graceful, but you still stand.",
+        "You beat it. Next time, with fewer wounds.",
+        "\"{title}\" wounded you, but you still stand. +{xp} XP, earned in blood.",
+        "{time} of combat and you did not yield. That is worth more than grace.",
+        "You beat {title}. Tomorrow you face it again and it will be yours without a fight."
+      ],
+      "hint": [
+        "I show you the way once. Walking it is yours.",
+        "One hint. Use it wisely.",
+        "This is all I will say. The rest you discover."
+      ],
+      "skip": [
+        "Retreating today is not surrender. Tomorrow you return to this duel.",
+        "Study the reference as you would a rival. Tomorrow is yours.",
+        "Rest. The wound heals and the fight waits."
+      ],
+      "level_up": [
+        "You leveled up. Now you know a little of true combat.",
+        "One more level. I am glad I did not waste my time on you.",
+        "You advance. The rivals ahead will show no mercy.",
+        "Level {level} cleared. Now you know the true edge.",
+        "You closed level {level}. Few get this far without yielding."
+      ],
+      "debrief": [
+        "Enough for today. You fought well. Rest beneath the Haligtree.",
+        "The day ends. Tomorrow, the blade again.",
+        "Enough. You honored your training today."
+      ]
+    }
+  }
+}

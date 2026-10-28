@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { allocateNew, dueReviews, freshExercises, nextPending, slotFor, slotTrack } from "../src/actions/queue.js";
+import { allocateNew, dueReviews, freshExercises, isUnfinished, nextPending, slotFor, slotTrack, undrawnSlotTrack } from "../src/actions/queue.js";
 
 const exercises = [
   { id: "node/love-note", track: "node", level: 1 },
@@ -38,6 +38,12 @@ test("Claire and Malenia's tracks take turns for the new exercises", () => {
   assert.deepEqual(allocateNew([], 2), []);
 });
 
+test("one new exercise a day takes turns across days", () => {
+  assert.deepEqual(allocateNew(["node", "react"], 1, 0), ["node"]);
+  assert.deepEqual(allocateNew(["node", "react"], 1, 1), ["react"]);
+  assert.deepEqual(allocateNew(["node", "react"], 1, 2), ["node"]);
+});
+
 test("a slot names the track it forges for", () => {
   assert.equal(slotTrack(slotFor("react")), "react");
   assert.equal(slotTrack("react/anniversary"), null);
@@ -46,4 +52,31 @@ test("a slot names the track it forges for", () => {
 test("the next pending entry skips what is done today", () => {
   assert.equal(nextPending(["node/love-note", "forge:node"], ["node/love-note"]), "forge:node");
   assert.equal(nextPending(["node/love-note"], ["node/love-note"]), null);
+});
+
+test("an exercise never solved nor skipped stays unfinished until it is", () => {
+  const day = { queue: [], done: [] };
+  assert.equal(isUnfinished("node/love-note", { attempts: 2, skips: 0 }, day), true);
+  assert.equal(isUnfinished("node/love-note", { attempts: 2, skips: 1 }, day), false);
+});
+
+test("a review queued today is unfinished until it is done", () => {
+  const solved = { firstSolvedAt: "2026-10-20", skips: 0 };
+  assert.equal(isUnfinished("node/playlist", solved, { queue: ["node/playlist"], done: [] }), true);
+  assert.equal(isUnfinished("node/playlist", solved, { queue: ["node/playlist"], done: ["node/playlist"] }), false);
+});
+
+test("a solved exercise opened again by hand does not hold the day", () => {
+  assert.equal(isUnfinished("node/playlist", { firstSolvedAt: "2026-10-20", skips: 0 }, { queue: [], done: [] }), false);
+});
+
+test("nothing open means nothing unfinished", () => {
+  assert.equal(isUnfinished(null, undefined, { queue: [], done: [] }), false);
+});
+
+test("the first pending slot of a track with no path asks for its placement", () => {
+  const queue = ["node/love-note", slotFor("react")];
+  assert.equal(undrawnSlotTrack(queue, ["node/love-note"], () => false), "react");
+  assert.equal(undrawnSlotTrack(queue, ["node/love-note"], () => true), null);
+  assert.equal(undrawnSlotTrack(queue, [], () => false), null);
 });

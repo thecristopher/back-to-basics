@@ -15,6 +15,9 @@ const DEFAULTS = {
   forgeBatch: 2,
   forgeRetries: 2,
   theme: "",
+  cast: null,
+  persona: "",
+  fromBasics: false,
   workspace: "workspace",
   dataDir: ".btb",
   claude: { command: ["claude", "-p"], timeoutMs: 300000 },
@@ -40,7 +43,7 @@ function validate(config) {
 /**
  * Loads btb.config.json (or $BTB_CONFIG) over the defaults and resolves its paths from the repo root.
  * @param {string} root the back-to-basics folder
- * @returns {Promise<typeof DEFAULTS & { root: string, tracksDir: string, profilesDir: string, examplesDir: string, dataDir: string, workspaceDir: string, statePath: string }>}
+ * @returns {Promise<typeof DEFAULTS & { root: string, tracksDir: string, profilesDir: string, personasDir: string, examplesDir: string, dataDir: string, workspaceDir: string, statePath: string }>}
  */
 export async function loadConfig(root) {
   const user = await readUserConfig(process.env.BTB_CONFIG ?? join(root, "btb.config.json"));
@@ -52,6 +55,7 @@ export async function loadConfig(root) {
     root,
     tracksDir: join(root, "tracks"),
     profilesDir: join(root, "profiles"),
+    personasDir: join(root, "personas"),
     examplesDir: join(root, "examples"),
     dataDir,
     workspaceDir: resolve(root, config.workspace),

@@ -20,12 +20,25 @@ function keptLines(kept) {
   ];
 }
 
+// a learner rebuilding from zero starts at level 1, the placement only says what to stress
+function startLines(fromBasics) {
+  if (!fromBasics) {
+    return ["Set startLevel to the first level they still need; the levels before it count as already passed. Be honest, not flattering."];
+  }
+  return [
+    "The learner is rebuilding from the very basics on purpose, after years of letting tools write the code for them.",
+    "Levels 1 and 2 are a warm up of the smallest pieces of this track. In a language: level 1 is returning values, arithmetic, comparing and if and else; level 2 is for loops over arrays and strings.",
+    "The warm up levels pass with 3 or 4 clean solves. Climb in small steps from there.",
+    "Set startLevel to 1 whatever the placement says, and use the placement only to decide what to stress.",
+  ];
+}
+
 /**
  * The prompt that asks Claude to draw, or redraw, the learner's path on a track.
- * @param {{ track: object, profileName: string, summary: object, others: object[], placement: object[], kept: object[], language: string }} input
+ * @param {{ track: object, profileName: string, summary: object, others: object[], placement: object[], kept: object[], language: string, fromBasics?: boolean }} input
  * @returns {string}
  */
-export function pathPrompt({ track, profileName, summary, others, placement, kept, language }) {
+export function pathPrompt({ track, profileName, summary, others, placement, kept, language, fromBasics = false }) {
   return [
     "BTB_TASK: path",
     "You are the architect of a learning path in back-to-basics, a daily practice tool where a programmer rebuilds their skills by hand.",
@@ -44,7 +57,7 @@ export function pathPrompt({ track, profileName, summary, others, placement, kep
     "",
     "Design 6 to 10 levels that go from where this learner truly is to the goal, or to big tech interview level when there is no goal.",
     "Each level: a title, a summary, 3 to 6 concrete concepts, and a target from 3 to 8 clean solves to pass it.",
-    "Set startLevel to the first level they still need; the levels before it count as already passed. Be honest, not flattering.",
+    ...startLines(fromBasics),
     "",
     "Respond with JSON only, no prose and no code fences, in this shape:",
     SCHEMA,

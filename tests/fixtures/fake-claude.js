@@ -17,6 +17,7 @@ function example(slug) {
     concepts: meta.concepts,
     hints: meta.hints,
     readme: read("README.md"),
+    lesson: read("lesson.md"),
     starter: read("starter.js"),
     reference: read("reference.js"),
     test: read("solution.test.js"),
@@ -70,6 +71,18 @@ function profile() {
   };
 }
 
-const answers = { exercises, fix, path, profile };
-if (task === "review") process.stdout.write("## Calificación\nCorrección 9/10, Inde estaría orgullosa.\n");
+function persona() {
+  const say = (line) => [line, `${line} Otra vez.`];
+  const moments = ["greet", "ready", "failed", "failed_again", "passed_clean", "passed_struggled", "hint", "skip", "level_up", "debrief"];
+  const lines = Object.fromEntries(moments.map((moment) => [moment, say(`Melina dice ${moment}.`)]));
+  return { name: "Melina", voice: "Calm and kind, she guides without carrying you.", lines: { es: lines } };
+}
+
+const answers = { exercises, fix, path, profile, persona };
+const MARKDOWN = {
+  review: "## Calificación\nCorrección 9/10, Inde estaría orgullosa.\n",
+  lesson: "# Closures\nUna función recuerda dónde nació, como Claire recuerda Raccoon City.\n",
+  brief: "Inde, hoy toca algo bonito. Lee bien y escríbelo tú.\n",
+};
+if (MARKDOWN[task]) process.stdout.write(MARKDOWN[task]);
 else process.stdout.write(JSON.stringify(answers[task]()));

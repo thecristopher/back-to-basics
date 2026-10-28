@@ -59,3 +59,157 @@ describe("back-to-basics setup", function()
     vim.cmd("bwipeout!")
   end)
 end)
+
+describe("back-to-basics coach", function()
+  local btb = require("back-to-basics")
+  local coach = require("back-to-basics.coach")
+  local claire =
+    { id = "claire", name = "Claire Redfield", moment = "passed_clean", line = "Limpio, Inde." }
+
+  before_each(function()
+    btb.setup({ keys = "<leader>k", forge_ahead = false, coach = { speed = 1, toast_ms = 50 } })
+  end)
+
+  local function floats()
+    return vim.tbl_filter(function(win)
+      return vim.api.nvim_win_get_config(win).relative ~= ""
+    end, vim.api.nvim_list_wins())
+  end
+
+  it("maps the lesson and the library under the prefix", function()
+    assert.are.equal("Lesson with the coach", vim.fn.maparg("<leader>kk", "n", false, true).desc)
+    assert.are.equal("Lesson library", vim.fn.maparg("<leader>kb", "n", false, true).desc)
+  end)
+
+  it("tells the config when the coach reacts", function()
+    local heard
+    vim.api.nvim_create_autocmd("User", {
+      pattern = "BtbMoment",
+      once = true,
+      callback = function(event)
+        heard = event.data
+      end,
+    })
+    btb.react({ persona = claire })
+    assert.are.equal("passed_clean", heard.moment)
+    assert.are.equal(1, #floats())
+  end)
+
+  it("stays quiet once the coach is hidden", function()
+    vim.wait(1000, function()
+      return #floats() == 0
+    end)
+    coach.toggle()
+    coach.say(claire)
+    assert.are.equal(0, #floats())
+    coach.toggle()
+  end)
+
+  it("plays the moment the coach reacts to", function()
+    local played
+    btb.setup({
+      keys = false,
+      forge_ahead = false,
+      sound = function(event)
+        played = event
+      end,
+    })
+    coach.say(claire)
+    assert.are.equal("passed_clean", played)
+  end)
+
+  it("closes the stage with q and says the lesson was not confirmed", function()
+    local confirmed
+    coach.stage(claire, { { "Malenia espera." } }, function(value)
+      confirmed = value
+    end)
+    vim.api.nvim_feedkeys("q", "x", false)
+    assert.is_false(confirmed)
+  end)
+
+  it("confirms the stage after the last page", function()
+    local confirmed
+    coach.stage(claire, { { "Leon llega tarde." } }, function(value)
+      confirmed = value
+    end)
+    vim.wait(200, function()
+      return vim.api.nvim_buf_get_lines(0, 0, -1, false)[1] == "Leon llega tarde."
+    end)
+    vim.api.nvim_feedkeys(vim.keycode("<CR>"), "x", false)
+    assert.is_true(confirmed)
+  end)
+end)
+
+describe("back-to-basics one exercise at a time", function()
+  local btb = require("back-to-basics")
+  local cli = require("back-to-basics.cli")
+
+  it("never sends a second next while the first one is still opening", function()
+    local real_run, calls, warned = cli.run, 0, false
+    cli.run = function()
+      calls = calls + 1
+    end
+    local real_notify = vim.notify
+    vim.notify = function(_, level)
+      warned = warned or level == vim.log.levels.WARN
+    end
+    btb.setup({ keys = false, forge_ahead = false })
+    btb.next()
+    btb.next()
+    cli.run, vim.notify = real_run, real_notify
+    assert.are.equal(1, calls)
+    assert.is_true(warned)
+  end)
+end)
+
+describe("back-to-basics progress", function()
+  local btb = require("back-to-basics")
+  local cli = require("back-to-basics.cli")
+
+  local function recorder()
+    local log = {}
+    return log,
+      function(start)
+        table.insert(log, "start:" .. start.message)
+        return {
+          update = function(_, line)
+            table.insert(log, "update:" .. line)
+          end,
+          done = function()
+            table.insert(log, "done")
+          end,
+          fail = function(_, message)
+            table.insert(log, "fail:" .. message)
+          end,
+        }
+      end
+  end
+
+  it("follows btb's progress lines until the answer, then closes", function()
+    local log, progress = recorder()
+    local real_run = cli.run
+    cli.run = function(_, _, on_done, on_progress)
+      on_progress("Claude forja un ejercicio para Inde")
+      on_done({ text = { "listo" } })
+    end
+    btb.setup({ keys = false, forge_ahead = false, progress = progress })
+    btb.subcommands.today({})
+    cli.run = real_run
+    assert.are.same(
+      { "start:Revisando tu día…", "update:Claude forja un ejercicio para Inde", "done" },
+      log
+    )
+  end)
+
+  it("ends the bar in red when btb answers with an error", function()
+    local log, progress = recorder()
+    local real_run = cli.run
+    cli.run = function(_, _, on_done)
+      on_done({ error = "Wesker borró el archivo" })
+    end
+    btb.setup({ keys = false, forge_ahead = false, progress = progress })
+    btb.subcommands.status({})
+    cli.run = real_run
+    assert.are.equal("fail:Wesker borró el archivo", log[#log])
+  end)
+end)

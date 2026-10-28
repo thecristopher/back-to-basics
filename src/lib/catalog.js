@@ -52,16 +52,26 @@ export function findExercise(catalog, query) {
 /**
  * Paths of an exercise's stored files. Starter and reference keep the solution's extension.
  * @param {{ folder: string, files: { solution: string, test: string } }} exercise
- * @returns {{ readme: string, starter: string, reference: string, test: string }}
+ * @returns {{ readme: string, lesson: string, starter: string, reference: string, test: string }}
  */
 export function exerciseFiles(exercise) {
   const ext = extname(exercise.files.solution);
   return {
     readme: join(exercise.folder, "README.md"),
+    lesson: join(exercise.folder, "lesson.md"),
     starter: join(exercise.folder, `starter${ext}`),
     reference: join(exercise.folder, `reference${ext}`),
     test: join(exercise.folder, exercise.files.test),
   };
+}
+
+// from the very basics Claude sees the warm up example, the gentlest quality bar there is
+async function pickExampleSlug(dir, slugs, fromBasics) {
+  if (!fromBasics) return slugs[0];
+  for (const slug of slugs) {
+    if ((await readJsonIfExists(join(dir, slug, "exercise.json")))?.warmUp) return slug;
+  }
+  return slugs[0];
 }
 
 /**
@@ -73,7 +83,8 @@ export function exerciseFiles(exercise) {
 export async function loadExample(config, profileId) {
   const own = await listDirs(join(config.examplesDir, profileId));
   const dir = own.length > 0 ? join(config.examplesDir, profileId) : join(config.examplesDir, "javascript");
-  const [slug] = own.length > 0 ? own : await listDirs(dir);
+  const slugs = own.length > 0 ? own : await listDirs(dir);
+  const slug = await pickExampleSlug(dir, slugs, config.fromBasics);
   const exercise = await loadExercise(dir, profileId, slug);
   const files = exerciseFiles(exercise);
   const read = (file) => readFile(file, "utf8");
@@ -84,6 +95,7 @@ export async function loadExample(config, profileId) {
     concepts: exercise.concepts,
     hints: exercise.hints,
     readme: await read(files.readme),
+    lesson: await read(files.lesson),
     starter: await read(files.starter),
     reference: await read(files.reference),
     test: await read(files.test),

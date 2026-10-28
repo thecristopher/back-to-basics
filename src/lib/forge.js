@@ -1,6 +1,7 @@
 import { mkdir, writeFile } from "node:fs/promises";
 import { extname, join } from "node:path";
 import { summarizeAptitude } from "../actions/aptitude.js";
+import { pickCast } from "../actions/cast.js";
 import { withoutEmDashes } from "../actions/json.js";
 import { exercisePrompt, fixPrompt } from "../actions/prompts/exercise.js";
 import { describeRun } from "../actions/report.js";
@@ -69,6 +70,7 @@ async function saveExercise(ctx, track, draft, meta) {
   await mkdir(folder, { recursive: true });
   await writeFile(join(folder, "exercise.json"), `${JSON.stringify(stored, null, 2)}\n`);
   await writeFile(join(folder, "README.md"), withoutEmDashes(draft.readme));
+  await writeFile(join(folder, "lesson.md"), withoutEmDashes(draft.lesson));
   await writeFile(join(folder, `starter${ext}`), draft.starter);
   await writeFile(join(folder, `reference${ext}`), draft.reference);
   await writeFile(join(folder, meta.files.test), draft.test);
@@ -81,10 +83,11 @@ async function saveExercise(ctx, track, draft, meta) {
 /**
  * Asks Claude for exercises fitted to the learner and keeps only the ones whose tests prove them right.
  * @param {object} ctx
- * @param {{ track: object, purpose: "practice" | "placement", level?: object, count: number }} request
+ * @param {{ track: object, purpose: "practice" | "placement", level?: object, count: number, difficulty?: number, size?: number }} request
+ *   a placement probe forged alone carries its difficulty and the size of the whole test
  * @returns {Promise<object[]>} the saved exercises, possibly fewer than asked for
  */
-export async function forgeExercises(ctx, { track, purpose, level, count }) {
+export async function forgeExercises(ctx, { track, purpose, level, count, difficulty, size }) {
   const profile = await loadProfile(ctx.config, track.language);
   const files = filesFor(profile, ctx.config.flavor);
   const avoid = ctx.catalog.exercises.filter((exercise) => exercise.track === track.id).map((exercise) => exercise.title);
@@ -95,10 +98,14 @@ export async function forgeExercises(ctx, { track, purpose, level, count }) {
     files,
     level,
     count,
+    difficulty,
+    size,
     summary: summarizeAptitude(ctx.state.aptitude[track.id]),
     avoid,
     language: ctx.config.language,
     theme: ctx.config.theme,
+    fromBasics: ctx.config.fromBasics,
+    cast: pickCast(ctx.config.cast, 3),
     example: await loadExample(ctx.config, profile.id),
   });
   ctx.log(ctx.paint.dim(ctx.t.forging(count, track.title)));
@@ -108,7 +115,7 @@ export async function forgeExercises(ctx, { track, purpose, level, count }) {
   const saved = [];
   for (const [index, draft] of drafts.entries()) {
     const settled = await settle(ctx, profile, files, draft);
-    if (settled && meta.placement) settled.difficulty = index + 1;
+    if (settled && meta.placement) settled.difficulty = (difficulty ?? 1) + index;
     if (settled) saved.push(await saveExercise(ctx, track, settled, meta));
   }
   return saved;

@@ -1,6 +1,7 @@
 {
   "title": "Suma de pares",
   "level": 1,
+  "warmUp": true,
   "minutes": 10,
   "concepts": ["bucles", "condicionales", "operador %"],
   "hints": [
