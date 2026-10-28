@@ -2,6 +2,7 @@
   "title": "LLM apps on Bedrock",
   "language": "python",
   "example": "throttled-converse",
+  "after": { "track": "python", "share": 0.5 },
   "focus": "Building production LLM applications in Python on Amazon Bedrock, the way AI engineering roles ask for it: the Converse API with boto3, prompts and message history, streaming, tool use, structured output validated with pydantic, retries and cost control, embeddings and RAG, evals, guardrails and agents. Every exercise fakes Bedrock with botocore's Stubber or a small fake client, so the learner writes the real request and response handling with no network and no AWS account.",
   "ladder": [
     "Messages and prompts: Converse API request shape, system prompts, roles, templating, history trimming",

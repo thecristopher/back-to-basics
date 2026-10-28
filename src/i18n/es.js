@@ -103,6 +103,10 @@ Coach
   placementBusy: (track) => `Tienes la ubicación de ${track} a medias. Termínala o usa --restart.`,
   placementHeading: "ubicación",
 
+  trackLocked: (title, lock) =>
+    lock.needed === null
+      ? `${title} se abre cuando avances en ${lock.title}. Primero btb placement ${lock.track}.`
+      : `${title} se abre al pasar ${lock.needed} niveles de ${lock.title}, llevas ${lock.done}.`,
   pathMissing: (track) => `Sin camino todavía. btb placement ${track} para que Claude lo trace.`,
   startsAt: (title, level, levelTitle) => `${title}: empiezas en el nivel ${level}, ${levelTitle}`,
   seePath: (track) => `El camino completo: btb path ${track}`,

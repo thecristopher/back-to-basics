@@ -6,7 +6,7 @@ import { streakDays } from "../actions/streak.js";
 import { franchiseOf } from "../actions/cast.js";
 import { dayOf } from "../lib/state.js";
 import { bar } from "../utils/text.js";
-import { ensureQueue, isPlacementRunning, levelNow, openTracks, trackOf } from "./shared.js";
+import { ensureQueue, isPlacementRunning, levelNow, lockOf, openTracks, trackOf } from "./shared.js";
 
 /** The mark of each exercise state, shared by list and lessons. */
 export const GLYPHS = { mastered: "★", due: "↻", solved: "✓", started: "~", new: "·" };
@@ -14,7 +14,7 @@ export const GLYPHS = { mastered: "★", due: "↻", solved: "✓", started: "~"
 function trackLevels(ctx) {
   return ctx.catalog.tracks.map((track) => {
     const levels = levelProgress(track, ctx.catalog.exercises, ctx.state.exercises);
-    return { id: track.id, title: track.title, drawn: Boolean(track.path), current: currentLevel(levels), levels };
+    return { id: track.id, title: track.title, drawn: Boolean(track.path), current: currentLevel(levels), levels, locked: lockOf(ctx, track) };
   });
 }
 
@@ -52,6 +52,7 @@ function renderToday(ctx, data) {
   const lines = [`${paint.bold(t.todayHeader(data.today))}   ${t.streak(data.streak)}   ${t.xpToday(data.xp, data.goal)}`];
   if (data.placement === "running") return [...lines, t.placementPending];
   if (data.undrawn.length > 0) lines.push(paint.yellow(t.firstTime(data.undrawn[0])));
+  lines.push(...data.locked.map((track) => paint.dim(t.trackLocked(track.title, track.lock))));
   const next = data.queue.find((item) => !item.done);
   lines.push(...data.queue.map((item) => queueLine(ctx, item, item === next)));
   lines.push(paint.dim(next ? t.goNext : t.moreHint));
@@ -74,7 +75,8 @@ export async function today(ctx) {
     queue: queue.map((entry) => queueItem(ctx, day, entry, spare)),
     current: ctx.state.current,
     placement: ctx.state.placement?.status ?? null,
-    undrawn: ctx.catalog.tracks.filter((track) => !track.path).map((track) => track.id),
+    undrawn: ctx.catalog.tracks.filter((track) => !track.path && !lockOf(ctx, track)).map((track) => track.id),
+    locked: ctx.catalog.tracks.map((track) => ({ id: track.id, title: track.title, lock: lockOf(ctx, track) })).filter((track) => track.lock),
   };
   return { data, text: renderToday(ctx, data) };
 }
@@ -91,7 +93,8 @@ function renderStatus(ctx, data) {
   const lines = [t.totals(data.xp, data.streak, data.solved, data.mastered)];
   for (const track of data.tracks) {
     lines.push("", paint.bold(track.title));
-    if (!track.drawn) lines.push(paint.yellow(`  ${t.pathMissing(track.id)}`));
+    if (track.locked) lines.push(paint.dim(`  ${t.trackLocked(track.title, track.locked)}`));
+    else if (!track.drawn) lines.push(paint.yellow(`  ${t.pathMissing(track.id)}`));
     lines.push(...track.levels.map((level) => levelLine(ctx, level, level.level === track.current)));
   }
   return lines;

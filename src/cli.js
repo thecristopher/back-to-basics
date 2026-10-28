@@ -8,6 +8,7 @@ import { placement } from "./commands/placement.js";
 import { hint, next, reveal, skip, start, submit } from "./commands/practice.js";
 import { list, plan, status, today } from "./commands/progress.js";
 import { review } from "./commands/review.js";
+import { leaveLockedTracks } from "./commands/shared.js";
 import { loadCatalog } from "./lib/catalog.js";
 import { loadConfig } from "./lib/config.js";
 import { createT } from "./lib/i18n.js";
@@ -67,6 +68,7 @@ async function run(argv) {
   const handler = COMMANDS[command];
   if (!handler) return { code: 1, data: { error: t.unknownCommand(command) }, text: [t.unknownCommand(command)] };
   const ctx = await createContext(config, t, flags);
+  leaveLockedTracks(ctx);
   try {
     return speak(ctx, command, await handler(ctx, args, flags));
   } finally {
