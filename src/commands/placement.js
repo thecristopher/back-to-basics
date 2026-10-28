@@ -1,7 +1,7 @@
 import { placementEvidence, placementStatus } from "../actions/placement.js";
 import { drawPath } from "../lib/architect.js";
 import { forgeExercises } from "../lib/forge.js";
-import { failure, isPlacementRunning, openExercise, trackOf } from "./shared.js";
+import { failure, isPlacementRunning, lockOf, openExercise, trackOf } from "./shared.js";
 
 function statusOf(ctx) {
   const { queue, results, size } = ctx.state.placement;
@@ -96,7 +96,7 @@ export function renderPlacementNote(ctx, result) {
 function pickTrack(ctx, query) {
   if (query) return trackOf(ctx, query);
   if (isPlacementRunning(ctx.state)) return trackOf(ctx, ctx.state.placement.track);
-  return ctx.catalog.tracks.find((track) => !track.path) ?? ctx.catalog.tracks[0];
+  return ctx.catalog.tracks.find((track) => !track.path && !lockOf(ctx, track)) ?? ctx.catalog.tracks[0];
 }
 
 function begin(ctx, track) {
@@ -110,6 +110,8 @@ function begin(ctx, track) {
 export async function placement(ctx, [query], flags) {
   const track = pickTrack(ctx, query);
   if (!track) return failure(ctx.t.unknownTrack(query));
+  const lock = lockOf(ctx, track);
+  if (lock) return failure(ctx.t.trackLocked(track.title, lock));
   const running = isPlacementRunning(ctx.state);
   if (running && ctx.state.placement.track !== track.id && !flags.restart) return failure(ctx.t.placementBusy(ctx.state.placement.track));
   const fresh = flags.restart || !running;

@@ -11,7 +11,7 @@ AI made writing code fast and remembering how to write it optional. This is the 
 - **A path drawn for you.** A placement test of rising difficulty tells Claude where you really are, and it draws your levels from there. Each level up, it redraws what comes next with the new evidence.
 - **Every path ends at an onsite.** The last 2 levels of every track are interview levels: multi part problems like the ones in an Amazon, Zillow or Capital One loop, over realistic data, with edge cases and complexity limits the tests enforce.
 - **Node, React, Python and LLM apps at the base, any language on top.** `btb learn rust` has Claude work out how to run Rust tests on your machine. You approve the commands before anything runs.
-- **LLMs on Amazon Bedrock, by hand.** The `llm` track drills the Converse API with boto3, streaming, tool use, pydantic validated output, backoff, RAG, evals and agents. Bedrock is faked with botocore's `Stubber`, so it needs no AWS account and costs nothing.
+- **LLMs on Amazon Bedrock, by hand.** The `llm` track drills the Converse API with boto3, streaming, tool use, pydantic validated output, backoff, RAG, evals and agents. Bedrock is faked with botocore's `Stubber`, so it needs no AWS account and costs nothing. It opens once half of your Python path is done, so you get there with the language in hand.
 - **Spaced review.** Clean solves come back in 3, 7 and 21 days. Struggles come back tomorrow.
 - **AI only after the fight.** `btb review` has Claude grade your solution once the tests pass.
 - **Editor friendly.** Every command takes `--json`, progress goes to stderr.
@@ -27,7 +27,7 @@ npm link                  # puts `btb` on your PATH, or run `node bin/btb.js`
 btb placement node        # Claude measures you and draws your Node path
 btb placement react       # same for React (installs its test packages once)
 btb placement python      # Python (installs pytest, pydantic and boto3 in a venv once)
-btb placement llm         # LLM apps on Bedrock, same venv
+btb placement llm         # LLM apps on Bedrock, once half of the Python path is done
 btb                       # today's plan
 ```
 
@@ -208,7 +208,7 @@ vim.api.nvim_create_autocmd("User", {
 
 ```
 personas/     the bundled coaches: voice, portrait, lines per moment and the world of their franchise
-tracks/       seeds of the bundled tracks: focus, suggested stages and the example to show, Claude adapts them
+tracks/       seeds of the bundled tracks: focus, suggested stages, the example to show and what they wait for, Claude adapts them
 profiles/     how to run tests per language: files, command, report format, runtime (python/ holds the pytest plugin)
 examples/     hand written exercises with their lessons, the quality bar Claude is shown and the engine's fixtures
 src/actions/  pure logic: scheduling, levels, placement, aptitude, prompts, validation
@@ -216,6 +216,8 @@ src/lib/      disk, processes and Claude: runner, forge, architect
 src/commands/ one file per group of commands
 lua/          the Neovim plugin, pure logic in lua/back-to-basics/actions
 ```
+
+A track seed may wait for another one with `"after": { "track": "python", "share": 0.5 }`: it takes no placement and no new exercises until that share of the other path is done, and a placement or exercise it left open is let go. Once it has its own path it stays open.
 
 A language profile names the solution and test files, the test command (with `{test}`, `{dir}`, `{node}`, `{runtime}`, `{report}` placeholders) and how to read its verdict: `node-test`, `vitest-json`, `btb-json`, `tap` or `exit-code`. React's profile installs Vitest, jsdom and Testing Library once, under `.btb/runtimes/react`. Python's creates a venv with pytest, pydantic and boto3 under `.btb/runtimes/python`, and a small pytest plugin writes the `btb-json` verdict, with each test's docstring as its name. Profiles Claude writes for other languages may only use `tap` or `exit-code`, and stay unapproved until `btb setup --yes`.
 

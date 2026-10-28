@@ -1,6 +1,7 @@
 import { currentLevel, levelProgress } from "../actions/levels.js";
 import { allocateNew, dueReviews, freshExercises, slotFor, slotTrack } from "../actions/queue.js";
 import { franchiseOf } from "../actions/cast.js";
+import { waitingFor } from "../actions/unlock.js";
 import { drawPath } from "../lib/architect.js";
 import { existsSync } from "node:fs";
 import { exerciseFiles, findExercise } from "../lib/catalog.js";
@@ -25,6 +26,22 @@ export function failure(message) {
  */
 export function isPlacementRunning(state) {
   return state.placement?.status === "running";
+}
+
+function isLockedTrack(ctx, trackId) {
+  const track = trackOf(ctx, trackId);
+  return Boolean(track) && Boolean(lockOf(ctx, track));
+}
+
+/**
+ * Lets go of what a closed track left open, a running placement or the current exercise, so the day
+ * goes back to the track it waits for. Forged probes stay on disk, the test starts over once it opens.
+ * @param {object} ctx
+ */
+export function leaveLockedTracks(ctx) {
+  if (isPlacementRunning(ctx.state) && isLockedTrack(ctx, ctx.state.placement.track)) ctx.state.placement = null;
+  const current = ctx.catalog.byId[ctx.state.current];
+  if (current && isLockedTrack(ctx, current.track)) ctx.state.current = null;
 }
 
 /**
@@ -71,12 +88,27 @@ export function levelNow(ctx, track) {
 }
 
 /**
- * Tracks that still take new exercises: no path yet, or a path not finished.
+ * What a track still waits for before it opens, null when it is open.
+ * @param {object} ctx
+ * @param {object} track
+ * @returns {ReturnType<typeof waitingFor>}
+ */
+export function lockOf(ctx, track) {
+  const required = track.after ? trackOf(ctx, track.after.track) : undefined;
+  const progress = required ? levelProgress(required, ctx.catalog.exercises, ctx.state.exercises) : [];
+  return waitingFor(track, required, progress);
+}
+
+/**
+ * Tracks that still take new exercises: open, with no path yet or a path not finished.
  * @param {object} ctx
  * @returns {string[]} ids
  */
 export function openTracks(ctx) {
-  return ctx.catalog.tracks.filter((track) => !track.path || levelNow(ctx, track)).map((track) => track.id);
+  return ctx.catalog.tracks
+    .filter((track) => !lockOf(ctx, track))
+    .filter((track) => !track.path || levelNow(ctx, track))
+    .map((track) => track.id);
 }
 
 /**
@@ -92,6 +124,12 @@ export function targetExercise(ctx, query) {
   return exercise ? { exercise } : { error: ctx.t.unknownExercise(id) };
 }
 
+// a slot queued before its track closed, or before it was removed, is dropped from the day
+function isOpenSlot(ctx, trackId) {
+  const track = trackOf(ctx, trackId);
+  return Boolean(track) && !lockOf(ctx, track);
+}
+
 /**
  * The day's queue, built on its first use of the day and kept stable after that.
  * New exercises start as slots that Claude forges when they are opened.
@@ -101,7 +139,7 @@ export function targetExercise(ctx, query) {
  */
 export function ensureQueue(ctx, day) {
   if (day.queue) {
-    day.queue = day.queue.filter((entry) => slotTrack(entry) ? trackOf(ctx, slotTrack(entry)) : ctx.catalog.byId[entry]);
+    day.queue = day.queue.filter((entry) => (slotTrack(entry) ? isOpenSlot(ctx, slotTrack(entry)) : ctx.catalog.byId[entry]));
     return day.queue;
   }
   const reviews = dueReviews(ctx.catalog.exercises, ctx.state.exercises, ctx.today, ctx.config.dailyReviews);

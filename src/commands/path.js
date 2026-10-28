@@ -7,7 +7,7 @@ import { writeMissingLesson } from "../lib/library.js";
 import { loadProfile, saveProfile } from "../lib/profiles.js";
 import { saveTrack } from "../lib/tracks.js";
 import { toSlug } from "../utils/slug.js";
-import { failure, levelNow, profileOf, trackOf } from "./shared.js";
+import { failure, levelNow, lockOf, profileOf, trackOf } from "./shared.js";
 
 function levelLine({ t, paint }, level, isCurrent) {
   const mark = level.done ? paint.green("✓") : isCurrent ? paint.yellow("→") : " ";
@@ -106,7 +106,9 @@ async function forgeLessons(ctx, query) {
 export async function forge(ctx, [query], flags) {
   if (query && !trackOf(ctx, query)) return failure(ctx.t.unknownTrack(query));
   if (flags.lessons) return forgeLessons(ctx, query);
-  const tracks = query ? [trackOf(ctx, query)] : ctx.catalog.tracks.filter((track) => track.path);
+  const lock = query ? lockOf(ctx, trackOf(ctx, query)) : null;
+  if (lock) return failure(ctx.t.trackLocked(trackOf(ctx, query).title, lock));
+  const tracks = query ? [trackOf(ctx, query)] : ctx.catalog.tracks.filter((track) => track.path && !lockOf(ctx, track));
   const count = Number(flags.count) || ctx.config.forgeBatch;
   const forged = [];
   for (const track of tracks) {

@@ -103,6 +103,10 @@ Coach
   placementBusy: (track) => `Your ${track} placement is halfway. Finish it or use --restart.`,
   placementHeading: "placement",
 
+  trackLocked: (title, lock) =>
+    lock.needed === null
+      ? `${title} opens once you move through ${lock.title}. Start with btb placement ${lock.track}.`
+      : `${title} opens after ${lock.needed} levels of ${lock.title}, ${lock.done} done so far.`,
   pathMissing: (track) => `No path yet. btb placement ${track} so Claude draws it.`,
   startsAt: (title, level, levelTitle) => `${title}: you start at level ${level}, ${levelTitle}`,
   seePath: (track) => `The whole path: btb path ${track}`,
