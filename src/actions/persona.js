@@ -41,6 +41,18 @@ function lineProblems(language, lines) {
   return problems;
 }
 
+// a world is optional, when present it names the franchise and who and what may appear in it
+function worldProblems(world) {
+  if (world === undefined) return [];
+  const problems = [];
+  if (!isText(world?.franchise)) problems.push('"world.franchise" must be a non empty string');
+  for (const key of ["supporting", "places"]) {
+    const list = world?.[key];
+    if (list !== undefined && !(Array.isArray(list) && list.every(isText))) problems.push(`"world.${key}" must list names`);
+  }
+  return problems;
+}
+
 /**
  * True when the name can be a persona file name.
  * @param {string} name
@@ -58,6 +70,7 @@ export function isPersonaName(name) {
 export function personaProblems(persona) {
   const problems = ["name", "voice"].filter((key) => !isText(persona?.[key])).map((key) => `"${key}" must be a non empty string`);
   if (persona?.portrait !== undefined && !isText(persona.portrait)) problems.push('"portrait" must be a file name when present');
+  problems.push(...worldProblems(persona?.world));
   const languages = Object.keys(persona?.lines ?? {});
   if (languages.length === 0) problems.push('"lines" must have at least one language');
   for (const language of languages) problems.push(...lineProblems(language, persona.lines[language]));

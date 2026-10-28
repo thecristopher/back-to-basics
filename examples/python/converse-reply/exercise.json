@@ -1,0 +1,12 @@
+{
+  "title": "Respuesta de Converse",
+  "level": 2,
+  "minutes": 15,
+  "concepts": ["Bedrock Converse API", "forma del request", "leer content blocks", "uso de tokens"],
+  "hints": [
+    "El request lleva modelId, system como lista de {\"text\": ...} y messages con un solo mensaje de role \"user\".",
+    "La respuesta trae el texto en response[\"output\"][\"message\"][\"content\"], una lista de bloques: junta los que tengan \"text\".",
+    "stopReason y usage[\"totalTokens\"] vienen en la raíz de la respuesta."
+  ],
+  "files": { "solution": "solution.py", "test": "test_solution.py" }
+}

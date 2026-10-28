@@ -1,0 +1,12 @@
+{
+  "title": "Palabras más frecuentes",
+  "level": 2,
+  "minutes": 15,
+  "concepts": ["dict para contar", "sorted con key", "métodos de str"],
+  "hints": [
+    "Pasa todo a minúsculas y quédate solo con letras y espacios antes de partir en palabras.",
+    "Cuenta con un dict: counts[word] = counts.get(word, 0) + 1.",
+    "Ordena con key=lambda pair: (-pair[1], pair[0]) y corta los primeros n."
+  ],
+  "files": { "solution": "solution.py", "test": "test_solution.py" }
+}

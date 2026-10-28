@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { exercisePrompt, fixPrompt } from "../src/actions/prompts/exercise.js";
+import { exercisePrompt, fixPrompt, isInterviewLevel } from "../src/actions/prompts/exercise.js";
 import { pathPrompt } from "../src/actions/prompts/path.js";
 import { profilePrompt } from "../src/actions/prompts/profile.js";
 
@@ -26,6 +26,26 @@ test("a placement prompt spreads probes across the ladder", () => {
   assert.match(prompt, /Write 5 placement probes/);
   assert.match(prompt, /basics; async/);
   assert.match(prompt, /first contact/);
+});
+
+test("the last 2 levels of a drawn path are interview levels", () => {
+  const drawn = { ...track, path: { levels: [1, 2, 3, 4, 5, 6].map((number) => ({ level: number })) } };
+  assert.equal(isInterviewLevel(drawn, { level: 4 }), false);
+  assert.equal(isInterviewLevel(drawn, { level: 5 }), true);
+  assert.equal(isInterviewLevel(drawn, { level: 6 }), true);
+  assert.equal(isInterviewLevel(track, { level: 6 }), false);
+});
+
+test("an interview level asks for an Amazon, Zillow or Capital One onsite problem", () => {
+  const drawn = { ...track, path: { levels: [{ level: 1 }, { level: 2 }, { level: 3 }] } };
+  const prompt = exercisePrompt({ ...base, track: drawn, level: { ...level, level: 3 }, purpose: "practice" });
+  assert.match(prompt, /real onsite problem at Amazon, Zillow or Capital One/);
+  assert.match(prompt, /Set minutes between 30 and 60/);
+});
+
+test("an early level stays small and focused", () => {
+  const prompt = exercisePrompt({ ...base, purpose: "practice" });
+  assert.doesNotMatch(prompt, /onsite problem/);
 });
 
 test("a fix prompt carries the problems and the draft on its own line", () => {
@@ -66,6 +86,12 @@ test("from the very basics the path starts at level 1 whatever the placement say
   const prompt = pathPrompt({ track, profileName: profile.name, summary, others: [], placement: [], kept: [], language: "es", fromBasics: true });
   assert.match(prompt, /Set startLevel to 1 whatever the placement says/);
   assert.doesNotMatch(prompt, /count as already passed/);
+});
+
+test("every path prompt ends the path at an Amazon, Zillow or Capital One onsite", () => {
+  const prompt = pathPrompt({ track, profileName: profile.name, summary, others: [], placement: [], kept: [], language: "es" });
+  assert.match(prompt, /real onsite loop at Amazon, Zillow or Capital One/);
+  assert.match(prompt, /the last 2 levels are interview levels/);
 });
 
 test("a profile prompt names the language, the platform and the last problems", () => {

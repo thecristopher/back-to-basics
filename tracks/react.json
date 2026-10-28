@@ -11,6 +11,6 @@
     "Custom hooks",
     "Context and reducers",
     "Performance: memo, useMemo, useCallback, avoiding rerenders",
-    "Frontend interview level: building widgets like autocomplete, modal, infinite list"
+    "Interview level at Amazon, Zillow or Capital One: widgets built from scratch like autocomplete with debounce and keyboard, a listings map filter, an infinite list, a transactions table with sort and pagination, accessible and tested"
   ]
 }

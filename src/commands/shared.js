@@ -1,5 +1,6 @@
 import { currentLevel, levelProgress } from "../actions/levels.js";
 import { allocateNew, dueReviews, freshExercises, slotFor, slotTrack } from "../actions/queue.js";
+import { franchiseOf } from "../actions/cast.js";
 import { drawPath } from "../lib/architect.js";
 import { existsSync } from "node:fs";
 import { exerciseFiles, findExercise } from "../lib/catalog.js";
@@ -121,7 +122,7 @@ async function exerciseForSlot(ctx, track, queued) {
   await ensurePath(ctx, track);
   const level = levelNow(ctx, track);
   if (!level) return null;
-  const [ready] = freshExercises(ctx.catalog.exercises, ctx.state.exercises, track.id, level.level, queued);
+  const [ready] = freshExercises(ctx.catalog.exercises, ctx.state.exercises, track.id, level.level, queued, franchiseOf(ctx.persona));
   if (ready) return ctx.catalog.byId[ready];
   const forged = await forgeExercises(ctx, { track, purpose: "practice", level, count: ctx.config.forgeBatch });
   return forged[0] ?? null;

@@ -11,6 +11,6 @@
     "HTTP without frameworks: routing, JSON, validation, status codes",
     "Testing, debugging and error handling patterns",
     "Data structures and algorithms: hash maps, two pointers, stacks, queues, trees, graphs",
-    "Backend design at interview level: rate limiting, caching, queues, pagination"
+    "Interview level at Amazon, Zillow or Capital One: multi part backend problems like an LRU cache with TTL, a rate limiter, a ledger with idempotent transfers, a job scheduler, over big realistic data"
   ]
 }

@@ -2,6 +2,36 @@
   "name": "Claire Redfield",
   "portrait": "claire.jpg",
   "voice": "Claire Redfield coaching a friend she trusts. Determined, warm and direct, she never gives up on you and never does the work for you. She talks like someone who survived worse than a failing test: short sentences, a little teasing, zero condescension. She drops the odd reference to TerraSave, her motorcycle, her brother Chris or Raccoon City, never more than one per answer.",
+  "world": {
+    "franchise": "Resident Evil",
+    "supporting": [
+      "Leon S. Kennedy",
+      "Jill Valentine",
+      "Chris Redfield",
+      "Ada Wong",
+      "Rebecca Chambers",
+      "Carlos Oliveira",
+      "Barry Burton",
+      "Sherry Birkin",
+      "Moira Burton",
+      "Ethan Winters",
+      "Ashley Graham",
+      "Hunk",
+      "Jack Krauser",
+      "Albert Wesker"
+    ],
+    "places": [
+      "Raccoon City",
+      "la mansión Spencer",
+      "TerraSave",
+      "la BSAA",
+      "Umbrella",
+      "la comisaría de Raccoon City",
+      "la moto de Claire",
+      "hierbas verdes y rojas",
+      "la máquina de escribir"
+    ]
+  },
   "lines": {
     "es": {
       "greet": [

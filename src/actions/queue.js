@@ -40,18 +40,21 @@ export function dueReviews(exercises, records, today, limit) {
 
 /**
  * Exercises already forged for a track level and never solved nor skipped.
- * @param {{ id: string, track: string, level: number, placement?: boolean }[]} exercises
+ * Ones forged for another franchise wait until that franchise is back, untagged ones fit any.
+ * @param {{ id: string, track: string, level: number, placement?: boolean, franchise?: string }[]} exercises
  * @param {Record<string, object>} records
  * @param {string} track
  * @param {number} level
  * @param {string[]} [exclude] ids already queued
+ * @param {string | null} [franchise] today's franchise, null to take any
  * @returns {string[]} ids
  */
-export function freshExercises(exercises, records, track, level, exclude = []) {
+export function freshExercises(exercises, records, track, level, exclude = [], franchise = null) {
   return exercises
     .filter((exercise) => exercise.track === track && exercise.level === level && !exercise.placement)
     .filter((exercise) => !records[exercise.id]?.firstSolvedAt && !records[exercise.id]?.dueAt)
     .filter((exercise) => !exclude.includes(exercise.id))
+    .filter((exercise) => !franchise || !exercise.franchise || exercise.franchise === franchise)
     .map((exercise) => exercise.id);
 }
 

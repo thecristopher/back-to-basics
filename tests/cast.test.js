@@ -1,9 +1,11 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { castLine, pickCast } from "../src/actions/cast.js";
+import { castFor, castLines, franchiseOf, pickCast } from "../src/actions/cast.js";
 import { exercisePrompt } from "../src/actions/prompts/exercise.js";
 
-const cast = { leads: ["Claire Redfield", "Malenia", "Inde Navarrete"], supporting: ["Leon", "Jill", "Ada", "Melina", "Ranni"] };
+const cast = { leads: ["Claire Redfield"], supporting: ["Leon", "Jill", "Ada", "Rebecca", "Carlos"] };
+const claire = { name: "Claire Redfield", world: { franchise: "Resident Evil", supporting: ["Leon", "Jill", "Chris", "Wesker"], places: ["Raccoon City", "TerraSave"] } };
+const malenia = { name: "Malenia", world: { franchise: "Elden Ring", supporting: ["Melina", "Blaidd"] } };
 
 test("every lead shows up, with a few supporting faces drawn at random", () => {
   const picked = pickCast(cast, 3, () => 0);
@@ -22,13 +24,13 @@ test("asking for more faces than the cast has brings the whole cast", () => {
 
 test("no cast means no cast line", () => {
   assert.equal(pickCast(null, 3), null);
-  assert.equal(castLine(null), null);
+  assert.deepEqual(castLines(null), []);
 });
 
 test("the cast line names the leads and asks for the supporting ones by name", () => {
-  const line = castLine({ leads: ["Claire Redfield"], supporting: ["Leon", "Melina"] });
+  const [line] = castLines({ leads: ["Claire Redfield"], supporting: ["Leon", "Jill"] });
   assert.match(line, /Leads: Claire Redfield/);
-  assert.match(line, /Bring in Leon, Melina by name in the readme and the test data/);
+  assert.match(line, /Bring in Leon, Jill by name in the readme and the test data/);
 });
 
 test("the forge prompt carries the cast of the exercise", () => {
@@ -45,4 +47,35 @@ test("the forge prompt carries the cast of the exercise", () => {
     cast: { leads: ["Malenia"], supporting: ["Blaidd"] },
   });
   assert.match(prompt, /Bring in Blaidd by name/);
+});
+
+test("Claire's world casts her as the lead and fills the rest from Resident Evil", () => {
+  const picked = castFor(claire, cast, () => 0);
+  assert.deepEqual(picked.leads, ["Claire Redfield"]);
+  assert.deepEqual(picked.supporting, ["Leon", "Jill", "Chris"]);
+  assert.equal(picked.franchise, "Resident Evil");
+});
+
+test("Malenia's world never borrows a face from the config's cast", () => {
+  const picked = castFor(malenia, cast, () => 0);
+  assert.deepEqual(picked.supporting, ["Melina", "Blaidd"]);
+  assert.deepEqual(picked.places, []);
+});
+
+test("a persona without a world falls back to the config's cast", () => {
+  assert.deepEqual(castFor({ name: "Wesker" }, cast, () => 0), { leads: ["Claire Redfield"], supporting: ["Leon", "Jill", "Ada"] });
+});
+
+test("the romance stays between Claire and you, inside her franchise only", () => {
+  const lines = castLines(castFor(claire, null, () => 0)).join("\n");
+  assert.match(lines, /Claire Redfield is the learner's partner/);
+  assert.match(lines, /only between Claire Redfield and you/);
+  assert.match(lines, /never in a romance/);
+  assert.match(lines, /comes from Resident Evil only, never from another franchise\. Places and things to draw from: Raccoon City, TerraSave\./);
+});
+
+test("the franchise of a persona is the one its world names", () => {
+  assert.equal(franchiseOf(malenia), "Elden Ring");
+  assert.equal(franchiseOf({ name: "Wesker" }), null);
+  assert.equal(franchiseOf(null), null);
 });
