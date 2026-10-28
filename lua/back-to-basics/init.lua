@@ -19,6 +19,10 @@ M.defaults = {
   -- prefix for the keymaps, false for none
   keys = "<leader>k",
   submit_on_save = true,
+  -- a pass takes you to the next exercise, and the last one of the day to its summary
+  auto_advance = true,
+  -- how long the pass gets on screen before the coach takes the stage with what comes next
+  advance_ms = 1500,
   -- forge the next new exercise in the background, so next never waits on Claude
   forge_ahead = true,
   -- false turns completion off in solution buffers, AI suggestions included
@@ -110,6 +114,14 @@ function M.btb(args, on_done)
   run(args, on_done)
 end
 
+-- the moment reaches the rest of the config (sounds, for example) even when the line is shown elsewhere
+local function moment(data)
+  local persona = data and data.persona
+  if persona and persona.moment then
+    vim.api.nvim_exec_autocmds("User", { pattern = "BtbMoment", data = persona })
+  end
+end
+
 ---Lets the coach react to a btb answer and tells the rest of the config through User BtbMoment.
 ---@param data table a btb --json answer
 function M.react(data)
@@ -118,7 +130,16 @@ function M.react(data)
     return
   end
   coach.say(persona)
-  vim.api.nvim_exec_autocmds("User", { pattern = "BtbMoment", data = persona })
+  moment(data)
+end
+
+-- one message per moment: the coach's line when there is one, btb's text otherwise
+local function announce(data, lines)
+  if coach.enabled() and data.persona and data.persona.line then
+    return M.react(data)
+  end
+  notify(table.concat(lines, "\n"))
+  moment(data)
 end
 
 -- macOS hands out /var and /private/var for the same folder, so paths are compared with symlinks
@@ -188,13 +209,18 @@ function M.forge_ahead()
   end)
 end
 
+-- the coach's line goes inside the float, a toast beside it would cover the same moment twice
 local function show(data, title, filetype)
   if data.error then
     return notify(data.error, vim.log.levels.ERROR)
   end
-  ui.float(actions.text_lines(data), { title = title, filetype = filetype })
+  local lines =
+    vim.list_extend(actions.coach_lines(data, coach.enabled()), actions.text_lines(data))
+  ui.float(lines, { title = title, filetype = filetype })
+  moment(data)
 end
 
+-- the statement opens on the right, so the exercise needs no summary of its own on top
 local function open_exercise(data)
   if data.error then
     return notify(data.error, vim.log.levels.ERROR)
@@ -203,13 +229,14 @@ local function open_exercise(data)
     return show(data, "back-to-basics")
   end
   M.focus(ui.open_exercise(data))
-  notify(table.concat(actions.text_lines(data), "\n"))
   M.forge_ahead()
 end
 
 local function opened(data)
   open_exercise(data)
-  M.react(data)
+  if not data.error and data.path then
+    announce(data, actions.text_lines(data))
+  end
 end
 
 local host = {
@@ -236,22 +263,32 @@ function M.lessons(track)
   library.open(host, track)
 end
 
+-- a pass that moves on lets the stage carry the coach's line, the next exercise forges ahead once it opens
+local function passed(data, after)
+  if after then
+    moment(data)
+    return lesson.advance(host, data, opts.advance_ms)
+  end
+  announce(data, actions.text_lines(data))
+  if not data.redo then
+    M.forge_ahead()
+  end
+end
+
 local function submitted(id)
   return function(data)
     local verdict = actions.verdict(data)
     if verdict == "error" then
       return notify(data.error, vim.log.levels.ERROR)
     end
-    local lines = actions.text_lines(data)
     if verdict == "failed" then
-      ui.float(lines, { title = id })
-    else
-      notify(table.concat(lines, "\n"))
+      show(data, id)
+    elseif verdict == "repeat" then
+      notify(table.concat(actions.text_lines(data), "\n"))
     end
-    M.react(data)
     vim.api.nvim_exec_autocmds("User", { pattern = "BtbResult", data = actions.event_data(data) })
-    if verdict == "passed" and not data.redo then
-      M.forge_ahead()
+    if verdict == "passed" then
+      passed(data, actions.after_submit(data, opts.auto_advance))
     end
   end
 end
@@ -266,7 +303,10 @@ function M.submit(id, redo)
   if not id then
     return notify(opts.messages.not_exercise, vim.log.levels.WARN)
   end
-  notify(opts.messages.running_tests)
+  -- a progress bar already says the tests are running, a notification on top would say it twice
+  if not opts.progress then
+    notify(opts.messages.running_tests)
+  end
   run(actions.submit_args(id, redo), submitted(id), progress)
 end
 
@@ -276,7 +316,6 @@ local function on_exercise(name, filetype)
     local id = args[1] or current_id()
     run(id and { name, id } or { name }, function(data)
       show(data, name, filetype)
-      M.react(data)
     end, progress)
   end
 end

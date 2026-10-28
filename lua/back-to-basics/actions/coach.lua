@@ -114,6 +114,21 @@ function M.reveal(lines, shown)
   return visible, left >= 0
 end
 
+-- a portrait is about 5:6 and a cell twice as tall as it is wide, so it wants 1.64 columns per row
+M.PORTRAIT_COLUMNS_PER_ROW = 1.64
+local MIN_TEXT = 36
+local MIN_PORTRAIT = 12
+
+-- as wide as the stage height asks for, never more than 40% of the stage, none when the text would starve
+local function portrait_width(width, height)
+  local wanted = math.floor(height * M.PORTRAIT_COLUMNS_PER_ROW + 0.5)
+  local portrait = math.min(wanted, math.floor(width * 0.4))
+  if portrait < MIN_PORTRAIT or width - portrait - 2 < MIN_TEXT then
+    return 0
+  end
+  return portrait
+end
+
 ---Where the stage sits: centered, with room on the left for the portrait when there is one.
 ---@param columns integer
 ---@param rows integer
@@ -122,8 +137,7 @@ end
 function M.stage_layout(columns, rows, with_portrait)
   local width = math.max(40, math.min(100, columns - 8))
   local height = math.max(8, math.min(20, rows - 8))
-  -- a portrait only fits when the text still keeps 40 columns beside it
-  local portrait = (with_portrait and width >= 72) and math.floor(width * 0.32) or 0
+  local portrait = with_portrait and portrait_width(width, height) or 0
   return {
     row = math.floor((rows - height) / 2),
     col = math.floor((columns - width) / 2),

@@ -32,6 +32,8 @@ M.MESSAGES = {
     library_review = "Ver la revisión de Claude",
     library_reveal = "Ver la referencia",
     library_redo = "Resolverlo otra vez",
+    clean = "Limpio",
+    struggled = "Con batalla",
   },
   en = {
     not_exercise = "This buffer is not a back-to-basics exercise.",
@@ -63,6 +65,8 @@ M.MESSAGES = {
     library_review = "See Claude's review",
     library_reveal = "See the reference",
     library_redo = "Solve it again",
+    clean = "Clean",
+    struggled = "Hard fought",
   },
 }
 
@@ -179,6 +183,42 @@ function M.verdict(data)
     return "repeat"
   end
   return data.ok and "passed" or "failed"
+end
+
+---What follows a submit: the day's summary when it ended, the next exercise when it passed, nil otherwise.
+---A redo and a second solve the same day stay where they are.
+---@param data table btb submit --json
+---@param auto_advance boolean
+---@return "debrief"|"advance"|nil
+function M.after_submit(data, auto_advance)
+  if M.verdict(data) ~= "passed" or data.redo then
+    return nil
+  end
+  if data.day then
+    return "debrief"
+  end
+  return auto_advance and "advance" or nil
+end
+
+---One line with how the round went, for the stage that takes the learner to the next exercise.
+---@param messages table<string, string>
+---@param data table btb submit --json
+---@return string
+function M.pass_line(messages, data)
+  local outcome = data.outcome == "clean" and messages.clean or messages.struggled
+  return ("✓ %s · %s · +%d XP"):format(data.title or data.id, outcome, data.xp or 0)
+end
+
+---The coach's line on top of a report float, so the coach never needs a toast beside it.
+---@param data table a btb --json answer
+---@param enabled boolean the coach is shown
+---@return string[] empty when the coach has nothing to say
+function M.coach_lines(data, enabled)
+  local persona = data.persona
+  if not enabled or not persona or not persona.line then
+    return {}
+  end
+  return { persona.name .. ": " .. persona.line, "" }
 end
 
 ---Payload of the User BtbResult event, so the rest of the config can react to a submit.
