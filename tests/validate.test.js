@@ -2,10 +2,14 @@ import assert from "node:assert/strict";
 import { test } from "node:test";
 import { draftProblems, pathProblems, profileProblems } from "../src/actions/validate.js";
 
-const draft = { title: "Nota", readme: "# Nota", starter: "x", reference: "y", test: "z", hints: ["h"], concepts: ["c"], minutes: 10 };
+const draft = { title: "Nota", readme: "# Nota", lesson: "# Closures", starter: "x", reference: "y", test: "z", hints: ["h"], concepts: ["c"], minutes: 10 };
 
 test("a complete draft has no problems", () => {
   assert.deepEqual(draftProblems(draft), []);
+});
+
+test("a draft without a lesson is refused", () => {
+  assert.deepEqual(draftProblems({ ...draft, lesson: "" }), ['"lesson" must be a non empty string']);
 });
 
 test("a draft missing pieces lists each one", () => {

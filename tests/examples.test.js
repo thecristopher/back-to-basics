@@ -40,8 +40,9 @@ for (const id of await listDirs(join(ROOT, "examples"))) {
         testCode: await readFile(files.test, "utf8"),
       });
 
-    test(`${id}/${slug} has what Claude is asked to write`, () => {
+    test(`${id}/${slug} has what Claude is asked to write`, async () => {
       assert.ok(meta.title && meta.minutes > 0 && meta.hints.length > 0 && meta.concepts.length > 0);
+      assert.ok((await readFile(files.lesson, "utf8")).trim().length > 0, "lesson.md is missing");
     });
 
     test(`${id}/${slug} passes with its reference`, { skip }, async () => {

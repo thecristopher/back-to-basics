@@ -72,6 +72,10 @@ test("a drawn path is numbered from 1, clamped and cleaned", () => {
   assert.equal(path.rationale, "Inde va, sin prisa");
 });
 
+test("from the very basics a new path starts at level 1 even when Claude says otherwise", () => {
+  assert.equal(normalizePath(draft, null, 0, { fromBasics: true }).startLevel, 1);
+});
+
 test("a redraw keeps the levels already done and the original start", () => {
   const previous = { startLevel: 1, levels: [{ level: 1, title: "Hecho", summary: "s", concepts: ["c"], target: 3 }] };
   const path = normalizePath(draft, previous, 1);

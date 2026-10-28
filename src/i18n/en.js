@@ -12,19 +12,31 @@ Practice
   hint [id]             reveals the next hint, costs XP
   skip [id]             leave it for today, it comes back tomorrow
   reveal [id]           the reference solution, only after solving or skipping
-  review [id]           Claude grades your solution, only after solving
+  review [id]           Claude grades your solution, only after solving. --again for a new review
 
 Path
   placement [track]     placement test: Claude measures you and draws your path. --restart to take it again
   path [track]          the path Claude drew. --redraw to draw it again
-  forge [track]         forge exercises ahead of time. --count=n
+  forge [track]         forge exercises ahead of time. --count=n, --lessons for missing lessons
   learn <language>      a new track for any language. --goal="..." and --again
   setup [track] --yes   approve and install what a language needs
 
 Progress
   status                levels, XP and streak
   plan                  your pace and when you reach your goals
-  list                  everything forged and where you stand`,
+  list                  everything forged and where you stand
+
+Lessons
+  lessons [track]       every lesson, with your solution and Claude's review
+  lesson [id]           the lesson behind an exercise
+  brief [id]            the coach presents the lesson in their voice. --again for a new one
+  redo <id>             solve it again from the starter, your solution stays. --fresh to restart
+  submit <id> --redo    grades the redo, without touching your progress
+
+Coach
+  persona [name]        the coach in use, or another. list to see them all
+  persona new <name>    Claude drafts a new coach. --from="who they are"
+  --persona=<name>      any command with that coach, --persona=none for none`,
   unknownCommand: (name) => `Unknown command "${name}". Run btb help.`,
   noCurrent: "No exercise open. Run btb next.",
   unknownExercise: (id) => `Could not find exercise "${id}". Run btb list.`,
@@ -136,4 +148,32 @@ Progress
   projected: (date) => `(projected ${date})`,
   legend: "★ mastered   ↻ due for review   ✓ solved   ~ started   · new",
   nothingForged: "No exercises yet. btb next and Claude forges the first one.",
+
+  unknownPersona: (name) => `There is no persona "${name}". Run btb persona list.`,
+  personasHeader: "Coaches",
+  personaHowTo: 'Pick one with "persona" in btb.config.json, or draft one with btb persona new <name> --from="..."',
+  personaSample: "Says",
+  personaBadName: "The name of a persona is lowercase letters, digits and hyphens, like claire or my-coach.",
+  personaNeedsFrom: 'Tell Claude who the coach is: btb persona new <name> --from="..."',
+  personaExists: (name) => `There is already a persona "${name}". Pick another name.`,
+  draftingPersona: (name) => `Claude is drafting ${name}...`,
+  personaInvalid: (problems) => `Claude's draft did not hold: ${problems.join("; ")}. Run it again.`,
+  personaSaved: (file, name) => `Saved in ${file}. Read it, tweak it, and set "persona": "${name}" in btb.config.json to use it.`,
+
+  noLesson: (id) => `${id} has no lesson yet. Run btb forge --lessons.`,
+  hasLesson: "lesson",
+  hasReview: "review",
+  lessonsHowTo: "Read one with btb lesson <id>, its review with btb review <id>, solve it again with btb redo <id>",
+  briefing: (name, title) => `${name} is getting "${title}" ready for you...`,
+  writingLesson: (title) => `Claude is writing the lesson of "${title}"...`,
+  lessonsComplete: "Every exercise already has its lesson.",
+  lessonsWritten: (count) => `${count} ${count === 1 ? "lesson written" : "lessons written"}:`,
+  redoNeedsId: "Which one? btb redo <id>, they are in btb lessons.",
+  redoLocked: "Solve it or skip it first, a redo is for coming back.",
+  redoHeader: (title) => `Redo: ${title}. Your first solution stays where it was.`,
+  redoHowTo: (id) => `When it is ready: btb submit ${id} --redo`,
+  redoNotStarted: (id) => `There is no redo of ${id}. Run btb redo ${id}.`,
+  redoPassed: (passed, total, title) => `✓ ${passed}/${total} tests pass. ${title}, solved again.`,
+  afterFailRedo: (id) => `Adjust and run btb submit ${id} --redo again.`,
+  finishFirst: "Finish this one first, or give up with btb skip. Then we move on to the next.",
 };

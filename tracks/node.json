@@ -3,7 +3,8 @@
   "language": "javascript",
   "focus": "JavaScript and Node.js from the ground up, by hand: language fundamentals, functions and closures, async, Node core modules, HTTP without frameworks, errors and testing, then data structures, algorithms and backend design at big tech interview level.",
   "ladder": [
-    "Language basics: loops, conditionals, strings, arrays, objects",
+    "The very basics: variables, operators, if and else, for loops, tiny functions",
+    "Strings, arrays and objects by hand",
     "Functions, closures, recursion, higher order functions",
     "Async: callbacks, promises, async/await, timers, errors",
     "Node core: fs, path, events, streams, buffers",

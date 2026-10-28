@@ -45,11 +45,12 @@ export async function drawPath(ctx, track, { placement = [] } = {}) {
     placement,
     kept: progress.slice(0, kept),
     language: ctx.config.language,
+    fromBasics: ctx.config.fromBasics,
   });
   ctx.log(ctx.paint.dim(ctx.t.drawing(track.title)));
   const draft = await askPath(ctx, prompt, kept);
   const revision = (track.path?.revision ?? 0) + 1;
-  track.path = { ...normalizePath(draft, track.path, kept), revision, drawnAt: ctx.today };
+  track.path = { ...normalizePath(draft, track.path, kept, { fromBasics: ctx.config.fromBasics }), revision, drawnAt: ctx.today };
   await saveTrack(ctx.config, track);
   return track.path;
 }

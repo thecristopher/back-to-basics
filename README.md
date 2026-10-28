@@ -63,15 +63,32 @@ If the toolchain is missing, `setup` tells you what to install. If the commands 
 | `btb hint [id]` | Reveals the next hint. None during placement. |
 | `btb skip [id]` | Leaves it for tomorrow and unlocks its reference. |
 | `btb reveal [id]` | Prints the reference solution, once solved or skipped. |
-| `btb review [id]` | Claude reviews your solution, once solved. |
+| `btb review [id] [--again]` | Claude reviews your solution, once solved. The review is kept, `--again` asks for a new one. |
 | `btb placement [track] [--restart]` | Probes of rising difficulty, then Claude draws the path. |
 | `btb path [track] [--redraw]` | The path Claude drew, with the reason it starts where it does. |
-| `btb forge [track] [--count=n]` | Forges exercises for the current level ahead of time. |
+| `btb forge [track] [--count=n] [--lessons]` | Forges exercises for the current level ahead of time. `--lessons` writes the lessons older exercises are missing. |
 | `btb learn <language> [--goal=...] [--again]` | A new track for any language. |
 | `btb setup [track] --yes` | Approves a learned language and proves its toolchain. |
+| `btb lessons [track]` | Every lesson forged so far, with your solution and Claude's review when they exist. |
+| `btb lesson [id]` | The lesson behind an exercise. |
+| `btb brief [id] [--again]` | The coach presents the lesson in their voice, kept for next time. |
+| `btb redo <id> [--fresh]` | Solve it again from the starter. Your first solution and your schedule stay as they are. |
+| `btb submit <id> --redo` | Grades the redo. |
 | `btb status` | Levels per track, XP, streak, mastery. |
 | `btb plan` | When each level lands at your pace, and how your goals look. |
 | `btb list` | Everything forged and where you stand on it. |
+| `btb persona [name]` | The coach in use, or another one. `list` shows them all. |
+| `btb persona new <name> --from="..."` | Claude drafts a new coach from a description. |
+
+## Lessons to come back to
+
+Every exercise Claude forges comes with a `lesson.md`: the concept behind it, a small example on a different problem, the typical mistakes and a question to think about. It never solves the exercise. `btb lessons` is the library: what you fought, its lesson, your solution and Claude's review, which is kept the first time you ask for it. `btb redo <id>` puts a fresh starter in `workspace/<track>/<id>/redo/` for when you want to prove you still have it, without touching your first solution, your XP or the spaced review. Exercises forged before lessons existed get theirs with `btb forge --lessons`.
+
+## A coach beside you
+
+Set `"persona": "claire"` and Claire Redfield keeps you company: she greets you on `btb`, reacts to every submit, hint and skip, and Claude writes `btb review` in her voice. The scores stay as honest as without her. Malenia comes bundled too, and `--persona=malenia` (or `--persona=none`) switches for a single run.
+
+A persona is a JSON file in `personas/`: a `name`, a `voice` that the reviewer reads, an optional `portrait` and lines per language for each moment (`greet`, `ready`, `failed`, `failed_again`, `passed_clean`, `passed_struggled`, `hint`, `skip`, `level_up`, `debrief`). Lines may use `{title}`, `{xp}`, `{time}` and `{level}`, filled from the round that just happened, and a line whose placeholders the round cannot fill is skipped. `btb persona new rennala --from="the Queen of the Full Moon, a patient teacher"` has Claude draft one into `.btb/personas/` for you to read and tweak. With `--json` the line comes in `persona` (`id`, `name`, `portrait`, `moment`, `line`) so an editor can show it its own way.
 
 ## Configuration
 
@@ -91,6 +108,9 @@ If the toolchain is missing, `setup` tells you what to install. If the commands 
 | `forgeBatch` | `2` | Exercises forged per call, the extra ones wait for the next day. |
 | `forgeRetries` | `2` | Times Claude may fix an exercise that failed validation. |
 | `theme` | `""` | What test data should be about, passed to Claude as is. |
+| `fromBasics` | `false` | Rebuild from the very basics: every new path starts at level 1, the placement goes from returning a value to a loop with an if, and the first two levels are a guided warm up (one idea per exercise, the steps written in the starter, 3 or 4 tests, the warm up example as the quality bar). |
+| `cast` | `null` | `{ "leads": [...], "supporting": [...] }`: the leads appear in every exercise, and 3 supporting characters drawn at random get a role in each statement and its test data. |
+| `persona` | `""` | The coach that reacts to your rounds and voices `btb review`, `claire` or `malenia` for example. Empty for none. |
 | `testTimeoutMs` | `15000` | Kills a run that takes longer, an infinite loop for example. |
 | `workspace` | `"workspace"` | Where your solutions live. Ignored by git. |
 | `dataDir` | `".btb"` | Progress, paths, forged exercises and runtimes. Ignored by git. |
@@ -111,18 +131,23 @@ This repo is also a Neovim plugin (0.10 or newer). Point lazy.nvim at your clone
 }
 ```
 
-`<leader>kn` opens the day's next exercise with its statement on the right, and saving the solution runs the tests. Completion is off in solution buffers, AI suggestions included, because you are here to fight by hand. When the next new exercise is not forged yet, the plugin has Claude forge it in the background, so `next` opens instantly.
+`<leader>kk` starts the lesson: the coach takes the stage with today's plan, briefs the next exercise in their voice (Claude writes the briefing ahead of time, so it opens instantly) and opens it with its statement on the right. Saving the solution runs the tests and the coach reacts in the corner. Completion is off in solution buffers, AI suggestions included, because you are here to fight by hand. When the next new exercise is not forged yet, the plugin has Claude forge it and brief it in the background.
+
+`<leader>kb` opens the library: pick a lesson and read it, have the coach walk you through it again, open your solution, see the review or the reference, or solve it again in a redo buffer that saves into `btb submit --redo`.
 
 | Key | Does |
 |---|---|
-| `<leader>kn` / `kN` | Next exercise / one more new one |
+| `<leader>kk` | The lesson with the coach |
+| `<leader>kn` / `kN` | Next exercise without the stage / one more new one |
 | `<leader>ks` | Submit (also on every save) |
 | `<leader>kh` / `kx` | Hint / skip for today |
 | `<leader>kv` / `kr` | Reveal the reference / Claude reviews your solution |
+| `<leader>kL` / `kb` | The coach explains this lesson again / the lesson library |
+| `<leader>kc` | Show or hide the coach |
 | `<leader>kt` `kp` `kS` `kP` `kl` | Today, path, status, plan, list |
 | `<leader>kf` | Forge ahead |
 
-`:Btb <command> [args]` runs any btb command, `:Btb placement react` for example.
+`:Btb <command> [args]` runs any btb command, `:Btb placement react` for example. `:checkhealth back-to-basics` checks Node, Claude and the coach.
 
 | Option | Default | Meaning |
 |---|---|---|
@@ -130,20 +155,30 @@ This repo is also a Neovim plugin (0.10 or newer). Point lazy.nvim at your clone
 | `node` | `"node"` | Node to run btb with. |
 | `keys` | `"<leader>k"` | Prefix of the keymaps, `false` for none. |
 | `submit_on_save` | `true` | Run the tests on every save of a solution. |
-| `forge_ahead` | `true` | Forge the next new exercise in the background. |
+| `forge_ahead` | `true` | Forge and brief the next new exercise in the background. |
 | `completion` | `false` | `false` turns completion off in solution buffers (sets `b:completion` and `b:copilot_enabled`). |
+| `persona` | `nil` | The coach, a name or a function that returns one each time (to follow a theme, say). `nil` uses `persona` in btb.config.json. |
+| `coach` | `{ enabled = true, speed = 12, toast_ms = 4500 }` | Whether the coach shows, how fast it types (ms per tick) and how long a reaction stays. |
+| `portrait` | `nil` | `fun(buf, win, persona)` that draws the coach on the left of the stage. Without it the stage is text only. |
+| `sound` | `nil` | `fun(event)` called with `"coach_open"` or the moment the coach reacts to. |
 
-Two `User` events let the rest of your config join in:
+Three `User` events let the rest of your config join in:
 
 ```lua
 vim.api.nvim_create_autocmd("User", {
   pattern = "BtbResult",
   callback = function(event)
-    -- event.data: { id, ok, outcome = "clean" | "struggled", xp, level_up, mastered, placement_finished }
+    -- event.data: { id, title, ok, outcome = "clean" | "struggled", xp, level_up, mastered, placement_finished, redo }
     if event.data.ok then
       vim.notify("Solved " .. event.data.id)
     end
   end,
+})
+
+vim.api.nvim_create_autocmd("User", {
+  pattern = "BtbMoment",
+  -- event.data: { id, name, portrait, moment, line }, every time the coach reacts
+  callback = function(event) end,
 })
 
 vim.api.nvim_create_autocmd("User", {
@@ -156,9 +191,10 @@ vim.api.nvim_create_autocmd("User", {
 ## How it fits together
 
 ```
+personas/     the bundled coaches: voice, portrait and lines per moment
 tracks/       seeds of the bundled tracks: focus and suggested stages, Claude adapts them
 profiles/     how to run tests per language: files, command, report format, runtime
-examples/     hand written exercises, the quality bar Claude is shown and the engine's fixtures
+examples/     hand written exercises with their lessons, the quality bar Claude is shown and the engine's fixtures
 src/actions/  pure logic: scheduling, levels, placement, aptitude, prompts, validation
 src/lib/      disk, processes and Claude: runner, forge, architect
 src/commands/ one file per group of commands

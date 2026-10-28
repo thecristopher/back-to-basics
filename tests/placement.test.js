@@ -10,17 +10,37 @@ const byId = {
 const queue = ["node/a", "node/b", "node/c"];
 
 test("Inde starts with the easiest probe", () => {
-  assert.deepEqual(placementStatus(queue, {}, byId), { next: "node/a", remaining: 3, finished: false, stumbledAt: null });
+  assert.deepEqual(placementStatus(queue, {}, byId), { next: "node/a", remaining: 3, finished: false, stumbledAt: null, forgeDifficulty: null });
 });
 
 test("the first probe that was not clean ends the test", () => {
   const status = placementStatus(queue, { "node/a": "clean", "node/b": "skipped" }, byId);
-  assert.deepEqual(status, { next: null, remaining: 0, finished: true, stumbledAt: 2 });
+  assert.deepEqual(status, { next: null, remaining: 0, finished: true, stumbledAt: 2, forgeDifficulty: null });
 });
 
 test("Claire clearing every probe finishes without a stumble", () => {
   const results = { "node/a": "clean", "node/b": "clean", "node/c": "clean" };
-  assert.deepEqual(placementStatus(queue, results, byId), { next: null, remaining: 0, finished: true, stumbledAt: null });
+  assert.deepEqual(placementStatus(queue, results, byId), { next: null, remaining: 0, finished: true, stumbledAt: null, forgeDifficulty: null });
+});
+
+test("a fresh test asks for its first probe at difficulty 1", () => {
+  assert.deepEqual(placementStatus([], {}, byId, 5), { next: null, remaining: 5, finished: false, stumbledAt: null, forgeDifficulty: 1 });
+});
+
+test("a clean answer asks for the next probe, one harder", () => {
+  const status = placementStatus(["node/a"], { "node/a": "clean" }, byId, 3);
+  assert.equal(status.forgeDifficulty, 2);
+  assert.equal(status.remaining, 2);
+  assert.equal(status.finished, false);
+});
+
+test("a probe still open is never joined by another one", () => {
+  assert.equal(placementStatus(["node/a"], {}, byId, 3).forgeDifficulty, null);
+});
+
+test("Malenia clearing the whole size finishes the test", () => {
+  const results = { "node/a": "clean", "node/b": "clean" };
+  assert.equal(placementStatus(["node/a", "node/b"], results, byId, 2).finished, true);
 });
 
 test("probes no longer on disk are ignored", () => {

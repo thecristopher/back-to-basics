@@ -56,14 +56,16 @@ export function freshExercises(exercises, records, track, level, exclude = []) {
 }
 
 /**
- * Spreads the day's new exercises over the tracks, taking turns.
+ * Spreads the day's new exercises over the tracks, taking turns within the day and across days,
+ * so one new exercise a day still reaches every track.
  * @param {string[]} tracks in path order
  * @param {number} count
+ * @param {number} [turn] how many days were queued before this one
  * @returns {string[]} one track per new exercise
  */
-export function allocateNew(tracks, count) {
+export function allocateNew(tracks, count, turn = 0) {
   if (tracks.length === 0) return [];
-  return Array.from({ length: count }, (_, index) => tracks[index % tracks.length]);
+  return Array.from({ length: count }, (_, index) => tracks[(turn * count + index) % tracks.length]);
 }
 
 /**
@@ -74,4 +76,31 @@ export function allocateNew(tracks, count) {
  */
 export function nextPending(queue, done) {
   return queue.find((entry) => !done.includes(entry)) ?? null;
+}
+
+/**
+ * True when the exercise left open is still a fight in progress: never solved nor skipped,
+ * or queued today and not done yet. next keeps handing it back until it is solved or skipped.
+ * @param {string | null} id the current exercise
+ * @param {object | undefined} record its progress
+ * @param {{ queue: string[] | null, done: string[] }} day
+ * @returns {boolean}
+ */
+export function isUnfinished(id, record, day) {
+  if (!id || !record || day.done.includes(id)) return false;
+  const neverEnded = !record.firstSolvedAt && !record.skips;
+  return neverEnded || Boolean(day.queue?.includes(id));
+}
+
+/**
+ * The track of the first pending slot whose track has no path yet, so its placement goes first.
+ * @param {string[]} queue
+ * @param {string[]} done
+ * @param {(trackId: string) => boolean} hasPath
+ * @returns {string | null}
+ */
+export function undrawnSlotTrack(queue, done, hasPath) {
+  const entry = nextPending(queue, done);
+  const trackId = entry ? slotTrack(entry) : null;
+  return trackId && !hasPath(trackId) ? trackId : null;
 }

@@ -42,6 +42,32 @@ test("a path prompt on a redraw asks to keep the levels done", () => {
   assert.match(prompt, /No placement test was taken/);
 });
 
+test("from the very basics the placement stays on fundamentals", () => {
+  const prompt = exercisePrompt({ ...base, purpose: "placement", count: 5, fromBasics: true, summary: { strong: [], weak: [], recent: [] } });
+  assert.match(prompt, /return a value, add two numbers, compare two values/);
+  assert.doesNotMatch(prompt, /interview level/);
+});
+
+test("from the very basics a single probe is a guided warm up", () => {
+  const prompt = exercisePrompt({ ...base, purpose: "placement", count: 1, difficulty: 1, size: 3, fromBasics: true, avoid: [] });
+  assert.match(prompt, /a comment listing the steps in plain words/);
+  assert.match(prompt, /3 or 4 tests/);
+});
+
+test("the warm up covers the first two levels and stops at the third", () => {
+  const first = { ...level, level: 1 };
+  assert.match(exercisePrompt({ ...base, level: first, purpose: "practice", fromBasics: true }), /One idea per exercise/);
+  assert.match(exercisePrompt({ ...base, purpose: "practice", fromBasics: true }), /One idea per exercise/);
+  const third = { ...level, level: 3 };
+  assert.doesNotMatch(exercisePrompt({ ...base, level: third, purpose: "practice", fromBasics: true }), /One idea per exercise/);
+});
+
+test("from the very basics the path starts at level 1 whatever the placement says", () => {
+  const prompt = pathPrompt({ track, profileName: profile.name, summary, others: [], placement: [], kept: [], language: "es", fromBasics: true });
+  assert.match(prompt, /Set startLevel to 1 whatever the placement says/);
+  assert.doesNotMatch(prompt, /count as already passed/);
+});
+
 test("a profile prompt names the language, the platform and the last problems", () => {
   const prompt = profilePrompt({ language: "Rust", platform: "linux x64", problems: ["cargo not found"] });
   assert.match(prompt, /for Rust on linux x64/);

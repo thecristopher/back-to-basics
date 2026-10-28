@@ -1,6 +1,9 @@
+import { existsSync } from "node:fs";
 import { currentLevel, levelProgress } from "../actions/levels.js";
 import { drawPath, proveProfile, writeProfile } from "../lib/architect.js";
+import { exerciseFiles } from "../lib/catalog.js";
 import { forgeExercises } from "../lib/forge.js";
+import { writeMissingLesson } from "../lib/library.js";
 import { loadProfile, saveProfile } from "../lib/profiles.js";
 import { saveTrack } from "../lib/tracks.js";
 import { toSlug } from "../utils/slug.js";
@@ -29,7 +32,6 @@ function renderTrackPath(ctx, track) {
  */
 export async function path(ctx, [query], flags) {
   const tracks = query ? [trackOf(ctx, query)] : ctx.catalog.tracks;
-  if (tracks.includes(undefined)) return failure(ctx.t.unknownTrack(query));
   if (flags.redraw) {
     for (const track of tracks) await drawPath(ctx, track);
   }
@@ -90,12 +92,21 @@ export async function setup(ctx, [query], flags) {
   return { data: { ok: true }, text: [ctx.paint.green(ctx.t.setupDone(profile.name)), ctx.paint.dim(ctx.t.learnReady(track.id))] };
 }
 
+async function forgeLessons(ctx, query) {
+  const missing = ctx.catalog.exercises.filter((exercise) => (!query || exercise.track === query) && !existsSync(exerciseFiles(exercise).lesson));
+  for (const exercise of missing) await writeMissingLesson(ctx, exercise);
+  const text = missing.length === 0 ? [ctx.t.lessonsComplete] : [ctx.paint.green(ctx.t.lessonsWritten(missing.length)), ...missing.map((exercise) => `  ${exercise.id}  ${exercise.title}`)];
+  return { data: { lessons: missing.map((exercise) => exercise.id) }, text };
+}
+
 /**
  * `btb forge [track] [--count=n]`: has Claude forge exercises ahead of time for the current level, so next opens instantly.
+ * --lessons writes the lesson of every exercise forged before lessons existed.
  */
 export async function forge(ctx, [query], flags) {
+  if (query && !trackOf(ctx, query)) return failure(ctx.t.unknownTrack(query));
+  if (flags.lessons) return forgeLessons(ctx, query);
   const tracks = query ? [trackOf(ctx, query)] : ctx.catalog.tracks.filter((track) => track.path);
-  if (tracks.includes(undefined)) return failure(ctx.t.unknownTrack(query));
   const count = Number(flags.count) || ctx.config.forgeBatch;
   const forged = [];
   for (const track of tracks) {

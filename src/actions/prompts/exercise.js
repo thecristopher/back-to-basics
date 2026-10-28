@@ -1,30 +1,66 @@
+import { castLine } from "../cast.js";
 import { aptitudeLines, languageName } from "./evidence.js";
 
 const SCHEMA =
   '{"exercises":[{"slug":"kebab-case-name","title":"...","difficulty":1,"minutes":10,' +
-  '"concepts":["..."],"hints":["..."],"readme":"markdown statement with examples","starter":"code","reference":"code","test":"code"}]}';
+  '"concepts":["..."],"hints":["..."],"readme":"markdown statement with examples","lesson":"markdown lesson on the concept","starter":"code","reference":"code","test":"code"}]}';
 
-function purposeLines({ purpose, track, level, count, avoid }) {
-  if (purpose === "placement") {
+// from the very basics, the placement only measures the fundamentals and the first level stays tiny
+function placementRange(count, fromBasics) {
+  if (fromBasics) return `from 1 (return a value, add two numbers, compare two values) to ${count} (a for loop over an array with an if inside)`;
+  return `from 1 (first weeks of programming) to ${count} (big tech interview level)`;
+}
+
+// someone very rusty needs the first steps small and guided, these override the general rules below
+const WARM_UP = [
+  "This learner is very rusty and rebuilding from zero, these rules win over the general ones:",
+  "- One idea per exercise, the reference solution is 3 to 8 lines, 5 to 10 minutes.",
+  "- 3 or 4 tests, plain inputs, no tricky edge cases.",
+  "- The readme names the operator or built in they will need, with a one line example of it on other data.",
+  "- The starter has the signature and a comment listing the steps in plain words, never the code.",
+];
+
+function basicsLines(level, fromBasics) {
+  if (!fromBasics || level.level > 2) return [];
+  return [...WARM_UP, "- 3 hints, the last one almost the answer."];
+}
+
+function placementLines({ track, count, difficulty, size, avoid, fromBasics }) {
+  const ladder = `${track.ladder?.join("; ") || track.focus}`;
+  if (!difficulty) {
     return [
       "BTB_PURPOSE: placement",
-      `Write ${count} placement probes of rising difficulty, from 1 (first weeks of programming) to ${count} (big tech interview level).`,
-      `Spread them across this ladder: ${track.ladder?.join("; ") || track.focus}.`,
+      `Write ${count} placement probes of rising difficulty, ${placementRange(count, fromBasics)}.`,
+      `Spread them across this ladder: ${ladder}.`,
       'Each probe takes at most 15 minutes. Set "difficulty" on each, 1 to the count, in that order.',
     ];
   }
+  return [
+    "BTB_PURPOSE: placement",
+    `Write 1 placement probe at difficulty ${difficulty} on a scale ${placementRange(size, fromBasics)}.`,
+    `The scale follows this ladder: ${ladder}.`,
+    "Every easier probe so far was solved cleanly, so this one asks a little more than the last. At most 15 minutes.",
+    `Set "difficulty" to ${difficulty}.`,
+    avoid.length > 0 ? `Do not repeat these, already written: ${avoid.join("; ")}.` : null,
+    ...(fromBasics ? WARM_UP : []),
+  ];
+}
+
+function purposeLines({ purpose, track, level, count, avoid, fromBasics, difficulty, size }) {
+  if (purpose === "placement") return placementLines({ track, count, difficulty, size, avoid, fromBasics });
   return [
     "BTB_PURPOSE: practice",
     `Write ${count} exercises for level ${level.level} of their path: "${level.title}". ${level.summary}`,
     `Concepts of this level: ${level.concepts.join(", ")}.`,
     "Lean into their weak concepts when they belong to this level, and stretch a little past their strong ones.",
+    ...basicsLines(level, fromBasics),
     avoid.length > 0 ? `Do not repeat these, already written: ${avoid.join("; ")}.` : null,
   ];
 }
 
 /**
  * The prompt that asks Claude to forge exercises fitted to the learner.
- * @param {{ purpose: "practice" | "placement", track: object, profile: object, files: object, level?: object, count: number, summary: object, avoid?: string[], language: string, theme?: string, example: object }} input
+ * @param {{ purpose: "practice" | "placement", track: object, profile: object, files: object, level?: object, count: number, summary: object, avoid?: string[], language: string, theme?: string, example: object, fromBasics?: boolean, difficulty?: number, size?: number, cast?: { leads: string[], supporting: string[] } | null }} input
  * @returns {string}
  */
 export function exercisePrompt(input) {
@@ -53,7 +89,9 @@ export function exercisePrompt(input) {
     "- The starter has the signature and a doc comment with an empty body, so every test fails without crashing the run.",
     "- The reference is a clean, idiomatic solution that passes every test.",
     "- 2 or 3 hints, from a nudge to almost the answer, never the full code.",
+    "- The lesson teaches the concept behind the exercise so the learner can come back to it later: what it is, a small example on a different problem, the typical mistakes and one question to think about. It never solves the exercise.",
     theme ? `- Test data and examples: ${theme}` : null,
+    castLine(input.cast ?? null),
     "",
     "One exercise at the quality bar, as JSON. Keep its spirit in any language:",
     JSON.stringify(example),

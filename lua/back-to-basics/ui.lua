@@ -72,7 +72,7 @@ function M.show_statement(readme)
 end
 
 ---Opens the solution in the current window and its statement beside it.
----@param data { id: string, path: string, readme: string }
+---@param data { id: string, path: string, readme: string, redo?: boolean }
 ---@return integer buf the solution buffer
 function M.open_exercise(data)
   local editor = vim.api.nvim_get_current_win()
@@ -83,6 +83,7 @@ function M.open_exercise(data)
   vim.cmd.edit({ args = { data.path } })
   local buf = vim.api.nvim_get_current_buf()
   vim.b[buf].btb_exercise = data.id
+  vim.b[buf].btb_redo = data.redo == true
   M.show_statement(data.readme)
   vim.api.nvim_set_current_win(editor)
   return buf

@@ -1,7 +1,7 @@
 import { existsSync } from "node:fs";
 import { readFile } from "node:fs/promises";
 import { noteResult } from "../actions/aptitude.js";
-import { nextPending, slotFor } from "../actions/queue.js";
+import { isUnfinished, nextPending, slotFor, undrawnSlotTrack } from "../actions/queue.js";
 import { applyPass, applySkip, awardXp } from "../actions/record.js";
 import { roundOutcome } from "../actions/schedule.js";
 import { HINT_COST, xpFor } from "../actions/xp.js";
@@ -9,9 +9,9 @@ import { exerciseFiles, findExercise } from "../lib/catalog.js";
 import { runTests } from "../lib/runner.js";
 import { dayOf, recordOf } from "../lib/state.js";
 import { saveTrack } from "../lib/tracks.js";
-import { solutionPath } from "../lib/workspace.js";
+import { redoPath, solutionPath } from "../lib/workspace.js";
 import { duration, excerpt } from "../utils/text.js";
-import { nextPlacement, notePlacementResult, renderPlacementNote } from "./placement.js";
+import { nextPlacement, notePlacementResult, placement, renderPlacementNote } from "./placement.js";
 import {
   ensureQueue,
   failure,
@@ -31,15 +31,27 @@ function addExtra(ctx, day) {
   if (tracks.length > 0) day.queue.push(slotFor(tracks[day.queue.length % tracks.length]));
 }
 
+async function resumeCurrent(ctx) {
+  const report = await openExercise(ctx, ctx.catalog.byId[ctx.state.current]);
+  report.data.resumed = true;
+  report.text.unshift(ctx.paint.yellow(ctx.t.finishFirst), "");
+  return report;
+}
+
 /**
  * `btb next`: opens the first exercise still pending today, forging it with Claude when needed.
- * --more adds one more new exercise to the day.
+ * One fight at a time: the exercise left open comes back until it is solved or skipped, and a
+ * track with no path yet starts with its placement. --more adds one more new exercise to the day.
  */
 export async function next(ctx, _args, flags) {
   if (isPlacementRunning(ctx.state)) return nextPlacement(ctx);
   const day = dayOf(ctx.state, ctx.today);
   ensureQueue(ctx, day);
   if (flags.more) addExtra(ctx, day);
+  const current = ctx.state.current;
+  if (ctx.catalog.byId[current] && isUnfinished(current, ctx.state.exercises[current], day)) return resumeCurrent(ctx);
+  const undrawn = undrawnSlotTrack(day.queue, day.done, (trackId) => Boolean(trackOf(ctx, trackId)?.path));
+  if (undrawn) return placement(ctx, [undrawn], {});
   for (let entry = nextPending(day.queue, day.done); entry; entry = nextPending(day.queue, day.done)) {
     const exercise = await resolveEntry(ctx, day, entry);
     if (exercise) return openExercise(ctx, exercise);
@@ -62,8 +74,13 @@ function elapsedSeconds(startedAt) {
   return startedAt ? Math.round((Date.now() - startedAt) / 1000) : null;
 }
 
+function afterFailLine(t, data) {
+  if (data.redo) return t.afterFailRedo(data.id);
+  return data.placement ? t.afterFailPlacement : t.afterFail;
+}
+
 function renderFailure({ t, paint }, data) {
-  const after = paint.dim(data.placement ? t.afterFailPlacement : t.afterFail);
+  const after = paint.dim(afterFailLine(t, data));
   if (data.unapproved) return [paint.red(t.unapproved(data.track))];
   if (data.unsupported) return [paint.red(t.tsUnsupported)];
   if (data.timedOut) return [paint.red(t.timedOut(data.timeoutSeconds)), after];
@@ -77,10 +94,10 @@ function renderFailure({ t, paint }, data) {
   return lines;
 }
 
-function failed(ctx, exercise, record, result) {
-  record.round.failures += 1;
-  const data = {
+function failureData(ctx, exercise, result) {
+  return {
     id: exercise.id,
+    title: exercise.title,
     track: exercise.track,
     ok: false,
     passed: result.passed,
@@ -93,9 +110,26 @@ function failed(ctx, exercise, record, result) {
     unsupported: Boolean(result.unsupported),
     unapproved: Boolean(result.unapproved),
     stderr: result.stderr,
-    attempt: record.round.failures,
     placement: isPlacementQuestion(ctx.state, exercise.id),
   };
+}
+
+function failed(ctx, exercise, record, result) {
+  record.round.failures += 1;
+  const data = { ...failureData(ctx, exercise, result), attempt: record.round.failures };
+  return { code: 1, data, text: renderFailure(ctx, data) };
+}
+
+// a redo only counts its own failed submits, so the coach can tell a first miss from a stubborn one
+function redoFinished(ctx, exercise, result) {
+  ctx.state.redos ??= {};
+  if (result.ok) {
+    delete ctx.state.redos[exercise.id];
+    const data = { id: exercise.id, title: exercise.title, ok: true, redo: true, passed: result.passed, total: result.tests.length };
+    return { data, text: [ctx.paint.green(ctx.t.redoPassed(data.passed, data.total, exercise.title))] };
+  }
+  ctx.state.redos[exercise.id] = (ctx.state.redos[exercise.id] ?? 0) + 1;
+  const data = { ...failureData(ctx, exercise, result), placement: false, redo: true, attempt: ctx.state.redos[exercise.id] };
   return { code: 1, data, text: renderFailure(ctx, data) };
 }
 
@@ -144,6 +178,7 @@ async function passed(ctx, exercise, record, result) {
   const levelUp = placement ? null : await markLevelUp(ctx, track, levelBefore);
   const data = {
     id: exercise.id,
+    title: exercise.title,
     ok: true,
     passed: result.passed,
     total: result.tests.length,
@@ -159,17 +194,8 @@ async function passed(ctx, exercise, record, result) {
   return { data, text: renderPass(ctx, exercise, data, placement) };
 }
 
-/**
- * `btb submit [id]`: runs the tests against the solution and records the round.
- */
-export async function submit(ctx, [query]) {
-  const target = targetExercise(ctx, query);
-  if (target.error) return failure(target.error);
-  const { exercise } = target;
-  const solution = solutionPath(ctx.config, exercise);
-  if (!existsSync(solution)) return failure(ctx.t.notStarted(exercise.slug));
-  ctx.state.current = exercise.id;
-  const result = await runTests({
+async function testsOf(ctx, exercise, solution) {
+  return runTests({
     config: ctx.config,
     profile: await profileOf(ctx, trackOf(ctx, exercise.track)),
     files: { solutionFile: exercise.files.solution, testFile: exercise.files.test },
@@ -177,6 +203,21 @@ export async function submit(ctx, [query]) {
     testCode: await readFile(exerciseFiles(exercise).test, "utf8"),
     onInstall: ctx.onInstall,
   });
+}
+
+/**
+ * `btb submit [id]`: runs the tests against the solution and records the round.
+ * --redo runs them against the redo instead, and records nothing but the redo's own failures.
+ */
+export async function submit(ctx, [query], flags = {}) {
+  const target = targetExercise(ctx, query);
+  if (target.error) return failure(target.error);
+  const { exercise } = target;
+  const solution = flags.redo ? redoPath(ctx.config, exercise) : solutionPath(ctx.config, exercise);
+  if (!existsSync(solution)) return failure(flags.redo ? ctx.t.redoNotStarted(exercise.id) : ctx.t.notStarted(exercise.slug));
+  if (flags.redo) return redoFinished(ctx, exercise, await testsOf(ctx, exercise, solution));
+  ctx.state.current = exercise.id;
+  const result = await testsOf(ctx, exercise, solution);
   const record = recordOf(ctx.state, exercise.id);
   record.attempts += 1;
   return result.ok ? passed(ctx, exercise, record, result) : failed(ctx, exercise, record, result);
