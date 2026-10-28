@@ -6,7 +6,7 @@ import { streakDays } from "../actions/streak.js";
 import { franchiseOf } from "../actions/cast.js";
 import { dayOf } from "../lib/state.js";
 import { bar } from "../utils/text.js";
-import { ensureQueue, isPlacementRunning, levelNow, lockOf, openTracks, trackOf } from "./shared.js";
+import { ensureQueue, isPlacementRunning, levelNow, lockOf, openTracks, recappedToday, trackOf } from "./shared.js";
 
 /** The mark of each exercise state, shared by list and lessons. */
 export const GLYPHS = { mastered: "★", due: "↻", solved: "✓", started: "~", new: "·" };
@@ -47,10 +47,28 @@ function queueLine({ t, paint }, item, isNext) {
   return `  ${mark} [${item.track}] ${item.title}  ${tag}`;
 }
 
+function recapItem(ctx, id) {
+  const exercise = ctx.catalog.byId[id];
+  const record = ctx.state.exercises[id];
+  return { id, track: exercise.track, title: exercise.title, concepts: exercise.concepts ?? [], outcome: record.lastOutcome ?? null, dueAt: record.dueAt, mastered: Boolean(record.mastered) };
+}
+
+function recapLine({ t, paint }, item) {
+  const outcome = item.outcome === "clean" ? paint.green(t.clean) : paint.yellow(t.struggled);
+  const comesBack = item.mastered ? t.mastered : t.recapBack(item.dueAt);
+  return [`  ↻ [${item.track}] ${item.title}  ${outcome}`, paint.dim(`      ${item.concepts.join(", ")}  ·  ${comesBack}`)];
+}
+
+function renderRecap(ctx, recap) {
+  if (recap.length === 0) return [];
+  return [ctx.paint.bold(ctx.t.recapHeader), ...recap.flatMap((item) => recapLine(ctx, item)), ""];
+}
+
 function renderToday(ctx, data) {
   const { t, paint } = ctx;
   const lines = [`${paint.bold(t.todayHeader(data.today))}   ${t.streak(data.streak)}   ${t.xpToday(data.xp, data.goal)}`];
   if (data.placement === "running") return [...lines, t.placementPending];
+  lines.push(...renderRecap(ctx, data.recap));
   if (data.undrawn.length > 0) lines.push(paint.yellow(t.firstTime(data.undrawn[0])));
   lines.push(...data.locked.map((track) => paint.dim(t.trackLocked(track.title, track.lock))));
   const next = data.queue.find((item) => !item.done);
@@ -73,6 +91,7 @@ export async function today(ctx) {
     xp: day.xp,
     goal: ctx.config.dailyGoalXp,
     queue: queue.map((entry) => queueItem(ctx, day, entry, spare)),
+    recap: running ? [] : recappedToday(ctx, day).filter((id) => ctx.catalog.byId[id]).map((id) => recapItem(ctx, id)),
     current: ctx.state.current,
     placement: ctx.state.placement?.status ?? null,
     undrawn: ctx.catalog.tracks.filter((track) => !track.path && !lockOf(ctx, track)).map((track) => track.id),

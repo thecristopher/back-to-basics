@@ -34,7 +34,7 @@ export function personaPrompt({ description, language }) {
     "- Original lines only, never quotes from games, films or books.",
     "- Never mention code that solves the exercise, never insult the learner.",
     "- voice is written in English, it is read by the model that writes reviews in this voice.",
-    "- Lines may use {title} (the exercise), {xp} (XP earned), {time} (how long it took) and {level} (the level just passed) where they fit, mostly in passed_clean, passed_struggled and level_up. Keep at least one line per moment without placeholders.",
+    "- Lines may use {title} (the exercise), {xp} (XP earned), {time} (how long it took) and {level} (the level just passed) where they fit, mostly in passed_clean, passed_struggled and level_up. A line that offers a hint must carry {hints} (hints left), so it is only said when there is one to give. Keep at least one line per moment without placeholders.",
     "- Never use em dashes.",
     "",
     "When each line is said:",

@@ -140,6 +140,82 @@ describe("back-to-basics coach", function()
   end)
 end)
 
+describe("back-to-basics after a submit", function()
+  local btb = require("back-to-basics")
+  local cli = require("back-to-basics.cli")
+  local claire = { id = "claire", name = "Claire Redfield", line = "Limpio, Inde." }
+  local real_run
+
+  local function floats()
+    return vim.tbl_filter(function(win)
+      return vim.api.nvim_win_get_config(win).relative ~= ""
+    end, vim.api.nvim_list_wins())
+  end
+
+  local function answer(answers)
+    real_run = cli.run
+    cli.run = function(_, args, on_done)
+      on_done(answers[args[1]])
+    end
+  end
+
+  local function close_floats()
+    for _, win in ipairs(floats()) do
+      pcall(vim.api.nvim_win_close, win, true)
+    end
+  end
+
+  after_each(function()
+    cli.run = real_run
+    close_floats()
+  end)
+
+  it("shows Claire's line inside the failure, with no toast beside it", function()
+    btb.setup({ keys = false, forge_ahead = false, coach = { speed = 1 } })
+    local failed = vim.tbl_extend(
+      "force",
+      { id = "node/love-notes", ok = false, text = { "✗ 1/3" } },
+      {
+        persona = vim.tbl_extend("force", claire, { moment = "failed", line = "Casi." }),
+      }
+    )
+    answer({ submit = failed })
+    btb.submit("node/love-notes")
+    assert.are.equal(1, #floats())
+    assert.are.equal("Claire Redfield: Casi.", vim.api.nvim_buf_get_lines(0, 0, 1, false)[1])
+  end)
+
+  it("takes Inde from a pass to the next briefing on a single stage", function()
+    btb.setup({ keys = false, forge_ahead = false, advance_ms = 0, coach = { speed = 1 } })
+    answer({
+      submit = {
+        id = "node/love-notes",
+        title = "Notas para Inde",
+        ok = true,
+        outcome = "clean",
+        xp = 15,
+        persona = claire,
+      },
+      next = {
+        id = "node/date-night",
+        title = "Cita",
+        path = "/tmp/solution.js",
+        readme = "/tmp/README.md",
+      },
+      brief = { brief = "Hoy toca la cita con Inde." },
+    })
+    btb.submit("node/love-notes")
+    local text
+    vim.wait(1000, function()
+      text = table.concat(vim.api.nvim_buf_get_lines(0, 0, -1, false), "\n")
+      return text:find("Hoy toca la cita", 1, true) ~= nil
+    end)
+    assert.truthy(text:find("Limpio, Inde.", 1, true))
+    assert.truthy(text:find("Notas para Inde", 1, true))
+    assert.are.equal(1, #floats())
+  end)
+end)
+
 describe("back-to-basics one exercise at a time", function()
   local btb = require("back-to-basics")
   local cli = require("back-to-basics.cli")

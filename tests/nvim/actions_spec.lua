@@ -96,6 +96,42 @@ describe("back-to-basics actions", function()
     end)
   end)
 
+  describe("after_submit", function()
+    it("moves Inde on after a pass", function()
+      assert.are.equal("advance", actions.after_submit({ ok = true }, true))
+    end)
+
+    it("sums up the day when the pass was its last one", function()
+      assert.are.equal("debrief", actions.after_submit({ ok = true, day = { solved = 2 } }, false))
+    end)
+
+    it("stays put on a failure, a redo, a repeat or with auto advance off", function()
+      assert.is_nil(actions.after_submit({ ok = false }, true))
+      assert.is_nil(actions.after_submit({ ok = true, redo = true }, true))
+      assert.is_nil(actions.after_submit({ ok = true, ["repeat"] = true }, true))
+      assert.is_nil(actions.after_submit({ ok = true }, false))
+    end)
+  end)
+
+  it("sums a pass up in one line for the stage", function()
+    local messages = actions.messages("es")
+    local data = { title = "Notas para Inde", outcome = "clean", xp = 15 }
+    assert.are.equal("✓ Notas para Inde · Limpio · +15 XP", actions.pass_line(messages, data))
+  end)
+
+  describe("coach_lines", function()
+    local data = { persona = { name = "Malenia", line = "Otra vez, con calma." } }
+
+    it("puts Malenia's line on top of the report", function()
+      assert.are.same({ "Malenia: Otra vez, con calma.", "" }, actions.coach_lines(data, true))
+    end)
+
+    it("leaves the report alone when the coach is hidden or silent", function()
+      assert.are.same({}, actions.coach_lines(data, false))
+      assert.are.same({}, actions.coach_lines({}, true))
+    end)
+  end)
+
   it("builds the BtbResult payload Claire's config listens to", function()
     local data = {
       id = "node/date-night",

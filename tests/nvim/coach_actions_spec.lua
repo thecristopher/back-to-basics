@@ -80,8 +80,18 @@ describe("coach actions", function()
       assert.are.equal(layout.width - layout.portrait - 2, layout.text_width)
     end)
 
-    it("drops the portrait when the editor is narrow", function()
-      assert.are.equal(0, coach.stage_layout(70, 40, true).portrait)
+    it("drops the portrait when the text would starve beside it", function()
+      assert.are.equal(0, coach.stage_layout(50, 40, true).portrait)
+    end)
+
+    it("keeps the portrait on a laptop split, sized to the stage height", function()
+      local layout = coach.stage_layout(70, 40, true)
+      assert.are.equal(24, layout.portrait)
+      assert.is_true(layout.text_width >= 36)
+    end)
+
+    it("shrinks the portrait with a short editor instead of stretching it", function()
+      assert.are.equal(20, coach.stage_layout(200, 20, true).portrait)
     end)
   end)
 
