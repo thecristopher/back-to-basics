@@ -1,5 +1,5 @@
 import { existsSync } from "node:fs";
-import { mkdir, writeFile } from "node:fs/promises";
+import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { expandCommand } from "../actions/command.js";
 import { runCommand } from "./exec.js";
@@ -64,6 +64,13 @@ async function runSteps(steps, cwd) {
   }
 }
 
+// a runtime file is its content inline, or { copy } naming a file under profiles/ when inline would be unreadable
+async function runtimeFileContent(config, profile, file) {
+  if (typeof file === "string") return file;
+  if (!profile.bundled) throw new Error(`${profile.name}: only bundled profiles may copy runtime files`);
+  return readFile(join(config.profilesDir, file.copy), "utf8");
+}
+
 /**
  * Installs a profile's runtime the first time it is needed, React's packages for example.
  * @param {object} config
@@ -77,7 +84,7 @@ export async function ensureRuntime(config, profile, onInstall) {
   if (existsSync(join(dir, profile.runtime.ready))) return dir;
   onInstall(profile.name, dir);
   await mkdir(dir, { recursive: true });
-  for (const [name, content] of Object.entries(profile.runtime.files ?? {})) await writeFile(join(dir, name), content);
+  for (const [name, file] of Object.entries(profile.runtime.files ?? {})) await writeFile(join(dir, name), await runtimeFileContent(config, profile, file));
   await runSteps(profile.runtime.setup ?? [], dir);
   return dir;
 }

@@ -4,17 +4,21 @@ Daily coding drills in your terminal, forged by Claude to fit you and graded by 
 
 AI made writing code fast and remembering how to write it optional. This is the gym: you solve by hand, every day. Claude is not the one solving; it is the coach that measures you, draws your path and forges each exercise for where you are today.
 
+![Claire briefs a Bedrock exercise in Neovim](docs/images/btb_re_coach.png)
+
 - **Nothing fixed.** There is no static exercise list. Claude forges exercises from your aptitude: the concepts you own, the ones that cost you and how your last rounds went.
 - **Trusted before you see it.** Every exercise Claude forges is run first: its reference must pass the tests and its starter must fail them. When one does not hold, Claude gets the failure and fixes it, or it is thrown away.
 - **A path drawn for you.** A placement test of rising difficulty tells Claude where you really are, and it draws your levels from there. Each level up, it redraws what comes next with the new evidence.
-- **Node and React at the base, any language on top.** `btb learn rust` has Claude work out how to run Rust tests on your machine. You approve the commands before anything runs.
+- **Every path ends at an onsite.** The last 2 levels of every track are interview levels: multi part problems like the ones in an Amazon, Zillow or Capital One loop, over realistic data, with edge cases and complexity limits the tests enforce.
+- **Node, React, Python and LLM apps at the base, any language on top.** `btb learn rust` has Claude work out how to run Rust tests on your machine. You approve the commands before anything runs.
+- **LLMs on Amazon Bedrock, by hand.** The `llm` track drills the Converse API with boto3, streaming, tool use, pydantic validated output, backoff, RAG, evals and agents. Bedrock is faked with botocore's `Stubber`, so it needs no AWS account and costs nothing.
 - **Spaced review.** Clean solves come back in 3, 7 and 21 days. Struggles come back tomorrow.
 - **AI only after the fight.** `btb review` has Claude grade your solution once the tests pass.
 - **Editor friendly.** Every command takes `--json`, progress goes to stderr.
 
 ## Getting started
 
-You need Node 22+ and the [Claude Code](https://claude.com/claude-code) CLI signed in (`claude -p` must work).
+You need Node 22+ and the [Claude Code](https://claude.com/claude-code) CLI signed in (`claude -p` must work). The `python` and `llm` tracks also need Python 3.10+ with `venv`.
 
 ```sh
 git clone <this repo> back-to-basics
@@ -22,6 +26,8 @@ cd back-to-basics
 npm link                  # puts `btb` on your PATH, or run `node bin/btb.js`
 btb placement node        # Claude measures you and draws your Node path
 btb placement react       # same for React (installs its test packages once)
+btb placement python      # Python (installs pytest, pydantic and boto3 in a venv once)
+btb placement llm         # LLM apps on Bedrock, same venv
 btb                       # today's plan
 ```
 
@@ -30,7 +36,7 @@ btb                       # today's plan
 ```sh
 btb               # what is queued: reviews first, then new exercises per track
 btb next          # opens the next one, Claude forges it if it does not exist yet
-# edit workspace/<track>/<exercise>/solution.js in your editor
+# edit workspace/<track>/<exercise>/solution.js (or .jsx, .py) in your editor
 btb submit        # runs the tests
 btb hint          # stuck? each hint costs XP
 btb skip          # not today: it returns tomorrow and unlocks the reference
@@ -88,7 +94,7 @@ Every exercise Claude forges comes with a `lesson.md`: the concept behind it, a 
 
 Set `"persona": "claire"` and Claire Redfield keeps you company: she greets you on `btb`, reacts to every submit, hint and skip, and Claude writes `btb review` in her voice. The scores stay as honest as without her. Malenia comes bundled too, and `--persona=malenia` (or `--persona=none`) switches for a single run.
 
-A persona is a JSON file in `personas/`: a `name`, a `voice` that the reviewer reads, an optional `portrait` and lines per language for each moment (`greet`, `ready`, `failed`, `failed_again`, `passed_clean`, `passed_struggled`, `hint`, `skip`, `level_up`, `debrief`). Lines may use `{title}`, `{xp}`, `{time}` and `{level}`, filled from the round that just happened, and a line whose placeholders the round cannot fill is skipped. `btb persona new rennala --from="the Queen of the Full Moon, a patient teacher"` has Claude draft one into `.btb/personas/` for you to read and tweak. With `--json` the line comes in `persona` (`id`, `name`, `portrait`, `moment`, `line`) so an editor can show it its own way.
+A persona is a JSON file in `personas/`: a `name`, a `voice` that the reviewer reads, an optional `portrait` and lines per language for each moment (`greet`, `ready`, `failed`, `failed_again`, `passed_clean`, `passed_struggled`, `hint`, `skip`, `level_up`, `debrief`). An optional `world` names the persona's franchise, its `supporting` characters and its `places`: the persona is then your partner in every exercise, the soft romance stays between the two of you, and 3 supporting faces drawn from her world get a role, never from another franchise. Claire lives in Resident Evil and Malenia in Elden Ring, so an editor that passes the persona of the day keeps each day in one world, and new exercises forged for the other franchise wait until it comes back. Lines may use `{title}`, `{xp}`, `{time}` and `{level}`, filled from the round that just happened, and a line whose placeholders the round cannot fill is skipped. `btb persona new rennala --from="the Queen of the Full Moon, a patient teacher"` has Claude draft one into `.btb/personas/` for you to read and tweak. With `--json` the line comes in `persona` (`id`, `name`, `portrait`, `moment`, `line`) so an editor can show it its own way.
 
 ## Configuration
 
@@ -98,8 +104,8 @@ A persona is a JSON file in `personas/`: a `name`, a `voice` that the reviewer r
 |---|---|---|
 | `language` | `"es"` | Language of the CLI and of everything Claude writes: `es` or `en`. |
 | `flavor` | `"js"` | `"ts"` forges TypeScript exercises for Node and React. Node strips the types, no build step. |
-| `tracks` | `["node", "react"]` | Bundled tracks, in path order. Tracks from `btb learn` are added after them. |
-| `dailyNew` | `2` | New exercises per day, shared by the tracks in turns. |
+| `tracks` | `["node", "react"]` | Bundled tracks, in path order: `node`, `react`, `python`, `llm`. Tracks from `btb learn` are added after them. |
+| `dailyNew` | `2` | New exercises per day, shared by the tracks in turns. One per track (`4` with every bundled track) keeps each one moving daily. |
 | `dailyReviews` | `3` | Reviews per day at most. |
 | `daysPerWeek` | `6` | Practice days a week, used by `btb plan`. |
 | `dailyGoalXp` | `40` | The XP you aim for each day. |
@@ -109,7 +115,7 @@ A persona is a JSON file in `personas/`: a `name`, a `voice` that the reviewer r
 | `forgeRetries` | `2` | Times Claude may fix an exercise that failed validation. |
 | `theme` | `""` | What test data should be about, passed to Claude as is. |
 | `fromBasics` | `false` | Rebuild from the very basics: every new path starts at level 1, the placement goes from returning a value to a loop with an if, and the first two levels are a guided warm up (one idea per exercise, the steps written in the starter, 3 or 4 tests, the warm up example as the quality bar). |
-| `cast` | `null` | `{ "leads": [...], "supporting": [...] }`: the leads appear in every exercise, and 3 supporting characters drawn at random get a role in each statement and its test data. |
+| `cast` | `null` | `{ "leads": [...], "supporting": [...] }`: the leads appear in every exercise, and 3 supporting characters drawn at random get a role in each statement and its test data. Only used when the persona has no `world`. |
 | `persona` | `""` | The coach that reacts to your rounds and voices `btb review`, `claire` or `malenia` for example. Empty for none. |
 | `testTimeoutMs` | `15000` | Kills a run that takes longer, an infinite loop for example. |
 | `workspace` | `"workspace"` | Where your solutions live. Ignored by git. |
@@ -132,6 +138,16 @@ This repo is also a Neovim plugin (0.10 or newer). Point lazy.nvim at your clone
 ```
 
 `<leader>kk` starts the lesson: the coach takes the stage with today's plan, briefs the next exercise in their voice (Claude writes the briefing ahead of time, so it opens instantly) and opens it with its statement on the right. Saving the solution runs the tests and the coach reacts in the corner. Completion is off in solution buffers, AI suggestions included, because you are here to fight by hand. When the next new exercise is not forged yet, the plugin has Claude forge it and brief it in the background.
+
+![A Bedrock exercise beside its statement](docs/images/btb_re_exercise.png)
+
+Pass the persona of the day (a function in `persona`) and each day stays in one world. Here Malenia briefs a Python exercise from the Lands Between.
+
+![Malenia briefs a Python exercise](docs/images/btb_coach.png)
+
+![The Python exercise beside its statement](docs/images/btb_exercise.png)
+
+The screenshots come from [Eldentree](https://github.com/thecristopher/nvim-config), recorded with vhs over a made up world that `node scripts/demo-sandbox.mjs <dir> <persona> <track> <example>` builds: its own config, a drawn path, one forged exercise and the coach's briefing, with the fake Claude from the tests, so no real progress shows up and nothing calls Claude.
 
 `<leader>kb` opens the library: pick a lesson and read it, have the coach walk you through it again, open your solution, see the review or the reference, or solve it again in a redo buffer that saves into `btb submit --redo`.
 
@@ -191,9 +207,9 @@ vim.api.nvim_create_autocmd("User", {
 ## How it fits together
 
 ```
-personas/     the bundled coaches: voice, portrait and lines per moment
-tracks/       seeds of the bundled tracks: focus and suggested stages, Claude adapts them
-profiles/     how to run tests per language: files, command, report format, runtime
+personas/     the bundled coaches: voice, portrait, lines per moment and the world of their franchise
+tracks/       seeds of the bundled tracks: focus, suggested stages and the example to show, Claude adapts them
+profiles/     how to run tests per language: files, command, report format, runtime (python/ holds the pytest plugin)
 examples/     hand written exercises with their lessons, the quality bar Claude is shown and the engine's fixtures
 src/actions/  pure logic: scheduling, levels, placement, aptitude, prompts, validation
 src/lib/      disk, processes and Claude: runner, forge, architect
@@ -201,7 +217,7 @@ src/commands/ one file per group of commands
 lua/          the Neovim plugin, pure logic in lua/back-to-basics/actions
 ```
 
-A language profile names the solution and test files, the test command (with `{test}`, `{dir}`, `{node}` placeholders) and how to read its verdict: `node-test`, `vitest-json`, `tap` or `exit-code`. React's profile installs Vitest, jsdom and Testing Library once, under `.btb/runtimes/react`. Profiles Claude writes for other languages may only use `tap` or `exit-code`, and stay unapproved until `btb setup --yes`.
+A language profile names the solution and test files, the test command (with `{test}`, `{dir}`, `{node}`, `{runtime}`, `{report}` placeholders) and how to read its verdict: `node-test`, `vitest-json`, `btb-json`, `tap` or `exit-code`. React's profile installs Vitest, jsdom and Testing Library once, under `.btb/runtimes/react`. Python's creates a venv with pytest, pydantic and boto3 under `.btb/runtimes/python`, and a small pytest plugin writes the `btb-json` verdict, with each test's docstring as its name. Profiles Claude writes for other languages may only use `tap` or `exit-code`, and stay unapproved until `btb setup --yes`.
 
 Tests always run in a fresh folder holding only the solution and the test, and the whole process tree is killed at the timeout. They still run code Claude wrote on your machine, which is the point of the tool, so read what `btb setup` shows you before approving a language.
 
@@ -209,6 +225,6 @@ Tests always run in a fresh folder holding only the solution and the test, and t
 
 ```sh
 npm test                          # unit and end to end tests, with a fake Claude
-BTB_TEST_RUNTIMES=1 npm test      # also installs React's runtime and runs its examples
+BTB_TEST_RUNTIMES=1 npm test      # also installs the React and Python runtimes and runs their examples
 ./scripts/test-nvim.sh            # the Neovim plugin specs (plenary.nvim, or PLENARY_DIR)
 ```

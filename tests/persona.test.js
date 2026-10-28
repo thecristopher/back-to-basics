@@ -19,6 +19,26 @@ test("a persona with a line for every moment holds", () => {
   assert.deepEqual(personaProblems(claire), []);
 });
 
+test("Claire's world names her franchise and who may show up", () => {
+  const world = { franchise: "Resident Evil", supporting: ["Leon", "Jill"], places: ["TerraSave"] };
+  assert.deepEqual(personaProblems({ ...claire, world }), []);
+});
+
+test("a world without its franchise or with a bad supporting list is refused", () => {
+  assert.deepEqual(personaProblems({ ...claire, world: { supporting: "Leon" } }), [
+    '"world.franchise" must be a non empty string',
+    '"world.supporting" must list names',
+  ]);
+});
+
+test("the bundled personas each carry their own world", async () => {
+  for (const name of ["claire", "malenia"]) {
+    const persona = JSON.parse(await readFile(new URL(`../personas/${name}.json`, import.meta.url), "utf8"));
+    assert.deepEqual(personaProblems(persona), []);
+    assert.ok(persona.world.supporting.length >= 10);
+  }
+});
+
 test("a persona missing a moment names the one missing", () => {
   const { debrief, ...rest } = everyMoment("Malenia:");
   assert.deepEqual(personaProblems(personaWith({ es: rest })), ['"lines.es.debrief" must list at least one line']);

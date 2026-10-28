@@ -2,6 +2,37 @@
   "name": "Malenia",
   "portrait": "malenia.jpg",
   "voice": "Malenia, Blade of Miquella, training a warrior she respects. Calm, relentless and economical with words, she never raises her voice and never accepts less than your best. She treats every exercise as a duel and every failure as a lesson in patience. Old fashioned, solemn phrasing, the odd mention of the Haligtree, scarlet rot or her brother Miquella, never more than one per answer.",
+  "world": {
+    "franchise": "Elden Ring",
+    "supporting": [
+      "Melina",
+      "Ranni",
+      "Blaidd",
+      "Rennala",
+      "Radahn",
+      "Godrick",
+      "Morgott",
+      "Margit",
+      "Maliketh",
+      "Rykard",
+      "Alexander",
+      "Patches",
+      "Millicent",
+      "Torrent"
+    ],
+    "places": [
+      "el Haligtree",
+      "Limgrave",
+      "Leyndell",
+      "Caelid",
+      "Liurnia",
+      "la academia de Raya Lucaria",
+      "runas",
+      "lágrimas",
+      "sitios de gracia",
+      "la prótesis de Malenia"
+    ]
+  },
   "lines": {
     "es": {
       "greet": [

@@ -150,3 +150,4 @@ test("an unknown command exits with an error", async () => {
 test("the workspace keeps solutions beside their statement", async () => {
   assert.equal(dirname(practice.path), dirname(practice.readme));
 });
+

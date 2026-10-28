@@ -78,13 +78,14 @@ async function pickExampleSlug(dir, slugs, fromBasics) {
  * Reads one of the bundled examples as the JSON shape Claude is asked to answer with.
  * @param {object} config
  * @param {string} profileId falls back to the JavaScript examples when the language has none
+ * @param {string} [preferred] the example a track asks for, used when the language has it
  * @returns {Promise<object>}
  */
-export async function loadExample(config, profileId) {
+export async function loadExample(config, profileId, preferred) {
   const own = await listDirs(join(config.examplesDir, profileId));
   const dir = own.length > 0 ? join(config.examplesDir, profileId) : join(config.examplesDir, "javascript");
   const slugs = own.length > 0 ? own : await listDirs(dir);
-  const slug = await pickExampleSlug(dir, slugs, config.fromBasics);
+  const slug = slugs.includes(preferred) ? preferred : await pickExampleSlug(dir, slugs, config.fromBasics);
   const exercise = await loadExercise(dir, profileId, slug);
   const files = exerciseFiles(exercise);
   const read = (file) => readFile(file, "utf8");

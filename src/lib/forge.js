@@ -1,7 +1,7 @@
 import { mkdir, writeFile } from "node:fs/promises";
 import { extname, join } from "node:path";
 import { summarizeAptitude } from "../actions/aptitude.js";
-import { pickCast } from "../actions/cast.js";
+import { castFor, franchiseOf } from "../actions/cast.js";
 import { withoutEmDashes } from "../actions/json.js";
 import { exercisePrompt, fixPrompt } from "../actions/prompts/exercise.js";
 import { describeRun } from "../actions/report.js";
@@ -63,6 +63,7 @@ async function saveExercise(ctx, track, draft, meta) {
     placement: meta.placement,
     language: meta.language,
     files: meta.files,
+    franchise: meta.franchise,
     // a timestamp keeps forge order without touching progress, so forging can run beside practice
     seq: Date.now(),
     forgedAt: ctx.today,
@@ -90,6 +91,7 @@ async function saveExercise(ctx, track, draft, meta) {
 export async function forgeExercises(ctx, { track, purpose, level, count, difficulty, size }) {
   const profile = await loadProfile(ctx.config, track.language);
   const files = filesFor(profile, ctx.config.flavor);
+  const franchise = franchiseOf(ctx.persona);
   const avoid = ctx.catalog.exercises.filter((exercise) => exercise.track === track.id).map((exercise) => exercise.title);
   const prompt = exercisePrompt({
     purpose,
@@ -105,13 +107,13 @@ export async function forgeExercises(ctx, { track, purpose, level, count, diffic
     language: ctx.config.language,
     theme: ctx.config.theme,
     fromBasics: ctx.config.fromBasics,
-    cast: pickCast(ctx.config.cast, 3),
-    example: await loadExample(ctx.config, profile.id),
+    cast: castFor(ctx.persona, ctx.config.cast),
+    example: await loadExample(ctx.config, profile.id, track.example),
   });
   ctx.log(ctx.paint.dim(ctx.t.forging(count, track.title)));
   const answer = await askJson(ctx.config.claude, prompt);
   const drafts = (answer.exercises ?? []).slice(0, count);
-  const meta = { level: level?.level ?? 0, placement: purpose === "placement", language: profile.id, files: { solution: files.solutionFile, test: files.testFile } };
+  const meta = { level: level?.level ?? 0, placement: purpose === "placement", language: profile.id, franchise, files: { solution: files.solutionFile, test: files.testFile } };
   const saved = [];
   for (const [index, draft] of drafts.entries()) {
     const settled = await settle(ctx, profile, files, draft);

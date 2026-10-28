@@ -33,6 +33,16 @@ test("an exercise already queued is not fresh again", () => {
   assert.deepEqual(freshExercises(exercises, {}, "node", 1, ["node/love-note"]), ["node/playlist"]);
 });
 
+test("a fresh exercise forged for another franchise waits for it to come back", () => {
+  const tagged = [
+    { id: "node/claire-date", track: "node", level: 1, franchise: "resident-evil" },
+    { id: "node/malenia-runes", track: "node", level: 1, franchise: "elden-ring" },
+    { id: "node/old-note", track: "node", level: 1 },
+  ];
+  assert.deepEqual(freshExercises(tagged, {}, "node", 1, [], "elden-ring"), ["node/malenia-runes", "node/old-note"]);
+  assert.deepEqual(freshExercises(tagged, {}, "node", 1, [], null), ["node/claire-date", "node/malenia-runes", "node/old-note"]);
+});
+
 test("Claire and Malenia's tracks take turns for the new exercises", () => {
   assert.deepEqual(allocateNew(["node", "react"], 3), ["node", "react", "node"]);
   assert.deepEqual(allocateNew([], 2), []);

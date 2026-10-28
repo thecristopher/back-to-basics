@@ -3,6 +3,7 @@ import { goalStatus, projectLevels } from "../actions/plan.js";
 import { freshExercises, slotTrack } from "../actions/queue.js";
 import { exerciseState } from "../actions/record.js";
 import { streakDays } from "../actions/streak.js";
+import { franchiseOf } from "../actions/cast.js";
 import { dayOf } from "../lib/state.js";
 import { bar } from "../utils/text.js";
 import { ensureQueue, isPlacementRunning, levelNow, openTracks, trackOf } from "./shared.js";
@@ -19,7 +20,7 @@ function trackLevels(ctx) {
 
 function spareExercises(ctx, track, queued) {
   const level = levelNow(ctx, track);
-  return level ? freshExercises(ctx.catalog.exercises, ctx.state.exercises, track.id, level.level, queued).length : 0;
+  return level ? freshExercises(ctx.catalog.exercises, ctx.state.exercises, track.id, level.level, queued, franchiseOf(ctx.persona)).length : 0;
 }
 
 // how many exercises each track already has forged and waiting, so slots can say whether they open instantly

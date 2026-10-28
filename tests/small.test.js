@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import { parseArgs } from "../src/actions/args.js";
-import { describeRun, parseNodeTest, parseTap, parseVitest, summarize } from "../src/actions/report.js";
+import { describeRun, parseBtbJson, parseNodeTest, parseTap, parseVitest, summarize } from "../src/actions/report.js";
 import { typeScriptFlags } from "../src/actions/runtime.js";
 import { streakDays } from "../src/actions/streak.js";
 import { xpFor } from "../src/actions/xp.js";
@@ -48,6 +48,34 @@ test("the Vitest report gives each assertion and any file level crash", () => {
     crash: "",
   });
   assert.equal(parseVitest(JSON.stringify({ testResults: [{ message: "Transform failed", assertionResults: [] }] })).crash, "Transform failed");
+});
+
+test("the btb-json report gives each test and any collection crash", () => {
+  const report = JSON.stringify({
+    tests: [
+      { name: "Claire recibe su nota de aniversario", ok: true, message: null },
+      { name: "Malenia comparte su playlist", ok: false, message: "assert 2 == 3" },
+    ],
+    crash: "",
+  });
+  assert.deepEqual(parseBtbJson(report), {
+    tests: [
+      { name: "Claire recibe su nota de aniversario", ok: true, message: null },
+      { name: "Malenia comparte su playlist", ok: false, message: "assert 2 == 3" },
+    ],
+    crash: "",
+  });
+});
+
+test("a btb-json report with only a crash is a crashed run", () => {
+  const report = JSON.stringify({ tests: [], crash: "SyntaxError: invalid syntax" });
+  const result = summarize("btb-json", { code: 2, stdout: "", stderr: "", timedOut: false, report });
+  assert.equal(result.crashed, true);
+  assert.equal(result.stderr, "SyntaxError: invalid syntax");
+});
+
+test("a missing btb-json report is a crash, not a pass", () => {
+  assert.deepEqual(parseBtbJson(null), { tests: [], crash: "" });
 });
 
 test("TAP lines become results, indented subtests are ignored", () => {

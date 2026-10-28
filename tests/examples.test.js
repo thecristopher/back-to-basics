@@ -4,15 +4,16 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { test } from "node:test";
 import { proveProfile } from "../src/lib/architect.js";
-import { exerciseFiles } from "../src/lib/catalog.js";
+import { exerciseFiles, loadExample } from "../src/lib/catalog.js";
 import { listDirs, readJsonIfExists } from "../src/lib/files.js";
-import { loadProfile } from "../src/lib/profiles.js";
+import { ensureRuntime, loadProfile } from "../src/lib/profiles.js";
 import { runTests } from "../src/lib/runner.js";
 
 const ROOT = new URL("..", import.meta.url).pathname;
 // runtimes like React's packages install once and stay cached between runs
 const config = {
   profilesDir: join(ROOT, "profiles"),
+  examplesDir: join(ROOT, "examples"),
   dataDir: join(tmpdir(), "btb-test-data"),
   testTimeoutMs: 60000,
 };
@@ -82,4 +83,20 @@ test("TypeScript solutions run with their types stripped", async () => {
     testCode: 'import assert from "node:assert/strict";\nimport { test } from "node:test";\nimport { add } from "./solution.ts";\n\ntest("adds", () => assert.equal(add(2, 3), 5));\n',
   });
   assert.equal(result.ok, true, result.stderr);
+});
+
+test("a track gets the example it asks for when its language has it", async () => {
+  const example = await loadExample(config, "python", "throttled-converse");
+  assert.equal(example.slug, "throttled-converse");
+});
+
+test("a track asking for an unknown example gets the language's first one", async () => {
+  const example = await loadExample(config, "python", "love-letter-that-does-not-exist");
+  assert.equal(example.slug, "converse-reply");
+});
+
+test("a learned profile may not copy runtime files from profiles/", async () => {
+  const learned = { id: "malenia-lang", name: "Malenia Lang", bundled: false, runtime: { ready: "never", files: { "x.py": { copy: "python/btb_pytest.py" } } } };
+  const dataDir = join(tmpdir(), "btb-test-learned");
+  await assert.rejects(ensureRuntime({ ...config, dataDir }, learned, () => {}), /only bundled profiles/);
 });

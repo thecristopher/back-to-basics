@@ -8,7 +8,7 @@ test("empieza en cero sin props", () => {
   expect(screen.getByRole("button").textContent).toBe("Me gusta (0)");
 });
 
-test("Inde le da like a la foto de Claire y suma uno", async () => {
+test("le das like a la foto de Claire y suma uno", async () => {
   render(<LikeButton initial={41} />);
   await userEvent.click(screen.getByRole("button"));
   expect(screen.getByRole("button").textContent).toBe("Me gusta (42)");

@@ -1,0 +1,17 @@
+{
+  "title": "Python",
+  "language": "python",
+  "example": "word-frequency",
+  "focus": "Python from the ground up, by hand and idiomatic: the data model, comprehensions, functions and closures, decorators, classes and dataclasses, iterators and generators, typing, errors and context managers, the standard library, asyncio and pytest, then data structures, algorithms and backend design at big tech interview level.",
+  "ladder": [
+    "Language basics: strings, lists, dicts, sets, tuples, slicing, loops",
+    "Comprehensions, unpacking and the standard library: collections, itertools, functools",
+    "Functions, closures, *args and **kwargs, decorators",
+    "Classes, dataclasses, dunder methods and protocols",
+    "Iterators, generators and context managers",
+    "Type hints, errors and custom exceptions, testing with pytest",
+    "asyncio: coroutines, gather, timeouts, semaphores, queues",
+    "Data structures and algorithms: hash maps, two pointers, heaps, stacks, trees, graphs",
+    "Interview level at Amazon, Zillow or Capital One: multi part problems like an LRU cache with TTL, a rate limiter, transaction fraud windows, a home price index over listings, under real complexity limits"
+  ]
+}

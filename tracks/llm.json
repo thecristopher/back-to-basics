@@ -1,0 +1,18 @@
+{
+  "title": "LLM apps on Bedrock",
+  "language": "python",
+  "example": "throttled-converse",
+  "focus": "Building production LLM applications in Python on Amazon Bedrock, the way AI engineering roles ask for it: the Converse API with boto3, prompts and message history, streaming, tool use, structured output validated with pydantic, retries and cost control, embeddings and RAG, evals, guardrails and agents. Every exercise fakes Bedrock with botocore's Stubber or a small fake client, so the learner writes the real request and response handling with no network and no AWS account.",
+  "ladder": [
+    "Messages and prompts: Converse API request shape, system prompts, roles, templating, history trimming",
+    "Calling Bedrock with boto3: converse, reading output, stopReason, token usage and cost",
+    "Streaming with converse_stream: assembling text deltas, metadata and stop events",
+    "Structured output: JSON in the answer, pydantic validation, repair and retry on invalid output",
+    "Tool use: toolConfig specs, toolUse and toolResult blocks, the agent loop with a step limit",
+    "Resilience and cost: ThrottlingException, exponential backoff with jitter, timeouts, token budgets, model fallback",
+    "Embeddings and vector search: chunking, cosine similarity, top k, metadata filters",
+    "RAG: retrieval, grounded prompts with citations, Knowledge Bases retrieve and generate responses",
+    "Evals and guardrails: golden sets, LLM as judge, scoring, prompt injection defenses, PII redaction",
+    "Interview level at Amazon, Zillow or Capital One: multi part LLM systems like a rate limited Bedrock gateway with model fallback and cost caps, a RAG service with citations and evals, a tool using agent with guardrails over real product data"
+  ]
+}

@@ -1,0 +1,48 @@
+{
+  "id": "python",
+  "name": "Python",
+  "solutionFile": "solution.py",
+  "testFile": "test_solution.py",
+  "importHint": "from solution import name",
+  "runtime": {
+    "ready": "venv/bin/pytest",
+    "files": {
+      "btb_pytest.py": { "copy": "python/btb_pytest.py" }
+    },
+    "setup": [
+      ["python3", "-m", "venv", "venv"],
+      [
+        "venv/bin/python",
+        "-m",
+        "pip",
+        "install",
+        "--quiet",
+        "--disable-pip-version-check",
+        "pytest==9.2.0",
+        "pydantic==2.14.1",
+        "boto3==1.43.120"
+      ]
+    ]
+  },
+  "check": [["python3", "--version"]],
+  "test": [
+    "{runtime}/venv/bin/python",
+    "-m",
+    "pytest",
+    "-p",
+    "btb_pytest",
+    "-p",
+    "no:cacheprovider",
+    "-q",
+    "--btb-report={report}",
+    "{test}"
+  ],
+  "report": "btb-json",
+  "testGuide": "Use pytest: plain test functions with assert, pytest.raises for errors, fixtures and monkeypatch when they help. Give every test a one line docstring in the prose language, btb shows it as the test name. The starter keeps the signature and its docstring with raise NotImplementedError as the body, so type checkers stay quiet and every test fails. Only the standard library, pytest, pydantic and boto3 are installed. Never touch the network or real AWS: for Amazon Bedrock create boto3.client(\"bedrock-runtime\", region_name=\"us-east-1\") and fake it with botocore.stub.Stubber (add_response, add_client_error with service_error_code like \"ThrottlingException\"), which needs no credentials, or pass a small fake client object. Fake time by injecting a sleep or clock function, never sleep for real.",
+  "install": "Python 3.10 or newer with venv: https://www.python.org/downloads",
+  "sample": {
+    "solution": "def add(a, b):\n    return a + b\n",
+    "broken": "def add(a, b):\n    return a - b\n",
+    "test": "from solution import add\n\n\ndef test_add():\n    \"\"\"suma dos números\"\"\"\n    assert add(2, 3) == 5\n"
+  }
+}

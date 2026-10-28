@@ -1,0 +1,12 @@
+{
+  "title": "Bedrock con backoff",
+  "level": 6,
+  "minutes": 20,
+  "concepts": ["ThrottlingException", "backoff exponencial", "ClientError de botocore", "inyectar el reloj"],
+  "hints": [
+    "Atrapa botocore.exceptions.ClientError y lee el código en error.response[\"Error\"][\"Code\"].",
+    "Cualquier código que no sea ThrottlingException se relanza con raise, sin esperar.",
+    "En el intento i (desde 0) espera base_delay * 2 ** i, pero no esperes después del último: relanza el error."
+  ],
+  "files": { "solution": "solution.py", "test": "test_solution.py" }
+}

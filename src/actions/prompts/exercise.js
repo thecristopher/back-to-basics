@@ -1,14 +1,34 @@
-import { castLine } from "../cast.js";
+import { castLines } from "../cast.js";
 import { aptitudeLines, languageName } from "./evidence.js";
 
 const SCHEMA =
   '{"exercises":[{"slug":"kebab-case-name","title":"...","difficulty":1,"minutes":10,' +
   '"concepts":["..."],"hints":["..."],"readme":"markdown statement with examples","lesson":"markdown lesson on the concept","starter":"code","reference":"code","test":"code"}]}';
 
+/**
+ * True for the last 2 levels of a drawn path, the ones that must feel like a real onsite interview.
+ * @param {{ path?: { levels: object[] } | null }} track
+ * @param {{ level: number } | undefined} level
+ * @returns {boolean}
+ */
+export function isInterviewLevel(track, level) {
+  const total = track.path?.levels?.length ?? 0;
+  return Boolean(level) && total > 0 && level.level > total - 2;
+}
+
+function interviewLines(track, level) {
+  if (!isInterviewLevel(track, level)) return [];
+  return [
+    "This is an interview level: write each exercise like a real onsite problem at Amazon, Zillow or Capital One.",
+    "Several parts that build on each other, realistic product data (orders, listings, transactions, events), edge cases a senior would catch, and a complexity limit the tests enforce with big inputs.",
+    "Set minutes between 30 and 60.",
+  ];
+}
+
 // from the very basics, the placement only measures the fundamentals and the first level stays tiny
 function placementRange(count, fromBasics) {
   if (fromBasics) return `from 1 (return a value, add two numbers, compare two values) to ${count} (a for loop over an array with an if inside)`;
-  return `from 1 (first weeks of programming) to ${count} (big tech interview level)`;
+  return `from 1 (first weeks of programming) to ${count} (an Amazon, Zillow or Capital One onsite problem)`;
 }
 
 // someone very rusty needs the first steps small and guided, these override the general rules below
@@ -54,6 +74,7 @@ function purposeLines({ purpose, track, level, count, avoid, fromBasics, difficu
     `Concepts of this level: ${level.concepts.join(", ")}.`,
     "Lean into their weak concepts when they belong to this level, and stretch a little past their strong ones.",
     ...basicsLines(level, fromBasics),
+    ...interviewLines(track, level),
     avoid.length > 0 ? `Do not repeat these, already written: ${avoid.join("; ")}.` : null,
   ];
 }
@@ -82,7 +103,7 @@ export function exercisePrompt(input) {
     ...aptitudeLines(summary),
     "",
     "Rules:",
-    "- Small and focused, solvable in the minutes you set (5 to 30).",
+    "- Small and focused, solvable in the minutes you set (5 to 30, 30 to 60 on the last 2 levels of the path).",
     "- 4 to 6 tests, one behavior each, names that read like a sentence.",
     "- Deterministic: no network, no real waiting (fake the clock), no randomness, no files outside the folder.",
     "- When the point is to build something by hand, the tests disable the built in that would make it trivial, and the readme says so.",
@@ -91,7 +112,7 @@ export function exercisePrompt(input) {
     "- 2 or 3 hints, from a nudge to almost the answer, never the full code.",
     "- The lesson teaches the concept behind the exercise so the learner can come back to it later: what it is, a small example on a different problem, the typical mistakes and one question to think about. It never solves the exercise.",
     theme ? `- Test data and examples: ${theme}` : null,
-    castLine(input.cast ?? null),
+    ...castLines(input.cast ?? null),
     "",
     "One exercise at the quality bar, as JSON. Keep its spirit in any language:",
     JSON.stringify(example),

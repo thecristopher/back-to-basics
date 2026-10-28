@@ -48,6 +48,17 @@ export function parseVitest(report) {
 }
 
 /**
+ * Reads a report already in btb's shape, like the one profiles/python/btb_pytest.py writes.
+ * @param {string | null} report
+ * @returns {{ tests: TestResult[], crash: string }} crash holds a collection error, like a syntax error
+ */
+export function parseBtbJson(report) {
+  if (!report) return { tests: [], crash: "" };
+  const { tests = [], crash = "" } = JSON.parse(report);
+  return { tests: tests.map(({ name, ok, message }) => ({ name, ok, message: message ?? null })), crash };
+}
+
+/**
  * Reads top level TAP lines: "ok 1 - name" and "not ok 2 - name".
  * @param {string} stdout
  * @returns {TestResult[]}
@@ -68,6 +79,7 @@ function tail(text, lines) {
 function collect(kind, run) {
   if (kind === "node-test") return { ...parseNodeTest(run.stdout), crash: "" };
   if (kind === "vitest-json") return { ...parseVitest(run.report), logs: [] };
+  if (kind === "btb-json") return { ...parseBtbJson(run.report), logs: [] };
   if (kind === "tap") return { tests: parseTap(run.stdout), logs: [], crash: "" };
   const message = run.code === 0 ? null : tail(`${run.stdout}\n${run.stderr}`, 30);
   return { tests: run.timedOut ? [] : [{ name: "tests", ok: run.code === 0, message }], logs: [], crash: "" };
@@ -75,7 +87,7 @@ function collect(kind, run) {
 
 /**
  * Turns a raw test run into a verdict, whatever reporter the language uses.
- * @param {"node-test" | "vitest-json" | "tap" | "exit-code"} kind
+ * @param {"node-test" | "vitest-json" | "btb-json" | "tap" | "exit-code"} kind
  * @param {Run} run
  * @returns {{ ok: boolean, tests: TestResult[], logs: string[], passed: number, timedOut: boolean, crashed: boolean, stderr: string }}
  */
