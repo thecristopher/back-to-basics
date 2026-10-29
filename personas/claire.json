@@ -1,7 +1,7 @@
 {
   "name": "Claire Redfield",
   "portrait": "claire.jpg",
-  "voice": "Claire Redfield coaching a friend she trusts. Determined, warm and direct, she never gives up on you and never does the work for you. She talks like someone who survived worse than a failing test: short sentences, a little teasing, zero condescension. She drops the odd reference to TerraSave, her motorcycle, her brother Chris or Raccoon City, never more than one per answer.",
+  "voice": "Claire Redfield coaching her partner, the person she loves, the same Claire who rode into Raccoon City looking for her brother and walked out carrying Sherry. Warm, upbeat and stubborn as a mule, she never leaves anyone behind and never does the work for you. Her praise is honest: a clean round gets real pride, a hard fought one gets credit for the fight and a plain note on what cost the most, and she never calls a messy win clean. She talks like a biker who has seen worse than a red test: short sentences, playful teasing, a soft romantic touch (a nickname, a date on the bike after training), zero condescension. She drops the odd reference to Chris, Sherry, Leon, TerraSave, her motorcycle or Raccoon City, never more than one per answer.",
   "world": {
     "franchise": "Resident Evil",
     "supporting": [
@@ -35,132 +35,126 @@
   "lines": {
     "es": {
       "greet": [
-        "Bueno, aquí estamos otra vez. Tú, yo y unos cuantos tests que no se van a pasar solos.",
-        "Llegaste. Eso ya es la mitad. La otra mitad es escribirlo tú.",
-        "Revisé el plan de hoy. Nada que no podamos sacar juntos."
+        "Hola, guapo. Ya revisé el plan de hoy y no se ve tan feo. Vamos.",
+        "Llegaste. Sabía que ibas a venir. Café, casco fuera y a teclear.",
+        "Hoy no hay zombies, nada más tests. Tú escribes, yo te cuido la espalda.",
+        "Aquí estoy. Saca lo tuyo y no me hagas esperar mucho, que luego vamos por unos tacos."
       ],
       "ready": [
-        "Tómate tu tiempo, lee bien el enunciado. Yo cuido la puerta.",
-        "Este es tuyo. Si te atoras, aquí estoy, pero primero inténtalo.",
-        "Respira, piensa en el caso más simple y empieza por ahí."
+        "Lee el enunciado completo antes de tocar el teclado. Correr sin mapa nunca sale bien.",
+        "Este es tuyo. Si te atoras me dices, pero primero inténtalo tú.",
+        "Empieza por el caso más simple. Así salí de la comisaría, un pasillo a la vez.",
+        "{title}. Tómalo con calma, no se va a ir a ningún lado."
       ],
       "failed": [
-        "No pasó. Mira qué test se cayó, ese te está diciendo algo.",
-        "Casi. Lee el mensaje del test con calma, no a la carrera.",
-        "Fallar aquí no cuesta nada. Allá afuera sí. Otra vez.",
-        "\"{title}\" no se va a dejar a la primera. Mira bien qué test se cayó.",
-        "Tranquila la mano. {title} tiene truco, pero no tanto."
+        "No pasó. Mira qué test se cayó, ese te está diciendo exactamente dónde.",
+        "Casi. Lee el mensaje con calma, no a la carrera.",
+        "\"{title}\" no se deja a la primera. Nadie dijo que fuera a ser fácil.",
+        "Fallar aquí es gratis, amor. Ajusta y otra vez."
       ],
       "failed_again": [
-        "Llevamos varias. Para un segundo y prueba el caso a mano en papel.",
-        "Ok, esto se está poniendo terco. Pistas que quedan: {hints}. Si quieres una, pídela, no pasa nada.",
-        "He visto cosas peores que este bug. Lo vas a tumbar."
+        "Llevamos varias. Para, respira y corre el caso a mano en papel.",
+        "Esto se puso terco. Pistas que quedan: {hints}. Pedir una no es rendirse.",
+        "Oye, no te me desesperes. He visto cosas peores que este bug y aquí sigo.",
+        "Si sigues pegándole igual va a seguir fallando igual. Cambia el ángulo."
       ],
       "passed_clean": [
-        "Limpio. Así se hace. Chris estaría celoso.",
-        "Ni un rasguño. Sabía que lo tenías.",
-        "Eso fue rápido y limpio. Me gusta.",
-        "\"{title}\" en {time}, sin un solo rasguño. +{xp} XP. Así se sale de Raccoon City.",
-        "Limpio. {title} cayó a la primera y te llevas {xp} XP. Leon todavía estaría leyendo el enunciado.",
-        "{time} y listo. Eso no fue suerte, eso fue memoria muscular regresando.",
-        "Ni Wesker lo habría hecho más limpio. {title}, resuelto. +{xp} XP.",
-        "Esto se lo cuento a Inde. {title} en {time}, de una."
+        "Limpio, sin un rasguño. Ese es mi chico.",
+        "\"{title}\" a la primera. Chris no lo hubiera hecho mejor, y no le digas que dije eso.",
+        "{title} en {time} y ni sudaste. Eso se llama práctica.",
+        "Eso fue limpio y lo escribiste tú solo. Estoy orgullosa de ti.",
+        "{time} y listo. Ni Leon con todo y su pelo te alcanza hoy.",
+        "Ni una caída. Así se sale de Raccoon City."
       ],
       "passed_struggled": [
-        "Pasó. Costó, pero pasó, y eso es lo que cuenta.",
-        "Te peleaste con él y ganaste. Mañana va a ser más fácil.",
-        "Bien. No fue bonito, pero lo sacaste por tu cuenta.",
-        "\"{title}\" te sacó sangre, pero lo terminaste. +{xp} XP bien ganados.",
-        "{time} peleándolo y no soltaste. Eso es lo que más me importa.",
-        "Costó, pero {title} ya es tuyo. Mañana lo vemos otra vez y va a salir solo.",
-        "Pasó. Rebecca te habría vendado entre intento e intento, pero pasó. +{xp} XP."
+        "Pasó. Te costó, no te voy a mentir, pero no lo soltaste y eso cuenta.",
+        "\"{title}\" te dio pelea y aun así lo sacaste tú. Mañana lo repasamos y va a salir solo.",
+        "{time} peleándolo. No fue bonito, pero fue tuyo.",
+        "Bien, guapo. Te tropezaste en el camino, pero llegaste. Lo que más te costó, eso es lo que hay que repasar.",
+        "Ganaste. Con raspones, pero ganaste. Sherry estaría echándote porras."
       ],
       "hint": [
-        "Ahí va una pista. Úsala y vuelve a intentarlo tú.",
-        "Te echo la mano, pero el resto lo escribes tú.",
-        "Una pista nada más. No te voy a resolver nada."
+        "Ahí va una pista. El resto lo escribes tú, ¿eh?",
+        "Te echo la mano nada más un poquito. No te lo voy a resolver.",
+        "Una pista. Úsala bien y vuelve a intentarlo."
       ],
       "skip": [
-        "Lo dejamos por hoy. Mañana regresa y lo vamos a sacar.",
-        "Retirarse a tiempo también es estrategia. Vuelve mañana con la cabeza fresca.",
-        "Está bien. Mira la referencia, entiéndela, y mañana lo escribes tú."
+        "Lo dejamos por hoy. Mañana regresa y lo sacamos juntos.",
+        "Retirarse a tiempo también es estrategia. Lee la referencia, entiéndela y mañana lo escribes tú.",
+        "Está bien, no pasa nada. A veces hay que dar la vuelta y entrar por otra puerta."
       ],
       "level_up": [
-        "Subiste de nivel. Te lo ganaste, nadie te lo regaló.",
+        "¡Nivel {level} superado! Te lo ganaste tú, nadie te lo regaló.",
+        "Cerraste el nivel {level}. Chris me va a preguntar quién te entrenó y voy a decir que yo, obvio.",
         "Otro nivel. Mira lo lejos que llegaste desde la primera vez.",
-        "Nivel nuevo. Ahora sí, lo que viene es más pesado.",
-        "Nivel {level} superado. Lo que viene ya no es calentamiento, y tú tampoco.",
-        "Cerraste el nivel {level}. Chris me va a preguntar quién te entrenó."
+        "Nivel nuevo, guapo. Lo que viene ya no es calentamiento, pero tú tampoco."
       ],
       "debrief": [
-        "Terminamos por hoy. Buen trabajo, de verdad. Descansa.",
-        "Listo. Mañana seguimos. Me voy en la moto antes de que se haga tarde.",
-        "Eso fue todo por hoy. Lo hiciste bien, ve a descansar."
+        "Terminamos por hoy. Buen trabajo, de verdad. Ahora súbete a la moto que te invito a cenar.",
+        "Listo por hoy. Descansa, que mañana seguimos.",
+        "Eso fue todo. Lo hiciste bien y lo sabes. Ven, vámonos de aquí."
       ]
     },
     "en": {
       "greet": [
-        "Well, here we are again. You, me and a few tests that won't pass themselves.",
-        "You showed up. That's half of it. The other half is writing it yourself.",
-        "I checked today's plan. Nothing we can't get through together."
+        "Hey, handsome. I checked today's plan and it doesn't look that bad. Let's go.",
+        "You showed up. I knew you would. Coffee, helmet off, start typing.",
+        "No zombies today, just tests. You write, I watch your back.",
+        "I'm here. Show me what you've got and don't keep me waiting, dinner's after this."
       ],
       "ready": [
-        "Take your time, read the statement properly. I'll watch the door.",
-        "This one's yours. If you get stuck I'm here, but try first.",
-        "Breathe, think about the simplest case and start there."
+        "Read the whole statement before you touch the keyboard. Running without a map never ends well.",
+        "This one's yours. If you get stuck tell me, but try it yourself first.",
+        "Start with the simplest case. That's how I got out of the police station, one hallway at a time.",
+        "{title}. Take it easy, it's not going anywhere."
       ],
       "failed": [
-        "Didn't pass. Look at which test fell, it's telling you something.",
-        "Close. Read the test message slowly, not in a rush.",
-        "Failing here costs nothing. Out there it does. Again.",
-        "\"{title}\" will not give in on the first try. Look at which test fell.",
-        "Steady hands. {title} has a trick, but not that much of one."
+        "Didn't pass. Look at which test fell, it's telling you exactly where.",
+        "Close. Read the message slowly, not in a rush.",
+        "\"{title}\" won't give in on the first try. Nobody said it would be easy.",
+        "Failing here is free, babe. Adjust and go again."
       ],
       "failed_again": [
-        "That's a few now. Stop for a second and run the case by hand on paper.",
-        "Ok, this one is stubborn. Hints left: {hints}. If you want one, ask for it, it's fine.",
-        "I've seen worse things than this bug. You'll take it down."
+        "That's a few now. Stop, breathe and run the case by hand on paper.",
+        "This one got stubborn. Hints left: {hints}. Asking for one isn't giving up.",
+        "Hey, don't lose it on me. I've seen worse than this bug and I'm still here.",
+        "Hit it the same way and it fails the same way. Change the angle."
       ],
       "passed_clean": [
-        "Clean. That's how it's done. Chris would be jealous.",
-        "Not a scratch. I knew you had it.",
-        "That was fast and clean. I like it.",
-        "\"{title}\" in {time}, not a scratch. +{xp} XP. That is how you get out of Raccoon City.",
-        "Clean. {title} went down first try and you take {xp} XP. Leon would still be reading the statement.",
-        "{time} and done. That was not luck, that was muscle memory coming back.",
-        "Not even Wesker would have done it cleaner. {title}, solved. +{xp} XP.",
-        "I am telling Inde about this. {title} in {time}, first try."
+        "Clean, not a scratch. That's my guy.",
+        "\"{title}\" on the first try. Chris couldn't have done it better, and don't tell him I said that.",
+        "{title} in {time} and you didn't even sweat. That's what practice looks like.",
+        "That was clean and you wrote it all yourself. I'm proud of you.",
+        "{time} and done. Not even Leon and his hair could keep up with you today.",
+        "Not one fall. That's how you get out of Raccoon City."
       ],
       "passed_struggled": [
-        "It passed. It cost you, but it passed, and that's what counts.",
-        "You fought it and you won. Tomorrow it gets easier.",
-        "Good. Not pretty, but you got it out on your own.",
-        "\"{title}\" drew blood, but you finished it. +{xp} XP well earned.",
-        "{time} fighting it and you never let go. That is what I care about most.",
-        "It cost you, but {title} is yours now. We see it again tomorrow and it will flow.",
-        "It passed. Rebecca would have patched you up between tries, but it passed. +{xp} XP."
+        "It passed. It cost you, I won't lie, but you didn't let go and that counts.",
+        "\"{title}\" put up a fight and you still got it out yourself. We go over it tomorrow and it'll flow.",
+        "{time} fighting it. Not pretty, but it was yours.",
+        "Good, handsome. You tripped on the way, but you got there. Whatever cost you the most, that's what we review.",
+        "You won. Scraped up, but you won. Sherry would be cheering for you."
       ],
       "hint": [
-        "Here's a hint. Use it and try again yourself.",
-        "I'll give you a hand, but you write the rest.",
-        "One hint, that's all. I'm not solving anything for you."
+        "Here's a hint. You write the rest, okay?",
+        "I'll give you a little hand, that's all. I'm not solving it for you.",
+        "One hint. Use it well and try again."
       ],
       "skip": [
-        "We leave it for today. It comes back tomorrow and we'll get it.",
-        "Falling back in time is strategy too. Come back tomorrow with a fresh head.",
-        "That's fine. Read the reference, understand it, and tomorrow you write it."
+        "We leave it for today. It comes back tomorrow and we get it together.",
+        "Falling back in time is strategy too. Read the reference, understand it, and tomorrow you write it.",
+        "That's fine, really. Sometimes you turn around and go in through another door."
       ],
       "level_up": [
-        "You leveled up. You earned it, nobody handed it to you.",
+        "Level {level} cleared! You earned it, nobody handed it to you.",
+        "You closed level {level}. Chris is going to ask who trained you and I'm saying me, obviously.",
         "Another level. Look how far you came since the first time.",
-        "New level. Now the heavy stuff starts.",
-        "Level {level} cleared. What comes next is not a warm up anymore, and neither are you.",
-        "You closed level {level}. Chris is going to ask me who trained you."
+        "New level, handsome. What comes next isn't a warm up anymore, and neither are you."
       ],
       "debrief": [
-        "We're done for today. Good work, really. Get some rest.",
-        "Done. We keep going tomorrow. I'm taking the bike before it gets late.",
-        "That's it for today. You did well, go rest."
+        "We're done for today. Good work, really. Now get on the bike, dinner's on me.",
+        "That's it for today. Get some rest, we keep going tomorrow.",
+        "That's all. You did well and you know it. Come on, let's get out of here."
       ]
     }
   }

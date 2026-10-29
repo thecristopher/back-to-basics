@@ -187,6 +187,12 @@ describe("back-to-basics after a submit", function()
 
   it("takes Inde from a pass to the next briefing on a single stage", function()
     btb.setup({ keys = false, forge_ahead = false, advance_ms = 0, coach = { speed = 1 } })
+    local real_notify, notices = vim.notify, {}
+    vim.notify = function(message, _, options)
+      if options.id == "back_to_basics_pass" then
+        table.insert(notices, { title = options.title, message = message })
+      end
+    end
     answer({
       submit = {
         id = "node/love-notes",
@@ -210,9 +216,43 @@ describe("back-to-basics after a submit", function()
       text = table.concat(vim.api.nvim_buf_get_lines(0, 0, -1, false), "\n")
       return text:find("Hoy toca la cita", 1, true) ~= nil
     end)
-    assert.truthy(text:find("Limpio, Inde.", 1, true))
-    assert.truthy(text:find("Notas para Inde", 1, true))
+    vim.notify = real_notify
+    assert.falsy(text:find("Limpio, Inde.", 1, true))
     assert.are.equal(1, #floats())
+    assert.are.same(
+      {
+        title = "Claire Redfield",
+        message = "✓ Notas para Inde · Limpio · +15 XP\n\nLimpio, Inde.",
+      },
+      notices[1]
+    )
+  end)
+
+  it("leaves Claire's line to the day's summary when the pass ends the day", function()
+    btb.setup({ keys = false, forge_ahead = false, advance_ms = 0, coach = { speed = 1 } })
+    local real_notify, notices = vim.notify, {}
+    vim.notify = function(message, _, options)
+      if options.id == "back_to_basics_pass" then
+        table.insert(notices, { title = options.title, message = message })
+      end
+    end
+    answer({
+      submit = {
+        id = "node/anniversary",
+        title = "Aniversario con Malenia",
+        ok = true,
+        outcome = "struggled",
+        xp = 10,
+        day = { solved = 2 },
+        persona = vim.tbl_extend("force", claire, { line = "Terminamos por hoy." }),
+      },
+    })
+    btb.submit("node/anniversary")
+    vim.notify = real_notify
+    assert.are.same(
+      { title = "back-to-basics", message = "✓ Aniversario con Malenia · Con batalla · +10 XP" },
+      notices[1]
+    )
   end)
 end)
 

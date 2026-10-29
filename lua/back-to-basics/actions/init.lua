@@ -209,6 +209,20 @@ function M.pass_line(messages, data)
   return ("✓ %s · %s · +%d XP"):format(data.title or data.id, outcome, data.xp or 0)
 end
 
+---The notification of a pass: the XP it paid and, when the coach speaks here, their comment under it.
+---@param messages table<string, string>
+---@param data table btb submit --json of a pass
+---@param with_line boolean the coach's line goes in the notice, not on a stage or a toast
+---@return { title: string, message: string }
+function M.pass_notice(messages, data, with_line)
+  local persona = data.persona
+  local summary = M.pass_line(messages, data)
+  if not with_line or not persona or not persona.line then
+    return { title = "back-to-basics", message = summary }
+  end
+  return { title = persona.name, message = summary .. "\n\n" .. persona.line }
+end
+
 ---The coach's line on top of a report float, so the coach never needs a toast beside it.
 ---@param data table a btb --json answer
 ---@param enabled boolean the coach is shown

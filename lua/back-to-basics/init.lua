@@ -23,6 +23,8 @@ M.defaults = {
   auto_advance = true,
   -- how long the pass gets on screen before the coach takes the stage with what comes next
   advance_ms = 1500,
+  -- how long the pass notice with the XP and the coach's comment stays on screen
+  notice_ms = 7000,
   -- forge the next new exercise in the background, so next never waits on Claude
   forge_ahead = true,
   -- false turns completion off in solution buffers, AI suggestions included
@@ -285,16 +287,26 @@ function M.lessons(track)
   library.open(host, track)
 end
 
--- a pass that moves on lets the stage carry the coach's line, the next exercise forges ahead once it opens
+-- the XP and the coach's comment stay up while the stage gets ready. The pass that ends the day
+-- leaves the coach's line to the summary on the stage, so it is said once
+local function notify_pass(data, after)
+  local with_line = coach.enabled() and after ~= "debrief"
+  local notice = actions.pass_notice(opts.messages, data, with_line)
+  local options = { title = notice.title, id = "back_to_basics_pass", timeout = opts.notice_ms }
+  vim.notify(notice.message, vim.log.levels.INFO, options)
+  moment(data)
+end
+
+-- a redo pays nothing, so it gets the plain report instead of the pass notice
 local function passed(data, after)
+  if data.redo then
+    return announce(data, actions.text_lines(data))
+  end
+  notify_pass(data, after)
   if after then
-    moment(data)
     return lesson.advance(host, data, opts.advance_ms)
   end
-  announce(data, actions.text_lines(data))
-  if not data.redo then
-    M.forge_ahead()
-  end
+  M.forge_ahead()
 end
 
 local function submitted(id)

@@ -26,13 +26,9 @@ local function report_text(data)
   return table.concat(actions.text_lines(data), "\n")
 end
 
-local function debrief(host, data, intro)
+local function debrief(host, data)
   local line = data.persona and data.persona.line
-  coach.stage(
-    speaker(host, data),
-    coach.pages(joined(intro, line, report_text(data))),
-    function() end
-  )
+  coach.stage(speaker(host, data), coach.pages(joined(line, report_text(data))), function() end)
 end
 
 -- runs fn once the moment comes, never earlier than ms after the gate was made
@@ -47,15 +43,14 @@ local function now(fn)
   fn()
 end
 
--- the exercise opens either way: btb already started its clock when it handed it over.
--- intro takes the place of the coach's ready line, when the stage opens right after a pass
-local function brief_then_open(host, opened, intro, wait)
+-- the exercise opens either way: btb already started its clock when it handed it over
+local function brief_then_open(host, opened, wait)
   host.run({ "brief", opened.id }, function(brief)
     if brief.error then
       host.notify(brief.error, vim.log.levels.WARN)
       return host.open(opened)
     end
-    local ready = intro or (opened.persona and opened.persona.line)
+    local ready = opened.persona and opened.persona.line
     local text = joined(ready, brief.brief, host.messages.stage_start)
     wait(function()
       coach.stage(speaker(host, opened), coach.pages(text), function()
@@ -65,7 +60,7 @@ local function brief_then_open(host, opened, intro, wait)
   end, host.progress)
 end
 
-local function open_next(host, intro, wait)
+local function open_next(host, wait)
   wait = wait or now
   host.run({ "next" }, function(data)
     if data.error then
@@ -73,15 +68,16 @@ local function open_next(host, intro, wait)
     end
     if data.done then
       return wait(function()
-        debrief(host, data, intro)
+        debrief(host, data)
       end)
     end
-    brief_then_open(host, data, intro, wait)
+    brief_then_open(host, data, wait)
   end, host.progress)
 end
 
 ---Takes the learner from a pass to what comes next: the next exercise briefed by the coach, or the
----day's summary when it was the last one. The pass gets ms on screen before the stage opens.
+---day's summary when it was the last one. The pass gets ms on screen before the stage opens, its
+---notice already carried the coach's comment, so the stage starts on what comes next.
 ---@param host BtbHost
 ---@param passed table btb submit --json of a pass
 ---@param ms? integer
@@ -90,14 +86,12 @@ function M.advance(host, passed, ms)
     return
   end
   local wait = gate(ms)
-  local intro =
-    joined(passed.persona and passed.persona.line, actions.pass_line(host.messages, passed))
   if passed.day then
     return wait(function()
       debrief(host, passed)
     end)
   end
-  open_next(host, intro, wait)
+  open_next(host, wait)
 end
 
 ---Starts the lesson: the coach greets with today's plan, briefs the next exercise and opens it.
