@@ -119,6 +119,30 @@ describe("back-to-basics actions", function()
     assert.are.equal("✓ Notas para Inde · Limpio · +15 XP", actions.pass_line(messages, data))
   end)
 
+  describe("pass_notice", function()
+    local messages = actions.messages("es")
+    local data = {
+      title = "Playlist para Inde",
+      outcome = "clean",
+      xp = 20,
+      persona = { name = "Claire Redfield", line = "Así se hace, guapo." },
+    }
+
+    it("puts the XP and Claire's comment in the notice", function()
+      assert.are.same({
+        title = "Claire Redfield",
+        message = "✓ Playlist para Inde · Limpio · +20 XP\n\nAsí se hace, guapo.",
+      }, actions.pass_notice(messages, data, true))
+    end)
+
+    it("keeps only the XP when the coach speaks somewhere else", function()
+      assert.are.same(
+        { title = "back-to-basics", message = "✓ Playlist para Inde · Limpio · +20 XP" },
+        actions.pass_notice(messages, data, false)
+      )
+    end)
+  end)
+
   describe("coach_lines", function()
     local data = { persona = { name = "Malenia", line = "Otra vez, con calma." } }
 
