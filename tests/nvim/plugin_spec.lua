@@ -288,4 +288,54 @@ describe("back-to-basics progress", function()
     cli.run = real_run
     assert.are.equal("fail:Wesker borró el archivo", log[#log])
   end)
+
+  it("forges ahead off the screen, so the statement stays readable", function()
+    local log, progress = recorder()
+    local real_run = cli.run
+    local asked = {}
+    cli.run = function(_, args, on_done, on_progress)
+      table.insert(asked, args[1])
+      if on_progress then
+        on_progress("Claude forja un ejercicio de React")
+      end
+      if args[1] == "today" then
+        return on_done({ queue = { { slot = 1, track = "react" } } })
+      end
+      on_done({ forged = { "count-green-herbs" } })
+    end
+    btb.setup({ keys = false, progress = progress })
+    btb.forge_ahead()
+    cli.run = real_run
+    assert.are.same({ "today", "forge", "brief" }, asked)
+    assert.are.same({}, log)
+  end)
+
+  it("tells the config what gets ready ahead, so it can show it somewhere small", function()
+    local steps = {}
+    local id = vim.api.nvim_create_autocmd("User", {
+      pattern = "BtbAhead",
+      callback = function(event)
+        table.insert(steps, event.data.step .. ":" .. tostring(event.data.label))
+      end,
+    })
+    local real_run = cli.run
+    cli.run = function(_, args, on_done)
+      if args[1] == "today" then
+        return on_done({ queue = { { slot = 1, track = "react" } } })
+      end
+      if args[1] == "brief" then
+        return on_done({ error = "Wesker se llevó la lección" })
+      end
+      on_done({ forged = { "count-green-herbs" } })
+    end
+    btb.setup({ keys = false })
+    btb.forge_ahead()
+    cli.run = real_run
+    vim.api.nvim_del_autocmd(id)
+    assert.are.same({
+      "forge:Forjando el siguiente",
+      "brief:Preparando la lección",
+      "failed:nil",
+    }, steps)
+  end)
 end)
