@@ -77,8 +77,7 @@ end
 ---@param args string[]
 ---@param on_done fun(data: table)
 ---@param on_progress? fun(line: string) the learner is waiting on this answer, so it shows its progress
----@param background? string the message of a bar for work the learner is not waiting on
-local function run(args, on_done, on_progress, background)
+local function run(args, on_done, on_progress)
   if OPENS[args[1]] then
     if opening then
       return notify(opts.messages.still_opening, vim.log.levels.WARN)
@@ -90,12 +89,8 @@ local function run(args, on_done, on_progress, background)
       done(data)
     end
   end
-  local task = nil
-  if on_progress then
-    task = start_progress("back_to_basics", actions.working(opts.messages, args[1]))
-  elseif background then
-    task = start_progress("back_to_basics_ahead", background)
-  end
+  local task = on_progress
+    and start_progress("back_to_basics", actions.working(opts.messages, args[1]))
   if task then
     on_progress, on_done = tracked(task, on_done)
   end
@@ -183,12 +178,38 @@ function M.focus(buf)
   vim.api.nvim_exec_autocmds("User", { pattern = "BtbFocus", data = { buf = buf } })
 end
 
+-- tells the config what is getting ready ahead, so it can show it somewhere small: "forge", "brief",
+-- "done" or "failed", with a short label in the learner's language
+local function ahead(step, error)
+  local data = { step = step, label = opts.messages["ahead_" .. step], error = error }
+  vim.api.nvim_exec_autocmds("User", { pattern = "BtbAhead", data = data })
+end
+
+-- work the learner is not waiting on stays off the screen, where it would cover the statement,
+-- and only a failure gets a notification
+local function quietly(on_done)
+  return function(data)
+    if data.error then
+      ahead("failed", data.error)
+      return notify(data.error, vim.log.levels.WARN)
+    end
+    on_done(data)
+  end
+end
+
 -- the coach's briefing is asked for ahead too, so the lesson opens without waiting on Claude
 local function brief_ahead(forged)
   local id = forged and forged.forged and forged.forged[1]
-  if id then
-    run({ "brief", id }, function() end, nil, opts.messages.briefing_ahead)
+  if not id then
+    return ahead("done")
   end
+  ahead("brief")
+  run(
+    { "brief", id },
+    quietly(function()
+      ahead("done")
+    end)
+  )
 end
 
 ---Forges the next new exercise of the day in the background when none is waiting.
@@ -202,10 +223,11 @@ function M.forge_ahead()
       return
     end
     forging = true
+    ahead("forge")
     run({ "forge", track, "--count=1" }, function(forged)
       forging = false
-      brief_ahead(forged)
-    end, nil, opts.messages.forging_ahead)
+      quietly(brief_ahead)(forged)
+    end)
   end)
 end
 

@@ -137,7 +137,7 @@ This repo is also a Neovim plugin (0.10 or newer). Point lazy.nvim at your clone
 }
 ```
 
-`<leader>kk` starts the lesson: the coach takes the stage with today's plan, briefs the next exercise in their voice (Claude writes the briefing ahead of time, so it opens instantly) and opens it with its statement on the right. Saving the solution runs the tests. A failure opens with the coach's line on top of it, and a pass takes you straight to the next exercise: the coach briefs it on the stage, or sums up the day when it was the last one. `auto_advance = false` keeps you where you are, `advance_ms` is how long the pass stays on screen before the stage opens. One message per moment: the statement opens on the right with no summary on top, and the coach speaks either on the stage, inside a report or in the corner, never twice. Completion is off in solution buffers, AI suggestions included, because you are here to fight by hand. When the next new exercise is not forged yet, the plugin has Claude forge it and brief it in the background.
+`<leader>kk` starts the lesson: the coach takes the stage with today's plan, briefs the next exercise in their voice (Claude writes the briefing ahead of time, so it opens instantly) and opens it with its statement on the right. Saving the solution runs the tests. A failure opens with the coach's line on top of it, and a pass takes you straight to the next exercise: the coach briefs it on the stage, or sums up the day when it was the last one. `auto_advance = false` keeps you where you are, `advance_ms` is how long the pass stays on screen before the stage opens. One message per moment: the statement opens on the right with no summary on top, and the coach speaks either on the stage, inside a report or in the corner, never twice. Completion is off in solution buffers, AI suggestions included, because you are here to fight by hand. When the next new exercise is not forged yet, the plugin has Claude forge it and brief it in the background, off the screen so the statement stays readable. Only a failure shows up.
 
 ![A Bedrock exercise beside its statement](docs/images/btb_re_exercise.png)
 
@@ -178,7 +178,7 @@ The screenshots come from [Eldentree](https://github.com/thecristopher/nvim-conf
 | `portrait` | `nil` | `fun(buf, win, persona)` that draws the coach on the left of the stage. Without it the stage is text only. |
 | `sound` | `nil` | `fun(event)` called with `"coach_open"` or the moment the coach reacts to. |
 
-Three `User` events let the rest of your config join in:
+Four `User` events let the rest of your config join in:
 
 ```lua
 vim.api.nvim_create_autocmd("User", {
@@ -200,6 +200,13 @@ vim.api.nvim_create_autocmd("User", {
 vim.api.nvim_create_autocmd("User", {
   pattern = "BtbFocus",
   -- event.data.buf is a solution buffer: switch off anything else that would help too much
+  callback = function(event) end,
+})
+
+vim.api.nvim_create_autocmd("User", {
+  pattern = "BtbAhead",
+  -- event.data: { step = "forge" | "brief" | "done" | "failed", label, error }, the work getting
+  -- the next exercise ready in the background, for a statusline piece instead of a notification
   callback = function(event) end,
 })
 ```
