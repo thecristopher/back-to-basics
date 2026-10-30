@@ -1,6 +1,7 @@
 -- back-to-basics in Neovim: the day's exercise beside its statement, tests on save, completion off
 -- while you fight, a coach that briefs and reacts, and User events for the rest of the config to join.
 local actions = require("back-to-basics.actions")
+local arena = require("back-to-basics.arena")
 local coach = require("back-to-basics.coach")
 local coach_actions = require("back-to-basics.actions.coach")
 local cli = require("back-to-basics.cli")
@@ -42,6 +43,9 @@ M.defaults = {
   portrait = nil,
   -- fun(event) that plays a sound: "coach_open", or the moment the coach reacts to
   sound = nil,
+  -- fun(info, buy) asked before a hint is revealed, info is { id, hints_left, cost }; call buy() to
+  -- go ahead. nil reveals it right away
+  before_hint = nil,
   -- fun({ id, title, message }) that starts a progress bar with update(message), done(message)
   -- and fail(message); without it btb's progress lines come as plain notifications
   progress = nil,
@@ -322,12 +326,19 @@ local function passed(data, after)
   M.forge_ahead()
 end
 
-local function submitted(id)
+-- the failing tests go on their lines and an onsite fight reaches the config, whatever the run was
+local function after_run(data, redo)
+  arena.show_failures(data, redo, opts.messages)
+  arena.announce_fight(data)
+end
+
+local function submitted(id, redo)
   return function(data)
     local verdict = actions.verdict(data)
     if verdict == "error" then
       return notify(data.error, vim.log.levels.ERROR)
     end
+    after_run(data, redo)
     if verdict == "failed" then
       show(data, id)
     elseif verdict == "repeat" then
@@ -354,15 +365,16 @@ function M.submit(id, redo)
   if not opts.progress then
     notify(opts.messages.running_tests)
   end
-  run(actions.submit_args(id, redo), submitted(id), progress)
+  run(actions.submit_args(id, redo), submitted(id, redo), progress)
 end
 
 -- a practice run on save says how it went in one line, the explicit one shows the failures in full
-local function tried(quiet)
+local function tried(quiet, redo)
   return function(data)
     if data.error then
       return notify(data.error, vim.log.levels.ERROR)
     end
+    after_run(data, redo)
     if data.ok then
       return notify(opts.messages.trial_passed:format(data.passed, data.total))
     end
@@ -390,7 +402,7 @@ function M.test(id, redo, quiet)
     return notify(opts.messages.not_exercise, vim.log.levels.WARN)
   end
   local args = redo and { "test", id, "--redo" } or { "test", id }
-  run(args, tried(quiet), not quiet and progress or nil)
+  run(args, tried(quiet, redo), not quiet and progress or nil)
 end
 
 -- commands that act on an exercise get the current buffer's one, so btb never guesses
@@ -401,6 +413,39 @@ local function on_exercise(name, filetype)
       show(data, name, filetype)
     end, progress)
   end
+end
+
+---Reveals the next hint of an exercise, the one in the current buffer by default. The config may
+---ask first through before_hint, and hears about every hint bought through User BtbHint.
+---@param id? string
+function M.hint(id)
+  id = id or current_id()
+  if not id then
+    return notify(opts.messages.not_exercise, vim.log.levels.WARN)
+  end
+  local function buy()
+    run({ "hint", id }, function(data)
+      show(data, "hint")
+      if not data.error then
+        vim.api.nvim_exec_autocmds("User", { pattern = "BtbHint", data = data })
+      end
+    end, progress)
+  end
+  if not opts.before_hint then
+    return buy()
+  end
+  local info = winbar.info(id) or {}
+  opts.before_hint({ id = id, hints_left = info.hintsLeft, cost = info.hintCost }, buy)
+end
+
+---Opens your solution beside the reference as a diff, the current buffer's exercise by default.
+---@param id? string
+function M.compare(id)
+  id = id or current_id()
+  if not id then
+    return notify(opts.messages.not_exercise, vim.log.levels.WARN)
+  end
+  arena.compare(host, id)
 end
 
 local function report(name)
@@ -434,7 +479,12 @@ M.subcommands = {
   test = function(args)
     M.test(args[1], args[2] == "--redo")
   end,
-  hint = on_exercise("hint"),
+  hint = function(args)
+    M.hint(args[1])
+  end,
+  compare = function(args)
+    M.compare(args[1])
+  end,
   skip = on_exercise("skip"),
   reveal = on_exercise("reveal"),
   review = on_exercise("review", "markdown"),
@@ -472,6 +522,7 @@ local KEYS = {
   { "h", "hint", "Next hint" },
   { "x", "skip", "Skip for today" },
   { "v", "reveal", "Reveal the reference" },
+  { "d", "compare", "Your solution beside the reference" },
   { "r", "review", "Claude reviews the solution" },
   { "L", "brief", "The coach explains this lesson again" },
   { "b", "lessons", "Lesson library" },

@@ -18,6 +18,27 @@ describe("back-to-basics setup", function()
     assert.are.equal("Next exercise", map.desc)
   end)
 
+  it("maps the diff against the reference and completes it", function()
+    assert.are.equal(
+      "Your solution beside the reference",
+      vim.fn.maparg("<leader>kd", "n", false, true).desc
+    )
+    assert.is_true(vim.tbl_contains(vim.fn.getcompletion("Btb ", "cmdline"), "compare"))
+  end)
+
+  it("asks before_hint first and only buys the hint when told to", function()
+    local asked
+    btb.setup({
+      keys = false,
+      forge_ahead = false,
+      before_hint = function(info)
+        asked = info
+      end,
+    })
+    btb.hint("node/love-note")
+    assert.are.equal("node/love-note", asked.id)
+  end)
+
   it("turns completion off in a solution buffer and announces the focus", function()
     local focused
     vim.api.nvim_create_autocmd("User", {
@@ -219,13 +240,10 @@ describe("back-to-basics after a submit", function()
     vim.notify = real_notify
     assert.falsy(text:find("Limpio, Inde.", 1, true))
     assert.are.equal(1, #floats())
-    assert.are.same(
-      {
-        title = "Claire Redfield",
-        message = "✓ Notas para Inde · Limpio · +15 XP\n\nLimpio, Inde.",
-      },
-      notices[1]
-    )
+    assert.are.same({
+      title = "Claire Redfield",
+      message = "✓ Notas para Inde · Limpio · +15 XP\n\nLimpio, Inde.",
+    }, notices[1])
   end)
 
   it("leaves Claire's line to the day's summary when the pass ends the day", function()
@@ -377,5 +395,56 @@ describe("back-to-basics progress", function()
       "brief:Preparando la lección",
       "failed:nil",
     }, steps)
+  end)
+end)
+
+describe("back-to-basics arena", function()
+  local arena = require("back-to-basics.arena")
+  local messages = require("back-to-basics.actions").messages("en")
+
+  local function solution_buffer(redo)
+    local buf = vim.api.nvim_create_buf(true, false)
+    vim.api.nvim_buf_set_lines(buf, 0, -1, false, { "a", "b", "c" })
+    vim.b[buf].btb_exercise = "node/love-note"
+    vim.b[buf].btb_redo = redo
+    return buf
+  end
+
+  it("puts Claire's failing tests on her solution as warnings and clears them on a pass", function()
+    local buf = solution_buffer(false)
+    local failed =
+      { id = "node/love-note", ok = false, failures = { { name = "signs it", line = 2 } } }
+    arena.show_failures(failed, false, messages)
+    local found = vim.diagnostic.get(buf)
+    assert.are.equal(1, #found)
+    assert.are.equal(1, found[1].lnum)
+    assert.are.equal(vim.diagnostic.severity.WARN, found[1].severity)
+    arena.show_failures({ id = "node/love-note", ok = true }, false, messages)
+    assert.are.equal(0, #vim.diagnostic.get(buf))
+    vim.api.nvim_buf_delete(buf, { force = true })
+  end)
+
+  it("leaves the first solution alone when the redo fails", function()
+    local buf = solution_buffer(false)
+    arena.show_failures(
+      { id = "node/love-note", ok = false, failures = { { name = "x" } } },
+      true,
+      messages
+    )
+    assert.are.equal(0, #vim.diagnostic.get(buf))
+    vim.api.nvim_buf_delete(buf, { force = true })
+  end)
+
+  it("tells the config how Malenia's onsite fight stands", function()
+    local fight
+    vim.api.nvim_create_autocmd("User", {
+      pattern = "BtbFight",
+      once = true,
+      callback = function(event)
+        fight = event.data
+      end,
+    })
+    arena.announce_fight({ id = "node/orders", onsite = true, passed = 1, total = 4 })
+    assert.are.equal(3, fight.remaining)
   end)
 end)

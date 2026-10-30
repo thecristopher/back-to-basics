@@ -1,6 +1,8 @@
 import { currentLevel, levelProgress } from "../actions/levels.js";
 import { allocateNew, dueReviews, freshExercises, slotFor, slotTrack } from "../actions/queue.js";
+import { isOnsite } from "../actions/arena.js";
 import { applyRecap, isRecap } from "../actions/recap.js";
+import { HINT_COST } from "../actions/xp.js";
 import { franchiseOf } from "../actions/cast.js";
 import { waitingFor } from "../actions/unlock.js";
 import { drawPath } from "../lib/architect.js";
@@ -248,9 +250,12 @@ export async function openExercise(ctx, exercise) {
     lesson: existsSync(exerciseFiles(exercise).lesson) ? exerciseFiles(exercise).lesson : null,
     review: Boolean(record.firstSolvedAt),
     placement: isPlacementQuestion(ctx.state, exercise.id),
+    // the last 2 levels of the path are onsite fights, an editor can stage them as one
+    onsite: isOnsite(trackOf(ctx, exercise.track), exercise),
     // an editor keeps the clock and the hints in sight while the learner writes
     startedAt: record.startedAt,
     hintsLeft: isPlacementQuestion(ctx.state, exercise.id) ? 0 : Math.max(0, exercise.hints.length - record.round.hints),
+    hintCost: HINT_COST,
   };
   return { data, text: renderOpen(ctx, data) };
 }

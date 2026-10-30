@@ -1,9 +1,12 @@
+import { existsSync, readFileSync } from "node:fs";
+import { conceptStanding, lessonQuestion } from "../actions/arena.js";
 import { currentLevel, levelProgress } from "../actions/levels.js";
 import { goalStatus, projectLevels } from "../actions/plan.js";
 import { freshExercises, slotTrack } from "../actions/queue.js";
 import { exerciseState } from "../actions/record.js";
 import { streakDays } from "../actions/streak.js";
 import { franchiseOf } from "../actions/cast.js";
+import { exerciseFiles } from "../lib/catalog.js";
 import { dayOf } from "../lib/state.js";
 import { bar } from "../utils/text.js";
 import { ensureQueue, isPlacementRunning, levelNow, lockOf, openTracks, recappedToday, trackOf } from "./shared.js";
@@ -47,10 +50,25 @@ function queueLine({ t, paint }, item, isNext) {
   return `  ${mark} [${item.track}] ${item.title}  ${tag}`;
 }
 
+// the lesson's closing question, so an editor can ask it before showing the recap
+function questionOf(exercise) {
+  const file = exerciseFiles(exercise).lesson;
+  return existsSync(file) ? lessonQuestion(readFileSync(file, "utf8")) : null;
+}
+
 function recapItem(ctx, id) {
   const exercise = ctx.catalog.byId[id];
   const record = ctx.state.exercises[id];
-  return { id, track: exercise.track, title: exercise.title, concepts: exercise.concepts ?? [], outcome: record.lastOutcome ?? null, dueAt: record.dueAt, mastered: Boolean(record.mastered) };
+  return {
+    id,
+    track: exercise.track,
+    title: exercise.title,
+    concepts: exercise.concepts ?? [],
+    outcome: record.lastOutcome ?? null,
+    dueAt: record.dueAt,
+    mastered: Boolean(record.mastered),
+    question: questionOf(exercise),
+  };
 }
 
 function recapLine({ t, paint }, item) {
@@ -130,6 +148,7 @@ export async function status(ctx) {
     solved: records.filter((record) => record.firstSolvedAt).length,
     mastered: records.filter((record) => record.mastered).length,
     tracks: trackLevels(ctx),
+    concepts: conceptStanding(ctx.state.aptitude),
   };
   return { data, text: renderStatus(ctx, data) };
 }

@@ -1,6 +1,7 @@
 import { existsSync } from "node:fs";
 import { readFile } from "node:fs/promises";
 import { briefPrompt } from "../actions/prompts/lesson.js";
+import { redoStart } from "../actions/arena.js";
 import { exerciseState } from "../actions/record.js";
 import { exerciseFiles } from "../lib/catalog.js";
 import { ask } from "../lib/claude.js";
@@ -118,6 +119,9 @@ export async function redo(ctx, [query], flags) {
   const { exercise } = target;
   if (!isUnlocked(ctx.state.exercises[exercise.id])) return failure(ctx.t.redoLocked);
   const { solution, readme } = await prepareRedo(ctx.config, exercise, Boolean(flags.fresh));
-  const data = { id: exercise.id, track: exercise.track, title: exercise.title, level: exercise.level, minutes: exercise.minutes, concepts: exercise.concepts, path: solution, readme, redo: true };
+  ctx.state.redoStarts ??= {};
+  const startedAt = redoStart(ctx.state.redoStarts, exercise.id, Date.now(), Boolean(flags.fresh));
+  const ghostSeconds = ctx.state.exercises[exercise.id]?.bestSeconds ?? null;
+  const data = { id: exercise.id, track: exercise.track, title: exercise.title, level: exercise.level, minutes: exercise.minutes, concepts: exercise.concepts, path: solution, readme, redo: true, startedAt, ghostSeconds };
   return { data, text: [ctx.paint.bold(ctx.t.redoHeader(exercise.title)), `${ctx.t.yourFile}: ${ctx.paint.cyan(solution)}`, ctx.paint.dim(ctx.t.redoHowTo(exercise.id))] };
 }

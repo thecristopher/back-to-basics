@@ -161,10 +161,13 @@ The screenshots come from [Eldentree](https://github.com/thecristopher/nvim-conf
 | `<leader>kT` | Try the tests without counting an attempt (also on every save) |
 | `<leader>kh` / `kx` | Hint / skip for today |
 | `<leader>kv` / `kr` | Reveal the reference / Claude reviews your solution |
+| `<leader>kd` | Your solution beside the reference as a diff, with the remarks of Claude's review on the lines they name |
 | `<leader>kL` / `kb` | The coach explains this lesson again / the lesson library |
 | `<leader>kc` | Show or hide the coach |
 | `<leader>kt` `kp` `kS` `kP` `kl` | Today, path, status, plan, list |
 | `<leader>kf` | Forge ahead |
+
+Every test run puts the failing tests on your solution as warnings, on the line the failure broke at when its stack or traceback reaches the solution, and on the first line when it never did. A pass clears them. A redo's winbar races its ghost, the best time of your first solve, green while you are ahead of it. When some reviews of the day left a question at the end of their lesson, `<leader>kk` asks each one first and shows what you answered from memory above the recap.
 
 `:Btb <command> [args]` runs any btb command, `:Btb placement react` for example. `:checkhealth back-to-basics` checks Node, Claude and the coach.
 
@@ -181,8 +184,9 @@ The screenshots come from [Eldentree](https://github.com/thecristopher/nvim-conf
 | `coach` | `{ enabled = true, speed = 12, toast_ms = 4500 }` | Whether the coach shows, how fast it types (ms per tick) and how long a reaction stays. |
 | `portrait` | `nil` | `fun(buf, win, persona)` that draws the coach on the left of the stage. Without it the stage is text only. |
 | `sound` | `nil` | `fun(event)` called with `"coach_open"` or the moment the coach reacts to. |
+| `before_hint` | `nil` | `fun(info, buy)` asked before a hint is revealed, with `info` as `{ id, hints_left, cost }`. Calling `buy()` reveals it, not calling it leaves it. `nil` reveals it right away. |
 
-Four `User` events let the rest of your config join in:
+Six `User` events let the rest of your config join in:
 
 ```lua
 vim.api.nvim_create_autocmd("User", {
@@ -212,6 +216,20 @@ vim.api.nvim_create_autocmd("User", {
   pattern = "BtbAhead",
   -- event.data: { step = "forge" | "brief" | "done" | "failed", label, error }, the work getting
   -- the next exercise ready in the background, for a statusline piece instead of a notification
+  callback = function(event) end,
+})
+
+vim.api.nvim_create_autocmd("User", {
+  pattern = "BtbFight",
+  -- event.data: { id, remaining, total, ok } after every run of an exercise from the last 2 levels
+  -- of its path, the onsite ones, to stage it as a fight that loses one test at a time
+  callback = function(event) end,
+})
+
+vim.api.nvim_create_autocmd("User", {
+  pattern = "BtbHint",
+  -- event.data: { id, hints, total, cost }, every hint revealed, cost is the XP it took (0 when
+  -- it was one already bought)
   callback = function(event) end,
 })
 ```

@@ -1,7 +1,24 @@
 /**
- * @typedef {{ name: string, ok: boolean, message: string | null }} TestResult
+ * @typedef {{ name: string, ok: boolean, message: string | null, line?: number }} TestResult
  * @typedef {{ code: number | null, stdout: string, stderr: string, timedOut: boolean, report?: string | null }} Run
  */
+
+const SOLUTION_FRAME = /(?<![\w.])solution\.(?:[cm]?[jt]sx?|py):(\d+)/;
+
+/**
+ * Finds the solution's line a failure points at, from a stack trace or a traceback.
+ * @param {string | null | undefined} text
+ * @returns {number | null}
+ */
+export function solutionLine(text) {
+  const match = String(text ?? "").match(SOLUTION_FRAME);
+  return match ? Number(match[1]) : null;
+}
+
+// the line only travels when the failure points at the solution, so results stay small otherwise
+function withLine(result, line) {
+  return line ? { ...result, line } : result;
+}
 
 function parseLine(line) {
   if (!line.startsWith("{")) return null;
@@ -23,7 +40,7 @@ export function parseNodeTest(stdout) {
   const logs = [];
   for (const line of stdout.split("\n")) {
     const parsed = parseLine(line);
-    if (parsed) tests.push({ name: parsed.name, ok: parsed.ok, message: parsed.message });
+    if (parsed) tests.push(withLine({ name: parsed.name, ok: parsed.ok, message: parsed.message }, parsed.line));
     else if (line.trim() !== "") logs.push(line);
   }
   return { tests, logs };
@@ -38,11 +55,10 @@ export function parseVitest(report) {
   if (!report) return { tests: [], crash: "" };
   const files = JSON.parse(report).testResults ?? [];
   const tests = files.flatMap((file) =>
-    file.assertionResults.map((assertion) => ({
-      name: assertion.title,
-      ok: assertion.status === "passed",
-      message: assertion.status === "passed" ? null : (assertion.failureMessages[0] ?? null),
-    })),
+    file.assertionResults.map((assertion) => {
+      const message = assertion.status === "passed" ? null : (assertion.failureMessages[0] ?? null);
+      return withLine({ name: assertion.title, ok: assertion.status === "passed", message }, solutionLine(message));
+    }),
   );
   return { tests, crash: files.map((file) => file.message).filter(Boolean).join("\n") };
 }
@@ -55,7 +71,7 @@ export function parseVitest(report) {
 export function parseBtbJson(report) {
   if (!report) return { tests: [], crash: "" };
   const { tests = [], crash = "" } = JSON.parse(report);
-  return { tests: tests.map(({ name, ok, message }) => ({ name, ok, message: message ?? null })), crash };
+  return { tests: tests.map(({ name, ok, message, line }) => withLine({ name, ok, message: message ?? null }, line)), crash };
 }
 
 /**

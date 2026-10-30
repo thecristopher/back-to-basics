@@ -22,8 +22,16 @@ local function tests_chunk(tests)
   return ("%%#%s#%s %d/%d%%*"):format(group, mark, tests.passed, tests.total)
 end
 
+-- a redo races the best time of the first solve: green while you are still ahead of it
+local function ghost_chunk(info, now_ms, messages)
+  local ahead = (now_ms - info.startedAt) / 1000 <= info.ghostSeconds
+  local group = ahead and "DiagnosticOk" or "DiagnosticWarn"
+  local text = messages.winbar_ghost:format(M.elapsed(info.ghostSeconds * 1000))
+  return ("%%#%s#󰊠 %s%%*"):format(group, escape(text))
+end
+
 ---The winbar of a solution: title, level, clock, hints left, the last test run and the keys.
----@param info { id: string, title?: string, level?: integer, startedAt?: integer, hintsLeft?: integer, tests?: { passed: integer, total: integer, ok: boolean } }
+---@param info { id: string, title?: string, level?: integer, startedAt?: integer, ghostSeconds?: integer, hintsLeft?: integer, tests?: { passed: integer, total: integer, ok: boolean } }
 ---@param now_ms integer
 ---@param messages table<string, string>
 ---@param keys string|false the keymap prefix, false when there are no keymaps
@@ -35,6 +43,9 @@ function M.text(info, now_ms, messages, keys)
   end
   if info.startedAt then
     table.insert(parts, "󱎫 " .. M.elapsed(now_ms - info.startedAt))
+  end
+  if info.startedAt and info.ghostSeconds then
+    table.insert(parts, ghost_chunk(info, now_ms, messages))
   end
   if info.hintsLeft then
     table.insert(parts, messages.winbar_hints:format(info.hintsLeft))
@@ -60,6 +71,7 @@ function M.fields(data)
   local fields = {}
   if data.path then
     fields.title, fields.level, fields.startedAt = data.title, data.level, data.startedAt
+    fields.ghostSeconds, fields.hintCost = data.ghostSeconds, data.hintCost
   end
   if data.total and data.passed then
     fields.tests = { passed = data.passed, total = data.total, ok = data.ok == true }

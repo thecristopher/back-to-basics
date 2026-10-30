@@ -113,6 +113,17 @@ test("passing a redo earns no XP and leaves the schedule alone", async () => {
   assert.deepEqual(await btb(["status"]), before);
 });
 
+test("Inde's redo keeps its clock and races the ghost of her first solve", async () => {
+  const redo = await btb(["redo", solved.id]);
+  const again = await btb(["redo", solved.id]);
+  assert.equal(typeof redo.startedAt, "number");
+  assert.equal(again.startedAt, redo.startedAt, "reopening keeps the clock running");
+  await copyFile(referenceOf(solved.id), redo.path);
+  const result = await btb(["submit", solved.id, "--redo"]);
+  assert.ok(["ahead", "behind", "tied"].includes(result.ghost));
+  assert.equal(typeof result.ghostSeconds, "number");
+});
+
 test("forge --lessons writes the lessons an older exercise is missing", async () => {
   const lessonFile = join(sandbox, "data/exercises", solved.id, "lesson.md");
   await rm(lessonFile);

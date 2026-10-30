@@ -1,6 +1,7 @@
 import { existsSync } from "node:fs";
 import { readFile } from "node:fs/promises";
 import { noteResult } from "../actions/aptitude.js";
+import { ghostVerdict, isOnsite } from "../actions/arena.js";
 import { isUnfinished, nextPending, slotFor, undrawnSlotTrack } from "../actions/queue.js";
 import { daySummary } from "../actions/recap.js";
 import { applyPass, applySkip, awardXp } from "../actions/record.js";
@@ -138,6 +139,7 @@ function failureData(ctx, exercise, result, hintsUsed = 0) {
     unapproved: Boolean(result.unapproved),
     stderr: result.stderr,
     placement,
+    onsite: isOnsite(trackOf(ctx, exercise.track), exercise),
     hintsLeft: placement ? 0 : Math.max(0, exercise.hints.length - hintsUsed),
   };
 }
@@ -148,14 +150,24 @@ function failed(ctx, exercise, record, result) {
   return { code: 1, data, text: renderFailure(ctx, data) };
 }
 
+// the redo races the best time of the first solution, its ghost
+function redoPassed(ctx, exercise, result) {
+  delete ctx.state.redos[exercise.id];
+  const startedAt = ctx.state.redoStarts?.[exercise.id];
+  if (ctx.state.redoStarts) delete ctx.state.redoStarts[exercise.id];
+  const seconds = elapsedSeconds(startedAt);
+  const ghostSeconds = ctx.state.exercises[exercise.id]?.bestSeconds ?? null;
+  const ghost = ghostVerdict(seconds, ghostSeconds);
+  const data = { id: exercise.id, title: exercise.title, ok: true, redo: true, passed: result.passed, total: result.tests.length, seconds, ghostSeconds, ghost };
+  const lines = [ctx.paint.green(ctx.t.redoPassed(data.passed, data.total, exercise.title))];
+  if (ghost) lines.push(ctx.t.redoGhost(ghost, duration(seconds), duration(ghostSeconds)));
+  return { data, text: lines };
+}
+
 // a redo only counts its own failed submits, so the coach can tell a first miss from a stubborn one
 function redoFinished(ctx, exercise, result) {
   ctx.state.redos ??= {};
-  if (result.ok) {
-    delete ctx.state.redos[exercise.id];
-    const data = { id: exercise.id, title: exercise.title, ok: true, redo: true, passed: result.passed, total: result.tests.length };
-    return { data, text: [ctx.paint.green(ctx.t.redoPassed(data.passed, data.total, exercise.title))] };
-  }
+  if (result.ok) return redoPassed(ctx, exercise, result);
   ctx.state.redos[exercise.id] = (ctx.state.redos[exercise.id] ?? 0) + 1;
   const data = { ...failureData(ctx, exercise, result), placement: false, redo: true, hintsLeft: 0, attempt: ctx.state.redos[exercise.id] };
   return { code: 1, data, text: renderFailure(ctx, data) };
@@ -283,7 +295,7 @@ export async function test(ctx, [query], flags = {}) {
   const solution = flags.redo ? redoPath(ctx.config, exercise) : solutionPath(ctx.config, exercise);
   if (!existsSync(solution)) return failure(flags.redo ? ctx.t.redoNotStarted(exercise.id) : ctx.t.notStarted(exercise.slug));
   const result = await testsOf(ctx, exercise, solution);
-  const data = { ...failureData(ctx, exercise, result), ok: result.ok, practice: true };
+  const data = { ...failureData(ctx, exercise, result), ok: result.ok, practice: true, redo: Boolean(flags.redo) };
   return { code: result.ok ? 0 : 1, data, text: renderTrial(ctx, data) };
 }
 
@@ -301,7 +313,7 @@ export async function hint(ctx, [query]) {
   const shown = exercise.hints.slice(0, record.round.hints);
   const header = fresh ? ctx.t.hintHeader(shown.length, exercise.hints.length, HINT_COST) : ctx.t.noMoreHints;
   return {
-    data: { id: exercise.id, hints: shown, total: exercise.hints.length },
+    data: { id: exercise.id, hints: shown, total: exercise.hints.length, cost: fresh ? HINT_COST : 0 },
     text: [ctx.paint.yellow(header), ...shown.map((text, index) => `  ${index + 1}. ${text}`)],
   };
 }
