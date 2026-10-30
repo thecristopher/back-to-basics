@@ -29,9 +29,15 @@ local function report_text(data)
   return table.concat(actions.text_lines(data), "\n")
 end
 
+-- the coach's own goodbye, written by Claude from today's rounds, and her fixed line when it fails
 local function debrief(host, data)
-  local line = data.persona and data.persona.line
-  coach.stage(speaker(host, data), coach.pages(joined(line, report_text(data))), function() end)
+  host.run({ "debrief" }, function(goodbye)
+    if goodbye.error then
+      host.notify(goodbye.error, vim.log.levels.WARN)
+    end
+    local line = goodbye.line or (data.persona and data.persona.line)
+    coach.stage(speaker(host, data), coach.pages(joined(line, report_text(data))), function() end)
+  end, host.progress)
 end
 
 -- runs fn once the moment comes, never earlier than ms after the gate was made
@@ -97,21 +103,59 @@ function M.advance(host, passed, ms)
   open_next(host, wait)
 end
 
--- each review that left a question is asked from memory first, the recap only comes after
+-- the coach reads an answer while the next question is typed, the last one shows its wait
+local function answer_back(host, entry, given, is_last, on_back)
+  host.run({ "recall", entry.id, "--answer=" .. (given.answer or "") }, function(data)
+    if data.error then
+      host.notify(data.error, vim.log.levels.WARN)
+    end
+    given.feedback = data.feedback
+    on_back()
+  end, is_last and host.progress or nil)
+end
+
+-- each review that left a question is asked from memory first, the recap only comes once the
+-- coach has answered every one
 local function recall(host, questions, on_done)
+  if #questions == 0 then
+    return on_done("")
+  end
   local answers = {}
+  local waiting = #questions
+  local function on_back()
+    waiting = waiting - 1
+    if waiting == 0 then
+      on_done(arena.recall_text(answers, host.messages))
+    end
+  end
   local function ask(index)
     local entry = questions[index]
     if not entry then
-      return on_done(arena.recall_text(answers, host.messages))
+      return
     end
     local question = coach_actions.wrap(entry.question, math.min(72, vim.o.columns - 10))
     ui.ask(question, { title = entry.title, prompt = host.messages.recall_prompt }, function(answer)
-      table.insert(answers, { title = entry.title, question = entry.question, answer = answer })
+      local given = { title = entry.title, question = entry.question, answer = answer }
+      table.insert(answers, given)
+      answer_back(host, entry, given, index == #questions, on_back)
       ask(index + 1)
     end)
   end
   ask(1)
+end
+
+-- calls on_done once every one of the runs has answered, with their answers in the same order
+local function all(host, runs, on_done)
+  local answers, waiting = {}, #runs
+  for index, args in ipairs(runs) do
+    host.run(args, function(data)
+      answers[index] = data
+      waiting = waiting - 1
+      if waiting == 0 then
+        on_done(unpack(answers))
+      end
+    end, index == 1 and host.progress or nil)
+  end
 end
 
 ---Starts the lesson: the coach greets with today's plan, briefs the next exercise and opens it.
@@ -120,12 +164,18 @@ function M.start(host)
   if coach.on_stage() then
     return
   end
-  host.run({ "today" }, function(today)
+  all(host, { { "greet" }, { "today" } }, function(greet, today)
     if today.error then
       return host.notify(today.error, vim.log.levels.ERROR)
     end
+    -- the queue exists now, so the coach writes her lines for it while the day goes on
+    host.run({ "prepare" }, function(prepared)
+      if prepared.error then
+        host.notify(prepared.error, vim.log.levels.WARN)
+      end
+    end)
     recall(host, arena.recall_questions(today), function(remembered)
-      local greeting = today.persona and today.persona.line
+      local greeting = greet.line or (today.persona and today.persona.line)
       coach.stage(
         speaker(host, today),
         coach.pages(joined(greeting, remembered, report_text(today))),

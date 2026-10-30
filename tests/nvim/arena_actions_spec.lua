@@ -105,6 +105,20 @@ describe("back-to-basics arena actions", function()
       assert.truthy(text:find("› (no answer)", 1, true))
     end)
 
+    it("writes Malenia's feedback under each answer", function()
+      local text = arena.recall_text({
+        {
+          title = "Closures",
+          question = "Why?",
+          answer = "It keeps its scope",
+          feedback = "True. The scope stays, not a copy.",
+        },
+      }, messages)
+      assert.truthy(
+        text:find("› It keeps its scope\n\nTrue. The scope stays, not a copy.", 1, true)
+      )
+    end)
+
     it("writes nothing when there was nothing to ask", function()
       assert.are.equal("", arena.recall_text({}, messages))
     end)

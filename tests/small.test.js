@@ -20,6 +20,10 @@ test("flags and positional args are split", () => {
   });
 });
 
+test("a flag value keeps the = signs it carries", () => {
+  assert.deepEqual(parseArgs(["recall", "node/closures", "--answer=a = b + 1"]).flags, { answer: "a = b + 1" });
+});
+
 test("the node:test report keeps test lines and leaves the solution's logs apart", () => {
   const stdout = ['{"btb":1,"name":"suma","ok":true,"message":null}', "hola Inde", '{"other":1}', ""].join("\n");
   assert.deepEqual(parseNodeTest(stdout), {

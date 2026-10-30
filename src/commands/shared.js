@@ -183,7 +183,7 @@ export function ensureQueue(ctx, day) {
 
 async function ensurePath(ctx, track) {
   if (track.path && !track.path.redrawPending) return;
-  if (!track.path) ctx.log(ctx.paint.yellow(ctx.t.noPlacementYet(track.id)));
+  if (!track.path) ctx.log(ctx.paint.yellow(ctx.t.noPlacementYet(ctx.coach, track.id)));
   await drawPath(ctx, track);
 }
 

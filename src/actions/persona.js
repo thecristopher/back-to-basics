@@ -1,3 +1,4 @@
+import { placeholdersOf } from "../i18n/voiced.js";
 import { duration } from "../utils/text.js";
 
 /** The moments a persona has lines for, in the order a day goes through them. */
@@ -41,8 +42,23 @@ function lineProblems(language, lines) {
   return problems;
 }
 
-// a world is optional, when present it names the franchise and who and what may appear in it
-function worldProblems(world) {
+function isTextList(list) {
+  return Array.isArray(list) && list.length > 0 && list.every(isText);
+}
+
+// lore maps each character of the world, the persona included, to the scenes of their own story
+function loreProblems(lore, known) {
+  if (lore === undefined) return [];
+  if (typeof lore !== "object" || lore === null || Array.isArray(lore)) return ['"world.lore" must map characters to their scenes'];
+  return Object.entries(lore).flatMap(([name, scenes]) => {
+    if (!known.includes(name)) return [`"world.lore" names ${name}, who is not in the world`];
+    return isTextList(scenes) ? [] : [`"world.lore.${name}" must list scenes`];
+  });
+}
+
+// a world is optional, when present it names the franchise, who and what may appear in it and the
+// scenes of each character's story an exercise can be set in
+function worldProblems(world, name) {
   if (world === undefined) return [];
   const problems = [];
   if (!isText(world?.franchise)) problems.push('"world.franchise" must be a non empty string');
@@ -50,7 +66,23 @@ function worldProblems(world) {
     const list = world?.[key];
     if (list !== undefined && !(Array.isArray(list) && list.every(isText))) problems.push(`"world.${key}" must list names`);
   }
+  const supporting = Array.isArray(world?.supporting) ? world.supporting : [];
+  problems.push(...loreProblems(world?.lore, [name, ...supporting]));
   return problems;
+}
+
+function textProblems(language, key, text) {
+  const allowed = placeholdersOf(key);
+  if (!allowed) return [`"texts.${language}.${key}" is not a text a persona can voice`];
+  if (!isText(text)) return [`"texts.${language}.${key}" must be a non empty string`];
+  const unknown = [...text.matchAll(/\{(\w+)\}/g)].map((match) => match[1]).filter((name) => !allowed.includes(name));
+  return unknown.length > 0 ? [`"texts.${language}.${key}" uses unknown placeholders: ${unknown.join(", ")}`] : [];
+}
+
+// texts are optional, the CLI and the editor say them in the persona's voice instead of their own
+function textsProblems(texts) {
+  if (texts === undefined) return [];
+  return Object.entries(texts ?? {}).flatMap(([language, byKey]) => Object.entries(byKey ?? {}).flatMap(([key, text]) => textProblems(language, key, text)));
 }
 
 /**
@@ -70,7 +102,9 @@ export function isPersonaName(name) {
 export function personaProblems(persona) {
   const problems = ["name", "voice"].filter((key) => !isText(persona?.[key])).map((key) => `"${key}" must be a non empty string`);
   if (persona?.portrait !== undefined && !isText(persona.portrait)) problems.push('"portrait" must be a file name when present');
-  problems.push(...worldProblems(persona?.world));
+  if (persona?.partner !== undefined && typeof persona.partner !== "boolean") problems.push('"partner" must be true or false when present');
+  problems.push(...worldProblems(persona?.world, persona?.name));
+  problems.push(...textsProblems(persona?.texts));
   const languages = Object.keys(persona?.lines ?? {});
   if (languages.length === 0) problems.push('"lines" must have at least one language');
   for (const language of languages) problems.push(...lineProblems(language, persona.lines[language]));
@@ -150,6 +184,15 @@ function submitMoment(data) {
   if (data.levelUp) return "level_up";
   if (data.day) return "debrief";
   return data.outcome === "clean" ? "passed_clean" : "passed_struggled";
+}
+
+/**
+ * The name the CLI gives whoever forges, draws and reviews: the coach's first name, Claude when there is none.
+ * @param {{ name: string } | null} persona
+ * @returns {string}
+ */
+export function coachName(persona) {
+  return persona?.name.trim().split(/\s+/)[0] || "Claude";
 }
 
 const OPENS = new Set(["next", "start", "placement", "redo"]);

@@ -24,7 +24,7 @@ async function forgeProbe(ctx, track, difficulty) {
  * @returns {string[]}
  */
 export function renderStart(ctx, track) {
-  if (!track.path) return [ctx.paint.yellow(ctx.t.pathMissing(track.id))];
+  if (!track.path) return [ctx.paint.yellow(ctx.t.pathMissing(ctx.coach, track.id))];
   const start = track.path.levels.find((level) => level.level === track.path.startLevel);
   return [
     ctx.paint.bold(ctx.t.startsAt(track.title, start.level, start.title)),
@@ -53,7 +53,7 @@ export async function nextPlacement(ctx) {
   const status = statusOf(ctx);
   if (status.forgeDifficulty) {
     status.next = await forgeProbe(ctx, track, status.forgeDifficulty);
-    if (!status.next) return failure(ctx.t.forgeEmpty);
+    if (!status.next) return failure(ctx.t.forgeEmpty(ctx.coach));
   }
   if (!status.next) {
     await finish(ctx, track);
@@ -117,6 +117,6 @@ export async function placement(ctx, [query], flags) {
   const fresh = flags.restart || !running;
   if (fresh) begin(ctx, track);
   const report = await nextPlacement(ctx);
-  if (fresh && !report.data.error) report.text.unshift(ctx.t.placementIntro(track.title), "");
+  if (fresh && !report.data.error) report.text.unshift(ctx.t.placementIntro(ctx.coach, track.title), "");
   return report;
 }

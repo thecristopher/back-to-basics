@@ -4,17 +4,56 @@ describe("back-to-basics actions", function()
   describe("settings", function()
     it("puts a relative workspace under the root", function()
       local settings = actions.settings({ language = "en", workspace = "dojo" }, "/home/inde/btb")
-      assert.are.same({ language = "en", workspace = "/home/inde/btb/dojo" }, settings)
+      assert.are.same({
+        language = "en",
+        workspace = "/home/inde/btb/dojo",
+        data_dir = "/home/inde/btb/.btb",
+      }, settings)
     end)
 
     it("keeps an absolute workspace and defaults to Spanish", function()
       local settings = actions.settings({ workspace = "/tmp/claire" }, "/home/inde/btb")
-      assert.are.same({ language = "es", workspace = "/tmp/claire" }, settings)
+      assert.are.same(
+        { language = "es", workspace = "/tmp/claire", data_dir = "/home/inde/btb/.btb" },
+        settings
+      )
     end)
 
     it("works without a config file", function()
       assert.are.equal("/r/workspace", actions.settings(nil, "/r").workspace)
     end)
+
+    it("finds the data folder where the config puts it", function()
+      assert.are.equal("/tmp/ada", actions.settings({ dataDir = "/tmp/ada" }, "/r").data_dir)
+    end)
+  end)
+
+  describe("voiced", function()
+    local messages =
+      { working_next = "Preparando tu ejercicio…", trial_passed = "✓ %d/%d pasan." }
+
+    it("lets Claire say the plugin's strings in her voice", function()
+      local voiced = actions.voiced(messages, { working_next = "Te preparo el siguiente…" })
+      assert.are.equal("Te preparo el siguiente…", voiced.working_next)
+      assert.are.equal("Preparando tu ejercicio…", messages.working_next)
+    end)
+
+    it("never lets Ada break a format or add a string the plugin lacks", function()
+      local voiced = actions.voiced(messages, { trial_passed = "Pasó", escape = "Por la ventana" })
+      assert.are.equal("✓ %d/%d pasan.", voiced.trial_passed)
+      assert.is_nil(voiced.escape)
+    end)
+
+    it("keeps the plugin's strings when the coach has no texts", function()
+      assert.are.same(messages, actions.voiced(messages, nil))
+    end)
+  end)
+
+  it("looks for Malenia's file among the created personas first", function()
+    assert.are.same(
+      { "/r/.btb/personas/malenia.json", "/r/personas/malenia.json" },
+      actions.persona_files("/r", "/r/.btb", "malenia")
+    )
   end)
 
   it("speaks the btb language and falls back to English", function()

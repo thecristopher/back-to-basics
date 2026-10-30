@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import { test } from "node:test";
-import { chooseLine, fillLine, linesFor, MOMENTS, momentOf, personaProblems, pickLine } from "../src/actions/persona.js";
+import { chooseLine, coachName, fillLine, linesFor, MOMENTS, momentOf, personaProblems, pickLine } from "../src/actions/persona.js";
 import { personaPrompt } from "../src/actions/prompts/persona.js";
 import { buildReviewPrompt } from "../src/actions/prompts/review.js";
 
@@ -32,11 +32,49 @@ test("a world without its franchise or with a bad supporting list is refused", (
 });
 
 test("the bundled personas each carry their own world", async () => {
-  for (const name of ["claire", "malenia"]) {
+  for (const name of ["claire", "malenia", "ada"]) {
     const persona = JSON.parse(await readFile(new URL(`../personas/${name}.json`, import.meta.url), "utf8"));
     assert.deepEqual(personaProblems(persona), []);
     assert.ok(persona.world.supporting.length >= 10);
+    for (const name of [persona.name, ...persona.world.supporting]) assert.ok(persona.world.lore[name]?.length > 0, `${name} has a story`);
   }
+});
+
+test("lore maps each character to their own scenes", () => {
+  const world = { franchise: "Resident Evil", supporting: ["Leon"], lore: { "Claire Redfield": ["her motorcycle"], Leon: ["the attache case"] } };
+  assert.deepEqual(personaProblems({ ...claire, world }), []);
+});
+
+test("a lore that is a plain list is refused", () => {
+  const world = { franchise: "Elden Ring", lore: ["runes"] };
+  assert.deepEqual(personaProblems({ ...claire, world }), ['"world.lore" must map characters to their scenes']);
+});
+
+test("lore for someone outside the world, or with no scenes, is refused", () => {
+  const world = { franchise: "Resident Evil", supporting: ["Leon"], lore: { Radahn: ["the festival"], Leon: [] } };
+  assert.deepEqual(personaProblems({ ...claire, world }), ['"world.lore" names Radahn, who is not in the world', '"world.lore.Leon" must list scenes']);
+});
+
+test("the CLI calls the coach by her first name, and Claude when there is none", () => {
+  assert.equal(coachName({ name: "Claire Redfield" }), "Claire");
+  assert.equal(coachName({ name: "Malenia" }), "Malenia");
+  assert.equal(coachName(null), "Claude");
+});
+
+test("Ada comes bundled, voicing the CLI and the editor in both languages", async () => {
+  const ada = JSON.parse(await readFile(new URL("../personas/ada.json", import.meta.url), "utf8"));
+  assert.deepEqual(personaProblems(ada), []);
+  assert.ok(ada.world.supporting.includes("Claire Redfield"));
+  assert.ok(ada.texts.es.goNext.includes("btb next"));
+  assert.ok(ada.texts.en.stage_start.includes("<CR>"));
+});
+
+test("a text the tool does not have, or a placeholder it does not fill, is refused", () => {
+  const texts = { es: { escape: "Por la ventana", skipped: "Vuelve el {date} a las {hour}" } };
+  assert.deepEqual(personaProblems({ ...claire, texts }), [
+    '"texts.es.escape" is not a text a persona can voice',
+    '"texts.es.skipped" uses unknown placeholders: hour',
+  ]);
 });
 
 test("a persona missing a moment names the one missing", () => {
@@ -108,7 +146,7 @@ test("errors and reports with no moment keep the persona quiet", () => {
 });
 
 test("every bundled persona holds", async () => {
-  for (const name of ["claire", "malenia"]) {
+  for (const name of ["claire", "malenia", "ada"]) {
     const persona = JSON.parse(await readFile(new URL(`../personas/${name}.json`, import.meta.url), "utf8"));
     assert.deepEqual(personaProblems(persona), [], name);
   }

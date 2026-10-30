@@ -43,9 +43,9 @@ function queueItem(ctx, day, entry, spare) {
   return { id: entry, track: exercise.track, title: exercise.title, done: day.done.includes(entry), review: day.reviews.includes(entry), slot: false };
 }
 
-function queueLine({ t, paint }, item, isNext) {
+function queueLine({ t, paint, coach }, item, isNext) {
   const mark = item.done ? paint.green("✓") : isNext ? paint.yellow("→") : " ";
-  if (item.slot) return `  ${mark} [${item.track}] ${paint.dim(t.slotTitle)}`;
+  if (item.slot) return `  ${mark} [${item.track}] ${paint.dim(t.slotTitle(coach))}`;
   const tag = paint.dim(`(${item.review ? t.tagReview : t.tagNew})`);
   return `  ${mark} [${item.track}] ${item.title}  ${tag}`;
 }
@@ -87,7 +87,7 @@ function renderToday(ctx, data) {
   const lines = [`${paint.bold(t.todayHeader(data.today))}   ${t.streak(data.streak)}   ${t.xpToday(data.xp, data.goal)}`];
   if (data.placement === "running") return [...lines, t.placementPending];
   lines.push(...renderRecap(ctx, data.recap));
-  if (data.undrawn.length > 0) lines.push(paint.yellow(t.firstTime(data.undrawn[0])));
+  if (data.undrawn.length > 0) lines.push(paint.yellow(t.firstTime(ctx.coach, data.undrawn[0])));
   lines.push(...data.locked.map((track) => paint.dim(t.trackLocked(track.title, track.lock))));
   const next = data.queue.find((item) => !item.done);
   lines.push(...data.queue.map((item) => queueLine(ctx, item, item === next)));
@@ -131,7 +131,7 @@ function renderStatus(ctx, data) {
   for (const track of data.tracks) {
     lines.push("", paint.bold(track.title));
     if (track.locked) lines.push(paint.dim(`  ${t.trackLocked(track.title, track.locked)}`));
-    else if (!track.drawn) lines.push(paint.yellow(`  ${t.pathMissing(track.id)}`));
+    else if (!track.drawn) lines.push(paint.yellow(`  ${t.pathMissing(ctx.coach, track.id)}`));
     lines.push(...track.levels.map((level) => levelLine(ctx, level, level.level === track.current)));
   }
   return lines;
@@ -218,7 +218,7 @@ export async function list(ctx) {
     placement: exercise.placement,
     state: exerciseState(ctx.state.exercises[exercise.id], ctx.today),
   }));
-  if (items.length === 0) return { data: { exercises: [] }, text: [ctx.t.nothingForged] };
+  if (items.length === 0) return { data: { exercises: [] }, text: [ctx.t.nothingForged(ctx.coach)] };
   const lines = [ctx.paint.dim(ctx.t.legend)];
   let heading = "";
   for (const item of items) {

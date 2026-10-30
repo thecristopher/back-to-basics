@@ -37,7 +37,21 @@ function exercises() {
   const count = Number(prompt.match(/^Write (\d+)/m)?.[1] ?? 2);
   const drafts = nextSlugs(count).map(example);
   if (process.env.FAKE_CLAUDE_BROKEN) drafts[0].reference = drafts[0].starter;
+  // a coach with a voice is asked for her lines about each exercise
+  if (prompt.includes('"moments"')) for (const draft of drafts) draft.moments = moments(draft.title);
   return { exercises: drafts };
+}
+
+function moments(title = prompt.match(/^Exercise: (.+)$/m)?.[1]) {
+  return {
+    ready: `${title}: lee bien, Inde.`,
+    failed: `${title} se resiste.`,
+    failed_again: `${title} otra vez, quedan {hints} pistas.`,
+    hint: `Una pista para ${title}.`,
+    skip: `${title} vuelve mañana.`,
+    passed_clean: `${title} cayó limpio, Inde. +{xp} XP para la cita.`,
+    passed_struggled: `${title} te dio pelea, pero es tuyo.`,
+  };
 }
 
 function fix() {
@@ -78,11 +92,14 @@ function persona() {
   return { name: "Melina", voice: "Calm and kind, she guides without carrying you.", lines: { es: lines } };
 }
 
-const answers = { exercises, fix, path, profile, persona };
+const answers = { exercises, fix, path, profile, persona, moments: () => moments() };
 const MARKDOWN = {
   review: "## Calificación\nCorrección 9/10, Inde estaría orgullosa.\n",
   lesson: "# Closures\nUna función recuerda dónde nació, como Claire recuerda Raccoon City.\n",
   brief: "Inde, hoy toca algo bonito. Lee bien y escríbelo tú.\n",
+  recall: "Casi, Inde: la función recuerda su scope, no una copia.\n",
+  greet: "Hola, Inde. Ayer peleaste bonito, hoy seguimos.\n",
+  debrief: "Cerramos el día, Inde. Mañana más.\n",
 };
 if (MARKDOWN[task]) process.stdout.write(MARKDOWN[task]);
 else process.stdout.write(JSON.stringify(answers[task]()));

@@ -14,6 +14,10 @@ Práctica
   skip [id]             lo dejas por hoy y regresa mañana
   reveal [id]           la solución de referencia, solo después de resolver o saltar
   review [id]           Claude califica tu solución, solo después de resolver. --again para otra
+  greet                 tu coach te saluda con lo de ayer y lo de hoy. --again para otro
+  debrief               tu coach cierra el día con cómo te fue en cada ejercicio
+  prepare               deja listo el día de tu coach: su saludo y sus líneas de cada ejercicio
+  recall <id>           tu coach comenta lo que recordaste de la pregunta de su lección. --answer="..."
 
 Camino
   placement [pista]     examen de ubicación: Claude te mide y traza tu camino. --restart para repetirlo
@@ -56,13 +60,13 @@ Coach
   yourFile: "Tu archivo",
   whenReady: "Cuando esté listo: btb submit",
 
-  forging: (count, title) => `Claude está forjando ${count === 1 ? "un ejercicio" : `${count} ejercicios`} de ${title} a tu medida, y los pone a prueba...`,
-  forgeFixing: (title) => `"${title}" no pasó la prueba, Claude lo está corrigiendo...`,
-  forgeEmpty: "Claude no logró forjar un ejercicio válido esta vez. Intenta de nuevo en un momento.",
+  forging: (who, count, title) => `${who} está forjando ${count === 1 ? "un ejercicio" : `${count} ejercicios`} de ${title} a tu medida, y los pone a prueba...`,
+  forgeFixing: (who, title) => `"${title}" no pasó la prueba, ${who} lo está corrigiendo...`,
+  forgeEmpty: (who) => `${who} no logró forjar un ejercicio válido esta vez. Intenta de nuevo en un momento.`,
   forged: (count) => `${count} ${count === 1 ? "ejercicio listo" : "ejercicios listos"} para cuando los abras:`,
   installing: (name, dir) => `Instalando lo que necesita ${name} en ${dir}, solo esta vez...`,
-  drawing: (title) => `Claude está trazando tu camino en ${title}...`,
-  noPlacementYet: (track) => `Aún no hay camino en ${track}. Claude traza uno desde el nivel más básico; btb placement ${track} lo ajusta a tu nivel real.`,
+  drawing: (who, title) => `${who} está trazando tu camino en ${title}...`,
+  noPlacementYet: (who, track) => `Aún no hay camino en ${track}. ${who} traza uno desde el nivel más básico; btb placement ${track} lo ajusta a tu nivel real.`,
 
   passed: (passed, total, title) => `✓ ${passed}/${total} tests pasan. ${title}, resuelto.`,
   clean: "Limpio",
@@ -70,7 +74,7 @@ Coach
   timeTaken: (time, minutes, within) => `${time} ${within ? `(dentro de ${minutes} min)` : `(meta: ${minutes} min)`}`,
   mastered: "★ Dominado. Ya no vuelve a repaso.",
   nextReviewOn: (date) => `Próximo repaso: ${date}`,
-  levelUp: (level) => `Nivel ${level} superado. Claude ajusta lo que sigue con lo que acabas de mostrar.`,
+  levelUp: (who, level) => `Nivel ${level} superado. ${who} ajusta lo que sigue con lo que acabas de mostrar.`,
   afterPass: "Sigue: btb next   Compara: btb reveal   Revisión: btb review",
   alreadySolved: (passed) => `✓ ${passed} tests pasan. Ya lo resolviste hoy, sin XP extra.`,
 
@@ -96,11 +100,15 @@ Coach
   revealHeader: (title) => `Solución de referencia: ${title}`,
 
   reviewLocked: "La revisión llega después de que pasen los tests.",
-  reviewing: (title) => `Claude está revisando ${title}, puede tardar un minuto...`,
+  preparingGreet: (who) => `${who} está preparando tu día...`,
+  preparingDebrief: (who) => `${who} está repasando cómo te fue hoy...`,
+  recalling: (who, title) => `${who} está leyendo lo que recordaste de "${title}"...`,
+  noRecallQuestion: (id) => `La lección de ${id} no deja ninguna pregunta para recordar.`,
+  reviewing: (who, title) => `${who} está revisando ${title}, puede tardar un minuto...`,
 
-  placementIntro: (title) =>
-    `Examen de ubicación de ${title}. Claude forjó pruebas que suben de dificultad, sin pistas.\n` +
-    "Resuelve lo que puedas. Si una no sale, btb skip y listo: así Claude sabe dónde empezar, no es un juicio.",
+  placementIntro: (who, title) =>
+    `Examen de ubicación de ${title}. ${who} forjó pruebas que suben de dificultad, sin pistas.\n` +
+    `Resuelve lo que puedas. Si una no sale, btb skip y listo: así ${who} sabe dónde empezar, no es un juicio.`,
   placementProgress: (answered, remaining) => `Ubicación: ${answered} respondidas, faltan ${remaining}`,
   placementLeft: (remaining) => `Ubicación: faltan ${remaining}. Sigue con btb next.`,
   placementDone: "Ubicación terminada.",
@@ -112,7 +120,7 @@ Coach
     lock.needed === null
       ? `${title} se abre cuando avances en ${lock.title}. Primero btb placement ${lock.track}.`
       : `${title} se abre al pasar ${lock.needed} niveles de ${lock.title}, llevas ${lock.done}.`,
-  pathMissing: (track) => `Sin camino todavía. btb placement ${track} para que Claude lo trace.`,
+  pathMissing: (who, track) => `Sin camino todavía. btb placement ${track} para que ${who} lo trace.`,
   startsAt: (title, level, levelTitle) => `${title}: empiezas en el nivel ${level}, ${levelTitle}`,
   seePath: (track) => `El camino completo: btb path ${track}`,
   revision: (revision, date) => `trazo ${revision}, ${date}`,
@@ -136,8 +144,8 @@ Coach
   todayHeader: (date) => `Hoy, ${date}`,
   streak: (days) => (days === 1 ? "racha 1 día" : `racha ${days} días`),
   xpToday: (xp, goal) => `XP ${xp}/${goal}`,
-  firstTime: (track) => `¿Primera vez? btb placement ${track}: Claude te mide en unos minutos y traza tu camino.`,
-  slotTitle: "nuevo, Claude lo forja al abrirlo",
+  firstTime: (who, track) => `¿Primera vez? btb placement ${track}: ${who} te mide en unos minutos y traza tu camino.`,
+  slotTitle: (who) => `nuevo, ${who} lo forja al abrirlo`,
   goNext: "Siguiente: btb next",
   allDone: (xp, goal) => `¡Terminaste lo de hoy! ${xp}/${goal} XP.`,
   summarySolved: (solved, clean, struggled) => `Resueltos: ${solved} (${clean} limpios, ${struggled} con batalla)`,
@@ -163,8 +171,9 @@ Coach
   by: (date) => `para ${date}`,
   projected: (date) => `(proyección ${date})`,
   legend: "★ dominado   ↻ toca repaso   ✓ resuelto   ~ empezado   · nuevo",
-  nothingForged: "Aún no hay ejercicios. btb next y Claude forja el primero.",
+  nothingForged: (who) => `Aún no hay ejercicios. btb next y ${who} forja el primero.`,
 
+  summoning: (character) => `Claude está invocando a ${character} como tu coach de hoy, solo esta vez...`,
   unknownPersona: (name) => `No hay ninguna persona "${name}". Corre btb persona list.`,
   personasHeader: "Coaches",
   personaHowTo: 'Elige uno con "persona" en btb.config.json, o redacta uno con btb persona new <nombre> --from="..."',
@@ -181,9 +190,11 @@ Coach
   hasReview: "revisión",
   lessonsHowTo: "Lee una con btb lesson <id>, su revisión con btb review <id>, resuélvela otra vez con btb redo <id>",
   briefing: (name, title) => `${name} te está preparando "${title}"...`,
-  writingLesson: (title) => `Claude está escribiendo la lección de "${title}"...`,
+  writingLesson: (who, title) => `${who} está escribiendo la lección de "${title}"...`,
   lessonsComplete: "Todos los ejercicios ya tienen su lección.",
   lessonsWritten: (count) => `${count} ${count === 1 ? "lección escrita" : "lecciones escritas"}:`,
+  writingMoments: (who, title) => `${who} está escribiendo lo que te va a decir en "${title}"...`,
+  momentsWritten: (who, count) => `${count} ${count === 1 ? "ejercicio" : "ejercicios"} donde ${who} ya habla de lo que estás peleando:`,
   redoNeedsId: "¿Cuál? btb redo <id>, están en btb lessons.",
   redoLocked: "Primero resuélvelo o sáltalo, el redo es para regresar.",
   redoHeader: (title) => `Redo: ${title}. Tu primera solución se queda donde estaba.`,

@@ -32,11 +32,13 @@ M.defaults = {
   advance_ms = 1500,
   -- how long the pass notice with the XP and the coach's comment stays on screen
   notice_ms = 7000,
-  -- forge the next new exercise in the background, so next never waits on Claude
+  -- forge the next new exercise in the background, so next never waits on Claude, and have the
+  -- coach of the day write her greeting as Neovim starts
   forge_ahead = true,
   -- false turns completion off in solution buffers, AI suggestions included
   completion = false,
-  -- the coach's name, or a function that picks one each time; nil uses "persona" in btb.config.json
+  -- the coach's name, or a function that picks one each time; nil uses "persona" in btb.config.json.
+  -- A character with no persona yet comes as { id, character, franchise } and btb summons them once
   persona = nil,
   coach = { enabled = true, speed = 12, toast_ms = 4500 },
   -- fun(buf, win, persona) that draws the coach's portrait on the stage
@@ -106,7 +108,7 @@ local function run(args, on_done, on_progress)
   if task then
     on_progress, on_done = tracked(task, on_done)
   end
-  local name = coach_actions.persona_name(opts.persona)
+  local choice = coach_actions.persona_choice(opts.persona)
   local answered = on_done
   on_done = function(data)
     if opts.winbar then
@@ -114,7 +116,7 @@ local function run(args, on_done, on_progress)
     end
     answered(data)
   end
-  cli.run(opts, coach_actions.with_persona(args, name), on_done, on_progress)
+  cli.run(opts, coach_actions.with_persona(args, choice), on_done, on_progress)
 end
 
 local function progress(line)
@@ -586,20 +588,60 @@ local function set_autocmds()
   })
 end
 
-local function read_config(root)
-  local file = vim.env.BTB_CONFIG or (root .. "/btb.config.json")
+local function read_json(file)
   local ok, lines = pcall(vim.fn.readfile, file)
   if not ok then
     return nil
   end
-  local decoded_ok, config = pcall(vim.json.decode, table.concat(lines, "\n"))
-  return decoded_ok and config or nil
+  local decoded_ok, decoded = pcall(vim.json.decode, table.concat(lines, "\n"))
+  return decoded_ok and decoded or nil
+end
+
+local function read_config(root)
+  return read_json(vim.env.BTB_CONFIG or (root .. "/btb.config.json"))
 end
 
 ---The options setup() settled on, for :checkhealth.
 ---@return table
 function M.options()
   return opts
+end
+
+-- the persona's texts in the learner's language, read once per persona. A coach still being
+-- summoned has no file yet, so a miss is looked up again next time
+local texts_by_persona = {}
+
+local function persona_texts(settings, name)
+  if not name or name == "" then
+    return nil
+  end
+  if texts_by_persona[name] == nil then
+    for _, file in ipairs(actions.persona_files(opts.root, settings.data_dir, name)) do
+      local persona = read_json(file)
+      if persona then
+        texts_by_persona[name] = (persona.texts or {})[settings.language] or {}
+        break
+      end
+    end
+  end
+  return texts_by_persona[name]
+end
+
+-- the coach of the moment says the plugin's strings in her voice, so they follow her as she changes
+local function voiced_messages(settings)
+  local base = actions.messages(settings.language)
+  local cache = {}
+  return setmetatable({}, {
+    __index = function(_, key)
+      local name = coach_actions.persona_name(opts.persona) or ""
+      local texts = persona_texts(settings, name)
+      if not texts then
+        return base[key]
+      end
+      cache[name] = cache[name] or actions.voiced(base, texts)
+      return cache[name][key]
+    end,
+  })
 end
 
 ---Sets up the :Btb command, the keymaps, the coach and submit on save.
@@ -609,7 +651,7 @@ function M.setup(user_opts)
   opts.on_save = winbar_actions.save_mode(user_opts)
   local settings = actions.settings(read_config(opts.root), opts.root)
   opts.workspace = opts.workspace or settings.workspace
-  opts.messages = actions.messages(settings.language)
+  opts.messages = voiced_messages(settings)
   host.messages = opts.messages
   coach.setup(opts.coach, opts.messages, { portrait = opts.portrait, sound = opts.sound })
   winbar.setup(opts.messages, opts.keys)
@@ -624,6 +666,9 @@ function M.setup(user_opts)
   })
   set_keys()
   set_autocmds()
+  if opts.forge_ahead then
+    run({ "prepare" }, quietly(function() end))
+  end
 end
 
 return M

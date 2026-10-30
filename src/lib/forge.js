@@ -2,6 +2,7 @@ import { mkdir, writeFile } from "node:fs/promises";
 import { extname, join } from "node:path";
 import { summarizeAptitude } from "../actions/aptitude.js";
 import { castFor, franchiseOf } from "../actions/cast.js";
+import { withMoments } from "../actions/moments.js";
 import { withoutEmDashes } from "../actions/json.js";
 import { exercisePrompt, fixPrompt } from "../actions/prompts/exercise.js";
 import { describeRun } from "../actions/report.js";
@@ -42,7 +43,7 @@ async function settle(ctx, profile, files, draft) {
     const problems = await problemsOf(ctx, profile, files, current);
     if (problems.length === 0) return current;
     if (attempt === ctx.config.forgeRetries) break;
-    ctx.log(ctx.paint.dim(ctx.t.forgeFixing(current.title ?? "?")));
+    ctx.log(ctx.paint.dim(ctx.t.forgeFixing(ctx.coach, current.title ?? "?")));
     current = unwrap(await askJson(ctx.config.claude, fixPrompt({ draft: current, problems, files, profile })));
   }
   return null;
@@ -64,6 +65,7 @@ async function saveExercise(ctx, track, draft, meta) {
     language: meta.language,
     files: meta.files,
     franchise: meta.franchise,
+    moments: withMoments(undefined, meta.persona, draft.moments),
     // a timestamp keeps forge order without touching progress, so forging can run beside practice
     seq: Date.now(),
     forgedAt: ctx.today,
@@ -110,10 +112,17 @@ export async function forgeExercises(ctx, { track, purpose, level, count, diffic
     cast: castFor(ctx.persona, ctx.config.cast),
     example: await loadExample(ctx.config, profile.id, track.example),
   });
-  ctx.log(ctx.paint.dim(ctx.t.forging(count, track.title)));
+  ctx.log(ctx.paint.dim(ctx.t.forging(ctx.coach, count, track.title)));
   const answer = await askJson(ctx.config.claude, prompt);
   const drafts = (answer.exercises ?? []).slice(0, count);
-  const meta = { level: level?.level ?? 0, placement: purpose === "placement", language: profile.id, franchise, files: { solution: files.solutionFile, test: files.testFile } };
+  const meta = {
+    level: level?.level ?? 0,
+    placement: purpose === "placement",
+    language: profile.id,
+    franchise,
+    persona: ctx.persona?.id ?? null,
+    files: { solution: files.solutionFile, test: files.testFile },
+  };
   const saved = [];
   for (const [index, draft] of drafts.entries()) {
     const settled = await settle(ctx, profile, files, draft);

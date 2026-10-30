@@ -12,10 +12,13 @@ const FAKE_CLAUDE = new URL("./fixtures/fake-claude.js", import.meta.url).pathna
 let sandbox;
 let env;
 let solved;
+let firstPass;
+let forgeLog;
 
 async function btb(args) {
   try {
-    const { stdout } = await run(process.execPath, [BIN, ...args, "--json"], { env });
+    const { stdout, stderr } = await run(process.execPath, [BIN, ...args, "--json"], { env });
+    forgeLog = stderr;
     return JSON.parse(stdout);
   } catch (error) {
     if (error.stdout) return JSON.parse(error.stdout);
@@ -43,7 +46,7 @@ before(async () => {
   delete env.NODE_TEST_CONTEXT;
   solved = await btb(["placement", "node"]);
   await copyFile(referenceOf(solved.id), solved.path);
-  await btb(["submit"]);
+  firstPass = await btb(["submit"]);
 });
 
 after(async () => {
@@ -63,6 +66,30 @@ test("Claire briefs the lesson once and keeps it for next time", async () => {
   assert.equal(first.cached, false);
   assert.equal(second.cached, true);
   assert.equal(first.persona.name, "Claire Redfield");
+});
+
+test("Claire forges the exercise, not Claude", async () => {
+  await btb(["forge", "node", "--count=1"]);
+  assert.match(forgeLog, /Claire está forjando un ejercicio de/);
+});
+
+test("passing an exercise has Claire talk about that exercise", async () => {
+  assert.equal(firstPass.persona.moment, "passed_clean");
+  assert.equal(firstPass.persona.line, `${solved.title} cayó limpio, Inde. +${firstPass.xp} XP para la cita.`);
+});
+
+test("Claire answers what Inde remembered of the lesson's question", async () => {
+  const answer = await btb(["recall", solved.id, "--answer=un Map deja llaves que no son texto"]);
+  assert.equal(answer.answer, "un Map deja llaves que no son texto");
+  assert.match(answer.question, /\?/);
+  assert.match(answer.feedback, /Casi, Inde/);
+  assert.match(forgeLog, /Claire está leyendo lo que recordaste/);
+});
+
+test("a recall with no answer still gets the coach's feedback", async () => {
+  const answer = await btb(["recall", solved.id]);
+  assert.equal(answer.answer, "");
+  assert.ok(answer.feedback.length > 0);
 });
 
 test("with no coach the brief is the lesson itself", async () => {
@@ -130,4 +157,65 @@ test("forge --lessons writes the lessons an older exercise is missing", async ()
   const written = await btb(["forge", "--lessons"]);
   assert.deepEqual(written.lessons, [solved.id]);
   assert.match(await readFile(lessonFile, "utf8"), /^# Closures/);
+});
+
+test("forge --lessons gives Claire her lines on an exercise forged without them", async () => {
+  const metaFile = join(sandbox, "data/exercises", solved.id, "exercise.json");
+  const { moments, ...meta } = JSON.parse(await readFile(metaFile, "utf8"));
+  assert.ok(moments.claire, "forged with Claire, it came with her lines");
+  await writeFile(metaFile, JSON.stringify(meta));
+  const written = await btb(["forge", "--lessons"]);
+  assert.deepEqual(written.moments, [solved.id]);
+  assert.match(JSON.parse(await readFile(metaFile, "utf8")).moments.claire.passed_clean, /cayó limpio/);
+});
+
+test("Claire greets Inde once a day and keeps the greeting", async () => {
+  const first = await btb(["greet"]);
+  const again = await btb(["greet"]);
+  assert.match(first.line, /Hola, Inde/);
+  assert.equal(first.cached, false);
+  assert.equal(again.cached, true);
+  assert.equal(first.persona.name, "Claire Redfield");
+});
+
+test("Claire says goodbye from the day's rounds", async () => {
+  const goodbye = await btb(["debrief"]);
+  assert.match(goodbye.line, /Cerramos el día/);
+  assert.match(forgeLog, /Claire está repasando cómo te fue hoy/);
+});
+
+test("Malenia prepares her own day with her lines for what is queued", async () => {
+  await btb(["today"]);
+  const prepared = await btb(["prepare", "--persona=malenia"]);
+  assert.match(prepared.greeting, /Hola, Inde/);
+  for (const id of prepared.moments) {
+    const meta = JSON.parse(await readFile(join(sandbox, "data/exercises", id, "exercise.json"), "utf8"));
+    assert.ok(meta.moments.malenia.ready);
+  }
+});
+
+test("with no coach there is no greeting to write", async () => {
+  assert.equal((await btb(["greet", "--persona=none"])).line, null);
+});
+
+test("Claire says the CLI's own texts in her voice", async () => {
+  const shown = await run(process.execPath, [BIN, "today"], { env });
+  assert.match(shown.stdout, /Casco puesto/);
+});
+
+test("on Leon's day Claude summons him once, borrowing Claire's world, with no romance", async () => {
+  const leonDay = ["greet", "--persona=leon-s-kennedy", "--character=Leon S. Kennedy", "--franchise=Resident Evil"];
+  const first = await btb(leonDay);
+  assert.match(forgeLog, /Claude está invocando a Leon S\. Kennedy/);
+  assert.equal(first.persona.name, "Leon S. Kennedy");
+  const leon = JSON.parse(await readFile(join(sandbox, "data/personas/leon-s-kennedy.json"), "utf8"));
+  assert.equal(leon.partner, undefined);
+  assert.ok(leon.world.supporting.includes("Claire Redfield"));
+  assert.ok(!leon.world.supporting.includes("Leon S. Kennedy"));
+  await btb(leonDay);
+  assert.doesNotMatch(forgeLog, /invocando/);
+});
+
+test("a coach with no persona and no character to summon is refused", async () => {
+  assert.match((await btb(["greet", "--persona=hunk"])).error, /hunk/);
 });
