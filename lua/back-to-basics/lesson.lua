@@ -2,6 +2,8 @@
 local actions = require("back-to-basics.actions")
 local arena = require("back-to-basics.actions.arena")
 local coach = require("back-to-basics.coach")
+local coach_actions = require("back-to-basics.actions.coach")
+local ui = require("back-to-basics.ui")
 
 local M = {}
 
@@ -103,8 +105,8 @@ local function recall(host, questions, on_done)
     if not entry then
       return on_done(arena.recall_text(answers, host.messages))
     end
-    local prompt = host.messages.recall_prompt:format(entry.title, entry.question)
-    vim.ui.input({ prompt = prompt }, function(answer)
+    local question = coach_actions.wrap(entry.question, math.min(72, vim.o.columns - 10))
+    ui.ask(question, { title = entry.title, prompt = host.messages.recall_prompt }, function(answer)
       table.insert(answers, { title = entry.title, question = entry.question, answer = answer })
       ask(index + 1)
     end)
