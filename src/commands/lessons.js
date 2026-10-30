@@ -61,7 +61,7 @@ function entryLine({ t, paint }, entry) {
 export async function lessons(ctx, [query]) {
   if (query && !trackOf(ctx, query)) return failure(ctx.t.unknownTrack(query));
   const entries = ctx.catalog.exercises.filter((exercise) => !query || exercise.track === query).map((exercise) => libraryEntry(ctx, exercise));
-  if (entries.length === 0) return { data: { lessons: [] }, text: [ctx.t.nothingForged] };
+  if (entries.length === 0) return { data: { lessons: [] }, text: [ctx.t.nothingForged(ctx.coach)] };
   const lines = [ctx.paint.dim(ctx.t.legend)];
   let heading = "";
   for (const entry of entries) {

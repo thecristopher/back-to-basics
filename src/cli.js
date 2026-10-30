@@ -1,18 +1,20 @@
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { parseArgs } from "./actions/args.js";
+import { debrief, greet, prepare } from "./commands/day.js";
 import { brief, lesson, lessons, redo } from "./commands/lessons.js";
 import { forge, learn, path, setup } from "./commands/path.js";
 import { persona } from "./commands/persona.js";
 import { placement } from "./commands/placement.js";
 import { hint, next, reveal, skip, start, submit, test } from "./commands/practice.js";
 import { list, plan, status, today } from "./commands/progress.js";
-import { review } from "./commands/review.js";
+import { recall, review } from "./commands/review.js";
 import { leaveLockedTracks } from "./commands/shared.js";
 import { loadCatalog } from "./lib/catalog.js";
 import { loadConfig } from "./lib/config.js";
 import { createT } from "./lib/i18n.js";
-import { loadPersona, speak } from "./lib/personas.js";
+import { coachName } from "./actions/persona.js";
+import { loadPersona, speak, summonPersona } from "./lib/personas.js";
 import { loadState, saveState } from "./lib/state.js";
 import { loadTracks } from "./lib/tracks.js";
 import { toDay } from "./utils/dates.js";
@@ -20,15 +22,21 @@ import { createPaint } from "./utils/text.js";
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
 
-const COMMANDS = { today, next, start, submit, test, hint, skip, reveal, review, placement, path, forge, learn, setup, status, plan, list, persona, lesson, lessons, brief, redo };
+const COMMANDS = { today, next, start, submit, test, hint, skip, reveal, review, placement, path, forge, learn, setup, status, plan, list, persona, lesson, lessons, brief, redo, recall, greet, debrief, prepare };
 
-// --persona=none silences the one in btb.config.json for a single run
+// --persona=none silences the one in btb.config.json for a single run, and --character with
+// --franchise summons a character who has no persona yet as the coach of the day
 async function personaFor(config, t, flags) {
   const name = typeof flags.persona === "string" ? flags.persona : config.persona;
   if (!name || name === "none") return null;
   const found = await loadPersona(config, name);
-  if (!found) throw new Error(t.unknownPersona(name));
-  return found;
+  if (found) return found;
+  if (typeof flags.character === "string" && typeof flags.franchise === "string") {
+    const log = (character) => process.stderr.write(`${t.summoning(character)}\n`);
+    const summoned = await summonPersona(config, { id: name, character: flags.character, franchise: flags.franchise }, log);
+    if (summoned) return summoned;
+  }
+  throw new Error(t.unknownPersona(name));
 }
 
 async function createContext(config, t, flags) {
@@ -36,9 +44,10 @@ async function createContext(config, t, flags) {
   const color = !json && process.stdout.isTTY && !process.env.NO_COLOR;
   // progress goes to stderr, so --json output on stdout stays parseable
   const log = (text) => process.stderr.write(`${text}\n`);
+  const persona = await personaFor(config, t, flags);
   return {
     config,
-    t,
+    t: createT(config.language, persona),
     json,
     paint: createPaint(color),
     log,
@@ -47,12 +56,13 @@ async function createContext(config, t, flags) {
     profiles: {},
     catalog: await loadCatalog(config, await loadTracks(config)),
     state: await loadState(config.statePath),
-    persona: await personaFor(config, t, flags),
+    persona,
+    coach: coachName(persona),
   };
 }
 
 // these run in the background from editors while the learner keeps practicing, so they never write progress
-const READS_PROGRESS_ONLY = new Set(["forge", "brief", "lesson", "lessons", "test"]);
+const READS_PROGRESS_ONLY = new Set(["forge", "brief", "lesson", "lessons", "test", "recall", "greet", "debrief", "prepare"]);
 
 function print(report, json) {
   // the text rides along so an editor can show exactly what the terminal would

@@ -186,7 +186,7 @@ function renderPass(ctx, exercise, data, placement) {
     paint.green(t.passed(data.passed, data.total, exercise.title)),
     `${outcome}   +${data.xp} XP   ${timeLine(t, data)}`,
     data.mastered ? paint.green(t.mastered) : t.nextReviewOn(data.dueAt),
-    ...(data.levelUp ? [paint.green(t.levelUp(data.levelUp))] : []),
+    ...(data.levelUp ? [paint.green(t.levelUp(ctx.coach, data.levelUp))] : []),
     ...renderPlacementNote(ctx, placement),
     ...after,
   ];

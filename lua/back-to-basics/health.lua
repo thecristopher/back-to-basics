@@ -1,4 +1,5 @@
 -- :checkhealth back-to-basics, everything the plugin needs before the first lesson.
+local actions = require("back-to-basics.actions")
 local coach_actions = require("back-to-basics.actions.coach")
 
 local M = {}
@@ -25,14 +26,8 @@ local function read_json(file)
 end
 
 local function persona_file(root, config, name)
-  local data_dir = config.dataDir or ".btb"
-  if data_dir:sub(1, 1) ~= "/" then
-    data_dir = root .. "/" .. data_dir
-  end
-  for _, file in ipairs({
-    data_dir .. "/personas/" .. name .. ".json",
-    root .. "/personas/" .. name .. ".json",
-  }) do
+  local data_dir = actions.settings(config, root).data_dir
+  for _, file in ipairs(actions.persona_files(root, data_dir, name)) do
     if vim.fn.filereadable(file) == 1 then
       return file
     end
@@ -41,11 +36,17 @@ local function persona_file(root, config, name)
 end
 
 local function check_persona(root, config, opts)
-  local name = coach_actions.persona_name(opts.persona) or config.persona
+  local choice = coach_actions.persona_choice(opts.persona)
+  local name = choice and choice.id or config.persona
   if not name or name == "" or name == "none" then
     return vim.health.info("no coach chosen, set persona in setup() or in btb.config.json")
   end
   local file = persona_file(root, config, name)
+  if not file and choice and choice.character then
+    return vim.health.info(
+      choice.character .. " is summoned as the coach on the first btb run of the day"
+    )
+  end
   if not file then
     return vim.health.error("persona " .. name .. " not found", "run btb persona list")
   end

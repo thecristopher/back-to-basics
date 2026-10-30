@@ -2,6 +2,7 @@
   "name": "Malenia",
   "portrait": "malenia.jpg",
   "voice": "Malenia, Blade of Miquella, training a warrior she respects. Calm, relentless and economical with words, she never raises her voice and never accepts less than your best. She treats every exercise as a duel and every failure as a lesson in patience. Old fashioned, solemn phrasing, the odd mention of the Haligtree, scarlet rot or her brother Miquella, never more than one per answer.",
+  "partner": true,
   "world": {
     "franchise": "Elden Ring",
     "supporting": [
@@ -31,7 +32,72 @@
       "lágrimas",
       "sitios de gracia",
       "la prótesis de Malenia"
-    ]
+    ],
+    "lore": {
+      "Malenia": [
+        "the Haligtree and Elphael: the Haligtree Secret Medallion halves and the long climb to her",
+        "her Waterfowl Dance: three flurries, and her lifesteal that heals her on every hit",
+        "scarlet rot: a buildup meter that procs when it fills and drains over time",
+        "her battle against Radahn in Caelid and the scarlet aeonia bloom"
+      ],
+      "Melina": [
+        "turning runes into levels at Sites of Grace, and the runes lost on death and recovered from the bloodstain only once",
+        "the Flasks of Crimson and Cerulean Tears: a fixed number of charges split between HP and FP, refilled at a Site of Grace",
+        "the journey to the Forge of the Giants to burn the Erdtree"
+      ],
+      "Ranni": [
+        "as Renna, giving out the Spirit Calling Bell: spirit ashes cost FP and only rise near a Rebirth Monument",
+        "her questline: the Carian Study Hall, the Fingerslayer Blade and the Dark Moon Greatsword",
+        "the dolls and servants of Ranni's Rise: Blaidd, Iji and Seluvis, each with their errand"
+      ],
+      "Blaidd": [
+        "hunting Darriwil in the Forlorn Hound Evergaol: evergaols are sealed fights one at a time",
+        "Ranni's shadow: his loyalty and the oath he was made to keep"
+      ],
+      "Rennala": [
+        "rebirth at the Academy of Raya Lucaria: Larval Tears to spend redistributing strength, dexterity, intelligence, faith and arcane",
+        "the glintstone keys, sorcery memory slots and the FP each spell costs"
+      ],
+      "Radahn": [
+        "the Radahn Festival: the summons gathered on the beach and who goes down first",
+        "Starscourge holding the stars still, and his little horse Leonard"
+      ],
+      "Godrick": [
+        "grafting limbs in Stormveil Castle: who he grafted and what he took",
+        "the Great Rune he guards, and the shardbearers who hold the others"
+      ],
+      "Morgott": [
+        "the Omen King defending Leyndell: the Erdtree's golden thorns and the gates of the capital",
+        "his hidden name and the Great Rune he never claimed for himself"
+      ],
+      "Margit": [
+        "the Fell Omen at Stormveil's gate: boss attempts, deaths counted and the runes held when the run ends",
+        "Margit's Shackle: an item that pins him for a few seconds, twice"
+      ],
+      "Maliketh": [
+        "the Black Blade guarding Destined Death in Crumbling Farum Azula",
+        "the Beast Clergyman trading Deathroots for incantations"
+      ],
+      "Rykard": [
+        "Volcano Manor: Tanith's assassination requests, one target at a time",
+        "the serpent that devours everything to become a god"
+      ],
+      "Alexander": [
+        "Iron Fist Alexander stuck in the ground: pulling him out and the warrior remains inside his jar",
+        "his challenge to every great warrior, from the festival to the Crumbling Farum Azula"
+      ],
+      "Patches": [
+        "the merchant who betrays you: trapped chests, his shop prices and the bell bearing he hides"
+      ],
+      "Millicent": [
+        "carrying scarlet rot: the Unalloyed Gold Needle that holds it back and Gowry's real plan",
+        "her sisters who want what she has, and the choice to help her or not"
+      ],
+      "Torrent": [
+        "the spectral steed: the whistle, the double jump and the spiritsprings",
+        "map fragments, the Lift of Dectus and the Grand Lift of Rold, routes between regions"
+      ]
+    }
   },
   "lines": {
     "es": {
@@ -159,6 +225,88 @@
         "The day ends. Tomorrow, the blade again.",
         "Enough. You honored your training today."
       ]
+    }
+  },
+  "texts": {
+    "es": {
+      "todayHeader": "Hoy, {date}. La espada espera.",
+      "recapHeader": "Duelos que ya libraste",
+      "goNext": "Al siguiente duelo: btb next",
+      "moreHint": "¿Aún te queda aliento? btb next --more",
+      "whenReady": "Cuando estés listo, golpea: btb submit",
+      "afterPass": "Siguiente duelo: btb next   Compara: btb reveal   Mi juicio: btb review",
+      "afterFail": "Corrige y vuelve a golpear con btb submit. Pista: btb hint   Retirada: btb skip",
+      "afterFailNoHints": "Corrige y vuelve a golpear con btb submit. Retirada: btb skip",
+      "timedOut": "✗ Más de {seconds}s sin terminar. Un bucle que no conoce el final.",
+      "noMoreHints": "No quedan más pistas. Si hoy no cae, btb skip y mañana vuelves.",
+      "skipped": "Te retiras por hoy. El duelo te espera el {date}.",
+      "mastered": "★ Dominado. Este rival ya no volverá.",
+      "nextReviewOn": "Volverás a enfrentarlo el {date}",
+      "revealLocked": "La solución se revela tras vencerlo o retirarte. Primero pelea.",
+      "reviewLocked": "Juzgo tu espada cuando pasen los tests.",
+      "finishFirst": "Un duelo a la vez. Termínalo o retírate con btb skip.",
+      "allDone": "El día termina. {xp}/{goal} XP. Descansa bajo el Haligtree.",
+      "summaryAllClean": "Nada que corregir. Ni una herida hoy.",
+      "still_opening": "Paciencia. El duelo aún se prepara.",
+      "working": "Un momento…",
+      "working_today": "Contemplo tu día…",
+      "working_next": "Preparo a tu siguiente rival…",
+      "working_placement": "Preparo la prueba de tu espada…",
+      "working_submit": "Los tests juzgan tu golpe…",
+      "working_test": "Ensayas el golpe, nada se registra…",
+      "working_brief": "Preparo la lección…",
+      "working_review": "Examino tu espada…",
+      "working_recall": "Escucho lo que recuerdas…",
+      "working_greet": "Trazo el camino de hoy…",
+      "working_debrief": "Repaso el combate de hoy…",
+      "working_lessons": "Abro tus pergaminos…",
+      "ready": "Listo",
+      "coach_on": "He vuelto.",
+      "coach_off": "Guardaré silencio.",
+      "stage_start": "Cuando estés listo, <CR> y comienza el duelo.",
+      "recall_prompt": "Lo que recuerdas",
+      "recall_header": "Lo que recordaste del combate",
+      "recall_blank": "(silencio)"
+    },
+    "en": {
+      "todayHeader": "Today, {date}. The blade awaits.",
+      "recapHeader": "Duels you have already fought",
+      "goNext": "To the next duel: btb next",
+      "moreHint": "Breath left in you? btb next --more",
+      "whenReady": "When you are ready, strike: btb submit",
+      "afterPass": "Next duel: btb next   Compare: btb reveal   My judgment: btb review",
+      "afterFail": "Correct it and strike again with btb submit. Hint: btb hint   Retreat: btb skip",
+      "afterFailNoHints": "Correct it and strike again with btb submit. Retreat: btb skip",
+      "timedOut": "✗ Over {seconds}s without an end. A loop that knows no ending.",
+      "noMoreHints": "No hints remain. If it will not fall today, btb skip and return tomorrow.",
+      "skipped": "You withdraw for today. The duel awaits you on {date}.",
+      "mastered": "★ Mastered. This rival will not return.",
+      "nextReviewOn": "You face it again on {date}",
+      "revealLocked": "The solution is revealed once you win or withdraw. Fight first.",
+      "reviewLocked": "I judge your blade once the tests pass.",
+      "finishFirst": "One duel at a time. Finish it or withdraw with btb skip.",
+      "allDone": "The day ends. {xp}/{goal} XP. Rest beneath the Haligtree.",
+      "summaryAllClean": "Nothing to correct. Not a single wound today.",
+      "still_opening": "Patience. The duel is still being prepared.",
+      "working": "A moment…",
+      "working_today": "I look upon your day…",
+      "working_next": "I prepare your next rival…",
+      "working_placement": "I prepare the trial of your blade…",
+      "working_submit": "The tests judge your strike…",
+      "working_test": "You rehearse the strike, nothing is recorded…",
+      "working_brief": "I prepare the lesson…",
+      "working_review": "I examine your blade…",
+      "working_recall": "I listen to what you remember…",
+      "working_greet": "I draw today's road…",
+      "working_debrief": "I go over today's battle…",
+      "working_lessons": "I open your scrolls…",
+      "ready": "Ready",
+      "coach_on": "I have returned.",
+      "coach_off": "I will keep my silence.",
+      "stage_start": "When you are ready, <CR> and the duel begins.",
+      "recall_prompt": "What you remember",
+      "recall_header": "What you remembered of the battle",
+      "recall_blank": "(silence)"
     }
   }
 }

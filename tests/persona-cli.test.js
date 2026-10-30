@@ -74,7 +74,7 @@ test("an unknown persona is an error", async () => {
 
 test("persona list shows the bundled coaches and the one in use", async () => {
   const listed = await btb(["persona", "list"]);
-  assert.deepEqual(listed.personas, ["claire", "malenia"]);
+  assert.deepEqual(listed.personas, ["ada", "claire", "malenia"]);
   assert.equal(listed.current, "claire");
 });
 

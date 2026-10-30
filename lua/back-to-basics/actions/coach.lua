@@ -1,27 +1,49 @@
 -- Pure pieces of the coach: which persona speaks, how the text wraps and pages, and where the panels sit.
 local M = {}
 
----The persona to ask btb for: a name, or what a function returns at the time of asking.
----@param persona string|fun(): string|nil|nil
----@return string|nil
-function M.persona_name(persona)
+---@alias BtbCoach { id: string, character?: string, franchise?: string }
+
+---The coach to ask btb for, from a name, a character to summon, or what a function returns at the
+---time of asking. A character comes as { id, character, franchise } so btb can summon them.
+---@param persona string|BtbCoach|fun(): string|BtbCoach|nil|nil
+---@return BtbCoach|nil
+function M.persona_choice(persona)
   if type(persona) == "function" then
-    local ok, name = pcall(persona)
-    return ok and name or nil
+    local ok, picked = pcall(persona)
+    persona = ok and picked or nil
   end
-  return persona
+  if type(persona) == "string" and persona ~= "" then
+    return { id = persona }
+  end
+  if type(persona) == "table" and type(persona.id) == "string" and persona.id ~= "" then
+    return persona
+  end
+  return nil
 end
 
----Adds --persona to btb's arguments when a persona is chosen.
+---The name of the persona to ask btb for.
+---@param persona string|BtbCoach|fun(): string|BtbCoach|nil|nil
+---@return string|nil
+function M.persona_name(persona)
+  local choice = M.persona_choice(persona)
+  return choice and choice.id or nil
+end
+
+---Adds the coach to btb's arguments: --persona, plus the character and franchise to summon them by.
 ---@param args string[]
----@param name string|nil
+---@param choice BtbCoach|string|nil
 ---@return string[]
-function M.with_persona(args, name)
-  if not name or name == "" then
+function M.with_persona(args, choice)
+  choice = M.persona_choice(choice)
+  if not choice then
     return args
   end
   local copy = vim.list_extend({}, args)
-  table.insert(copy, "--persona=" .. name)
+  table.insert(copy, "--persona=" .. choice.id)
+  if choice.character and choice.franchise then
+    table.insert(copy, "--character=" .. choice.character)
+    table.insert(copy, "--franchise=" .. choice.franchise)
+  end
   return copy
 end
 

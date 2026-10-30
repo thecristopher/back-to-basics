@@ -1,9 +1,20 @@
 import { castLines } from "../cast.js";
 import { aptitudeLines, languageName } from "./evidence.js";
+import { MOMENTS_SCHEMA, momentGuide } from "./moments.js";
 
-const SCHEMA =
-  '{"exercises":[{"slug":"kebab-case-name","title":"...","difficulty":1,"minutes":10,' +
-  '"concepts":["..."],"hints":["..."],"readme":"markdown statement with examples","lesson":"markdown lesson on the concept","starter":"code","reference":"code","test":"code"}]}';
+const DRAFT =
+  '"slug":"kebab-case-name","title":"...","difficulty":1,"minutes":10,' +
+  '"concepts":["..."],"hints":["..."],"readme":"markdown statement with examples","lesson":"markdown lesson on the concept","starter":"code","reference":"code","test":"code"';
+
+// a coach with a voice also writes what she says at each moment of this exercise
+function schemaFor(cast) {
+  return `{"exercises":[{${DRAFT}${cast?.coach ? `,"moments":${MOMENTS_SCHEMA}` : ""}}]}`;
+}
+
+function momentLines(cast) {
+  if (!cast?.coach) return [];
+  return [`- "moments" is what ${cast.coach} tells the learner while they fight this exercise. ${cast.voice ?? ""}`.trimEnd(), ...momentGuide(cast.coach)];
+}
 
 /**
  * True for the last 2 levels of a drawn path, the ones that must feel like a real onsite interview.
@@ -113,12 +124,13 @@ export function exercisePrompt(input) {
     "- The lesson teaches the concept behind the exercise so the learner can come back to it later: what it is, a small example on a different problem, the typical mistakes and one question to think about. It never solves the exercise.",
     theme ? `- Test data and examples: ${theme}` : null,
     ...castLines(input.cast ?? null),
+    ...momentLines(input.cast),
     "",
     "One exercise at the quality bar, as JSON. Keep its spirit in any language:",
     JSON.stringify(example),
     "",
     "Respond with JSON only, no prose and no code fences, in this shape:",
-    SCHEMA,
+    schemaFor(input.cast),
   ]
     .filter((line) => line !== null)
     .join("\n");

@@ -11,8 +11,9 @@ export function parseArgs(argv) {
       positional.push(arg);
       continue;
     }
-    const [name, value] = arg.slice(2).split("=");
-    flags[name] = value ?? true;
+    // only the first = splits, so a value can carry its own
+    const [name, ...value] = arg.slice(2).split("=");
+    flags[name] = value.length > 0 ? value.join("=") : true;
   }
   const [command = "today", ...args] = positional;
   return { command, args, flags };

@@ -3,7 +3,9 @@ import { currentLevel, levelProgress } from "../actions/levels.js";
 import { drawPath, proveProfile, writeProfile } from "../lib/architect.js";
 import { exerciseFiles } from "../lib/catalog.js";
 import { forgeExercises } from "../lib/forge.js";
-import { writeMissingLesson } from "../lib/library.js";
+import { franchiseOf } from "../actions/cast.js";
+import { lacksMoments } from "../actions/moments.js";
+import { writeMissingLesson, writeMissingMoments } from "../lib/library.js";
 import { loadProfile, saveProfile } from "../lib/profiles.js";
 import { saveTrack } from "../lib/tracks.js";
 import { toSlug } from "../utils/slug.js";
@@ -17,7 +19,7 @@ function levelLine({ t, paint }, level, isCurrent) {
 
 function renderTrackPath(ctx, track) {
   const { t, paint } = ctx;
-  if (!track.path) return [paint.bold(track.title), paint.yellow(`  ${t.pathMissing(track.id)}`)];
+  if (!track.path) return [paint.bold(track.title), paint.yellow(`  ${t.pathMissing(ctx.coach, track.id)}`)];
   const progress = levelProgress(track, ctx.catalog.exercises, ctx.state.exercises);
   const current = currentLevel(progress);
   return [
@@ -92,16 +94,34 @@ export async function setup(ctx, [query], flags) {
   return { data: { ok: true }, text: [ctx.paint.green(ctx.t.setupDone(profile.name)), ctx.paint.dim(ctx.t.learnReady(track.id))] };
 }
 
+// an exercise from another franchise keeps the lines of its own coach
+function needsMoments(ctx, exercise) {
+  if (!ctx.persona || !lacksMoments(exercise, ctx.persona.id)) return false;
+  return !exercise.franchise || exercise.franchise === franchiseOf(ctx.persona);
+}
+
+function listed(ctx, heading, exercises) {
+  if (exercises.length === 0) return [];
+  return [ctx.paint.green(heading), ...exercises.map((exercise) => `  ${exercise.id}  ${exercise.title}`)];
+}
+
 async function forgeLessons(ctx, query) {
-  const missing = ctx.catalog.exercises.filter((exercise) => (!query || exercise.track === query) && !existsSync(exerciseFiles(exercise).lesson));
+  const inTrack = ctx.catalog.exercises.filter((exercise) => !query || exercise.track === query);
+  const missing = inTrack.filter((exercise) => !existsSync(exerciseFiles(exercise).lesson));
   for (const exercise of missing) await writeMissingLesson(ctx, exercise);
-  const text = missing.length === 0 ? [ctx.t.lessonsComplete] : [ctx.paint.green(ctx.t.lessonsWritten(missing.length)), ...missing.map((exercise) => `  ${exercise.id}  ${exercise.title}`)];
-  return { data: { lessons: missing.map((exercise) => exercise.id) }, text };
+  const voiced = [];
+  for (const exercise of inTrack.filter((exercise) => needsMoments(ctx, exercise))) {
+    if (await writeMissingMoments(ctx, exercise)) voiced.push(exercise);
+  }
+  const lines = [...listed(ctx, ctx.t.lessonsWritten(missing.length), missing), ...listed(ctx, ctx.t.momentsWritten(ctx.coach, voiced.length), voiced)];
+  const text = lines.length === 0 ? [ctx.t.lessonsComplete] : lines;
+  return { data: { lessons: missing.map((exercise) => exercise.id), moments: voiced.map((exercise) => exercise.id) }, text };
 }
 
 /**
  * `btb forge [track] [--count=n]`: has Claude forge exercises ahead of time for the current level, so next opens instantly.
- * --lessons writes the lesson of every exercise forged before lessons existed.
+ * --lessons writes the lesson of every exercise forged before lessons existed, and the coach's
+ * lines for every exercise of her franchise that has none from her yet.
  */
 export async function forge(ctx, [query], flags) {
   if (query && !trackOf(ctx, query)) return failure(ctx.t.unknownTrack(query));
@@ -116,6 +136,6 @@ export async function forge(ctx, [query], flags) {
     const level = levelNow(ctx, track);
     if (level) forged.push(...(await forgeExercises(ctx, { track, purpose: "practice", level, count })));
   }
-  const text = forged.length === 0 ? [ctx.t.forgeEmpty] : [ctx.paint.green(ctx.t.forged(forged.length)), ...forged.map((exercise) => `  ${exercise.id}  ${exercise.title}`)];
+  const text = forged.length === 0 ? [ctx.t.forgeEmpty(ctx.coach)] : [ctx.paint.green(ctx.t.forged(forged.length)), ...forged.map((exercise) => `  ${exercise.id}  ${exercise.title}`)];
   return { data: { forged: forged.map((exercise) => exercise.id) }, text };
 }

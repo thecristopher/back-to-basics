@@ -30,6 +30,28 @@ describe("coach actions", function()
     assert.are.same({ "today" }, coach.with_persona({ "today" }, nil))
   end)
 
+  it("hands btb Leon's character and franchise so he can be summoned", function()
+    local leon =
+      { id = "leon-s-kennedy", character = "Leon S. Kennedy", franchise = "Resident Evil" }
+    assert.are.same({
+      "today",
+      "--persona=leon-s-kennedy",
+      "--character=Leon S. Kennedy",
+      "--franchise=Resident Evil",
+    }, coach.with_persona({ "today" }, leon))
+    assert.are.equal(
+      "leon-s-kennedy",
+      coach.persona_name(function()
+        return leon
+      end)
+    )
+  end)
+
+  it("ignores a coach with no id", function()
+    assert.is_nil(coach.persona_choice({ character = "Hunk" }))
+    assert.is_nil(coach.persona_choice(""))
+  end)
+
   it("wraps a line on spaces without breaking words", function()
     local lines = coach.wrap("Claire leaves Inde a love note under the door", 16)
     assert.are.same({ "Claire leaves", "Inde a love note", "under the door" }, lines)

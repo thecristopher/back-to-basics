@@ -1,4 +1,7 @@
 import { readFile } from "node:fs/promises";
+import { lessonQuestion } from "../actions/arena.js";
+import { withoutEmDashes } from "../actions/json.js";
+import { recallPrompt } from "../actions/prompts/recall.js";
 import { buildReviewPrompt } from "../actions/prompts/review.js";
 import { exerciseFiles } from "../lib/catalog.js";
 import { ask } from "../lib/claude.js";
@@ -27,7 +30,7 @@ async function askReview(ctx, exercise, record) {
     language: ctx.config.language,
     persona: ctx.persona,
   });
-  ctx.log(ctx.paint.dim(ctx.t.reviewing(exercise.title)));
+  ctx.log(ctx.paint.dim(ctx.t.reviewing(ctx.coach, exercise.title)));
   return (await ask(ctx.config.claude, prompt)).trim();
 }
 
@@ -46,4 +49,22 @@ export async function review(ctx, [query], flags) {
   const answer = saved?.trim() ?? (await askReview(ctx, exercise, record));
   if (!saved) await writeText(file, answer);
   return { data: { id: exercise.id, review: answer, saved: Boolean(saved), file }, text: [answer] };
+}
+
+/**
+ * `btb recall <id> --answer="..."`: the coach answers what you remembered of the question that closes
+ * an exercise's lesson. A blank answer gets the answer back.
+ */
+export async function recall(ctx, [query], flags) {
+  const target = targetExercise(ctx, query);
+  if (target.error) return failure(target.error);
+  const { exercise } = target;
+  const lesson = await readTextIfExists(exerciseFiles(exercise).lesson);
+  const question = lesson ? lessonQuestion(lesson) : null;
+  if (!question) return failure(ctx.t.noRecallQuestion(exercise.id));
+  const answer = typeof flags.answer === "string" ? flags.answer.trim() : "";
+  const prompt = recallPrompt({ title: exercise.title, question, answer, lesson, language: ctx.config.language, persona: ctx.persona });
+  ctx.log(ctx.paint.dim(ctx.t.recalling(ctx.coach, exercise.title)));
+  const feedback = withoutEmDashes((await ask(ctx.config.claude, prompt)).trim());
+  return { data: { id: exercise.id, title: exercise.title, question, answer, feedback }, text: [feedback] };
 }

@@ -15,7 +15,10 @@ M.MESSAGES = {
     working_placement = "Preparando tu evaluación…",
     working_submit = "Corriendo los tests…",
     working_brief = "Tu coach prepara la lección…",
-    working_review = "Claude revisa tu solución…",
+    working_review = "Tu coach revisa tu solución…",
+    working_recall = "Tu coach lee lo que recordaste…",
+    working_greet = "Tu coach prepara tu día…",
+    working_debrief = "Tu coach repasa cómo te fue…",
     working_lessons = "Abriendo tus lecciones…",
     ready = "Listo",
     ahead_forge = "Forjando el siguiente",
@@ -63,7 +66,10 @@ M.MESSAGES = {
     working_placement = "Getting your placement ready…",
     working_submit = "Running the tests…",
     working_brief = "Your coach gets the lesson ready…",
-    working_review = "Claude reviews your solution…",
+    working_review = "Your coach reviews your solution…",
+    working_recall = "Your coach reads what you remembered…",
+    working_greet = "Your coach gets your day ready…",
+    working_debrief = "Your coach goes over how today went…",
     working_lessons = "Opening your lessons…",
     ready = "Ready",
     ahead_forge = "Forging the next one",
@@ -107,6 +113,34 @@ function M.messages(language)
   return M.MESSAGES[language] or M.MESSAGES.en
 end
 
+---The plugin's strings with the ones a persona voices in their place. Only plain strings the
+---plugin already has are taken, so a persona can never break a format.
+---@param messages table<string, string>
+---@param texts table<string, string>|nil the persona's texts in the learner's language
+---@return table<string, string>
+function M.voiced(messages, texts)
+  local merged = vim.tbl_extend("force", {}, messages)
+  for key, text in pairs(texts or {}) do
+    if
+      type(messages[key]) == "string"
+      and type(text) == "string"
+      and not messages[key]:find("%%")
+    then
+      merged[key] = text
+    end
+  end
+  return merged
+end
+
+---Where a persona's file can live, the ones made with btb persona new first.
+---@param root string the back-to-basics folder
+---@param data_dir string
+---@param name string
+---@return string[]
+function M.persona_files(root, data_dir, name)
+  return { data_dir .. "/personas/" .. name .. ".json", root .. "/personas/" .. name .. ".json" }
+end
+
 ---What the progress bar says while a btb command works.
 ---@param messages table<string, string>
 ---@param command string
@@ -118,14 +152,17 @@ end
 ---What the plugin needs from btb.config.json: the language and where solutions live.
 ---@param config table|nil the decoded btb.config.json, nil when there is none
 ---@param root string the back-to-basics folder
----@return { language: string, workspace: string }
+---@return { language: string, workspace: string, data_dir: string }
 function M.settings(config, root)
   config = config or {}
-  local workspace = config.workspace or "workspace"
-  if workspace:sub(1, 1) ~= "/" then
-    workspace = root .. "/" .. workspace
+  local function absolute(path)
+    return path:sub(1, 1) == "/" and path or (root .. "/" .. path)
   end
-  return { language = config.language or "es", workspace = workspace }
+  return {
+    language = config.language or "es",
+    workspace = absolute(config.workspace or "workspace"),
+    data_dir = absolute(config.dataDir or ".btb"),
+  }
 end
 
 ---The btb command line for some arguments, always asking for JSON.

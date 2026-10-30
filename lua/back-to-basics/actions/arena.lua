@@ -92,8 +92,8 @@ function M.recall_questions(today)
   return questions
 end
 
----What you answered from memory, written above the recap so you can hold it against it.
----@param answers { title: string, question: string, answer: string|nil }[]
+---What you answered from memory and what the coach said about it, written above the recap.
+---@param answers { title: string, question: string, answer: string|nil, feedback: string|nil }[]
 ---@param messages table<string, string>
 ---@return string
 function M.recall_text(answers, messages)
@@ -101,7 +101,11 @@ function M.recall_text(answers, messages)
   for _, entry in ipairs(answers) do
     local answer = entry.answer and vim.trim(entry.answer) ~= "" and entry.answer
       or messages.recall_blank
-    table.insert(blocks, ("%s\n%s\n› %s"):format(entry.title, entry.question, answer))
+    local block = ("%s\n%s\n› %s"):format(entry.title, entry.question, answer)
+    if entry.feedback and vim.trim(entry.feedback) ~= "" then
+      block = block .. "\n\n" .. vim.trim(entry.feedback)
+    end
+    table.insert(blocks, block)
   end
   if #blocks == 0 then
     return ""

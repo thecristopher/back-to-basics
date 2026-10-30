@@ -364,7 +364,8 @@ describe("back-to-basics progress", function()
     btb.setup({ keys = false, progress = progress })
     btb.forge_ahead()
     cli.run = real_run
-    assert.are.same({ "today", "forge", "brief" }, asked)
+    -- the coach of the day prepares her greeting as Neovim starts, off the screen too
+    assert.are.same({ "prepare", "today", "forge", "brief" }, asked)
     assert.are.same({}, log)
   end)
 
