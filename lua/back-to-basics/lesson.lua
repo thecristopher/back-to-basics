@@ -1,5 +1,6 @@
 -- The lesson with the coach: the greeting, the briefing of the next exercise, then the fight.
 local actions = require("back-to-basics.actions")
+local arena = require("back-to-basics.actions.arena")
 local coach = require("back-to-basics.coach")
 
 local M = {}
@@ -94,6 +95,23 @@ function M.advance(host, passed, ms)
   open_next(host, wait)
 end
 
+-- each review that left a question is asked from memory first, the recap only comes after
+local function recall(host, questions, on_done)
+  local answers = {}
+  local function ask(index)
+    local entry = questions[index]
+    if not entry then
+      return on_done(arena.recall_text(answers, host.messages))
+    end
+    local prompt = host.messages.recall_prompt:format(entry.title, entry.question)
+    vim.ui.input({ prompt = prompt }, function(answer)
+      table.insert(answers, { title = entry.title, question = entry.question, answer = answer })
+      ask(index + 1)
+    end)
+  end
+  ask(1)
+end
+
 ---Starts the lesson: the coach greets with today's plan, briefs the next exercise and opens it.
 ---@param host BtbHost
 function M.start(host)
@@ -104,16 +122,18 @@ function M.start(host)
     if today.error then
       return host.notify(today.error, vim.log.levels.ERROR)
     end
-    local greeting = today.persona and today.persona.line
-    coach.stage(
-      speaker(host, today),
-      coach.pages(joined(greeting, report_text(today))),
-      function(confirmed)
-        if confirmed then
-          open_next(host)
+    recall(host, arena.recall_questions(today), function(remembered)
+      local greeting = today.persona and today.persona.line
+      coach.stage(
+        speaker(host, today),
+        coach.pages(joined(greeting, remembered, report_text(today))),
+        function(confirmed)
+          if confirmed then
+            open_next(host)
+          end
         end
-      end
-    )
+      )
+    end)
   end, host.progress)
 end
 

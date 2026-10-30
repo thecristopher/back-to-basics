@@ -37,6 +37,18 @@ describe("back-to-basics winbar actions", function()
       assert.truthy(text:find("␣k  s submit", 1, true))
     end)
 
+    it("shows the ghost in green while Inde's redo is still ahead of it", function()
+      local redo = { id = "x", title = "Redo", startedAt = 0, ghostSeconds = 600 }
+      local text = winbar.text(redo, 5 * 60000, messages, false)
+      assert.truthy(text:find("%#DiagnosticOk#󰊠 ghost 10 min", 1, true))
+    end)
+
+    it("turns the ghost amber once it gets away from Claire", function()
+      local redo = { id = "x", title = "Redo", startedAt = 0, ghostSeconds = 600 }
+      local text = winbar.text(redo, 11 * 60000, messages, false)
+      assert.truthy(text:find("%#DiagnosticWarn#󰊠 ghost 10 min", 1, true))
+    end)
+
     it("escapes a percent in a title so the winbar does not break", function()
       local text = winbar.text({ id = "x", title = "100% Claire" }, 0, messages, false)
       assert.truthy(text:find("100%% Claire", 1, true))
@@ -51,6 +63,13 @@ describe("back-to-basics winbar actions", function()
         { title = "Haligtree", level = 3, startedAt = 7, hintsLeft = 2 },
         winbar.fields(data)
       )
+    end)
+
+    it("takes the ghost and the hint price from an opened redo", function()
+      local data = { id = "x", path = "/w/x.js", startedAt = 7, ghostSeconds = 420, hintCost = 3 }
+      local fields = winbar.fields(data)
+      assert.are.equal(420, fields.ghostSeconds)
+      assert.are.equal(3, fields.hintCost)
     end)
 
     it("takes the tests from a run", function()

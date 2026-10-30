@@ -9,12 +9,18 @@ local clock = nil
 
 local EXPRESSION = "%{%v:lua.require'back-to-basics.winbar'.render()%}"
 
+-- a redo keeps its own clock and its ghost, apart from the first solution of the same exercise
+local function key_of(id, redo)
+  return redo and (id .. "#redo") or id
+end
+
 ---Renders the winbar of the window being drawn.
 ---@return string
 function M.render()
   local win = vim.g.statusline_winid or vim.api.nvim_get_current_win()
-  local id = vim.b[vim.api.nvim_win_get_buf(win)].btb_exercise
-  local info = id and infos[id]
+  local buf = vim.api.nvim_win_get_buf(win)
+  local id = vim.b[buf].btb_exercise
+  local info = id and infos[key_of(id, vim.b[buf].btb_redo == true)]
   if not info then
     return ""
   end
@@ -44,7 +50,8 @@ end
 ---@param buf integer
 ---@param id string
 function M.attach(buf, id)
-  infos[id] = infos[id] or { id = id }
+  local key = key_of(id, vim.b[buf].btb_redo == true)
+  infos[key] = infos[key] or { id = id }
   if vim.b[buf].btb_winbar then
     return
   end
@@ -67,6 +74,14 @@ function M.attach(buf, id)
   start_clock()
 end
 
+---What the winbar knows about an exercise, nil before btb said anything about it.
+---@param id string
+---@param redo? boolean the redo's winbar instead of the solution's
+---@return table|nil
+function M.info(id, redo)
+  return infos[key_of(id, redo)]
+end
+
 ---Folds a btb answer into the exercise's winbar.
 ---@param data table a btb --json answer
 function M.update(data)
@@ -74,7 +89,8 @@ function M.update(data)
   if not fields then
     return
   end
-  infos[data.id] = vim.tbl_extend("force", infos[data.id] or { id = data.id }, fields)
+  local key = key_of(data.id, data.redo == true)
+  infos[key] = vim.tbl_extend("force", infos[key] or { id = data.id }, fields)
   vim.cmd("redrawstatus!")
 end
 

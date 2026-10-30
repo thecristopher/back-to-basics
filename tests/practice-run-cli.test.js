@@ -47,6 +47,7 @@ test("Claire's opened exercise carries its clock and the hints left", async () =
   opened = await btb(["next"]);
   assert.equal(typeof opened.startedAt, "number");
   assert.equal(opened.hintsLeft, 0, "no hints during placement");
+  assert.equal(opened.onsite, false, "a placement probe is never an onsite fight");
 });
 
 test("a practice run on the starter fails without counting an attempt", async () => {

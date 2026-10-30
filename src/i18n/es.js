@@ -190,6 +190,8 @@ Coach
   redoHowTo: (id) => `Cuando esté lista: btb submit ${id} --redo`,
   redoNotStarted: (id) => `No hay redo de ${id}. Corre btb redo ${id}.`,
   redoPassed: (passed, total, title) => `✓ ${passed}/${total} tests pasan. ${title}, resuelto otra vez.`,
+  redoGhost: (verdict, time, ghost) =>
+    ({ ahead: `Le ganaste a tu fantasma: ${time} contra ${ghost}.`, behind: `Tu fantasma sigue adelante: ${time} contra ${ghost}.`, tied: `Empate con tu fantasma: ${time}.` })[verdict],
   afterFailRedo: (id) => `Ajusta y corre btb submit ${id} --redo otra vez.`,
   finishFirst: "Primero termina este, o ríndete con btb skip. Después seguimos con el que sigue.",
 };
