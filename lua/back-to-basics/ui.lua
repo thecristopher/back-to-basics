@@ -36,6 +36,81 @@ function M.float(lines, opts)
   return buf, win
 end
 
+---Asks a question in a float with the answer typed in a float right below it. <CR> sends the
+---answer, <Esc> or q back out with nil.
+---@param question string[]
+---@param opts { title: string, prompt: string }
+---@param on_answer fun(answer: string|nil)
+function M.ask(question, opts, on_answer)
+  local width = actions.float_size(question, vim.o.columns, vim.o.lines)
+  local height = math.max(1, math.min(#question, vim.o.lines - 12))
+  local answer_height = 3
+  -- the borders take a row above and below each float
+  local row = math.floor((vim.o.lines - height - answer_height - 4) / 2)
+  local col = math.floor((vim.o.columns - width) / 2)
+
+  local question_buf = vim.api.nvim_create_buf(false, true)
+  vim.api.nvim_buf_set_lines(question_buf, 0, -1, false, question)
+  vim.bo[question_buf].modifiable = false
+  vim.bo[question_buf].bufhidden = "wipe"
+  local question_win = vim.api.nvim_open_win(question_buf, false, {
+    relative = "editor",
+    width = width,
+    height = height,
+    row = row,
+    col = col,
+    style = "minimal",
+    focusable = false,
+    title = " " .. opts.title .. " ",
+    title_pos = "center",
+  })
+
+  local answer_buf = vim.api.nvim_create_buf(false, true)
+  vim.bo[answer_buf].bufhidden = "wipe"
+  local answer_win = vim.api.nvim_open_win(answer_buf, true, {
+    relative = "editor",
+    width = width,
+    height = answer_height,
+    row = row + height + 2,
+    col = col,
+    style = "minimal",
+    title = " " .. opts.prompt .. " ",
+    title_pos = "left",
+  })
+  vim.wo[answer_win].wrap = true
+
+  local finished = false
+  local function finish(answer)
+    if finished then
+      return
+    end
+    finished = true
+    vim.cmd.stopinsert()
+    pcall(vim.api.nvim_win_close, answer_win, true)
+    pcall(vim.api.nvim_win_close, question_win, true)
+    vim.schedule(function()
+      on_answer(answer)
+    end)
+  end
+
+  vim.keymap.set({ "i", "n" }, "<CR>", function()
+    finish(vim.trim(table.concat(vim.api.nvim_buf_get_lines(answer_buf, 0, -1, false), " ")))
+  end, { buffer = answer_buf, nowait = true })
+  for _, key in ipairs({ "q", "<Esc>" }) do
+    vim.keymap.set("n", key, function()
+      finish(nil)
+    end, { buffer = answer_buf, nowait = true })
+  end
+  vim.api.nvim_create_autocmd("WinLeave", {
+    buffer = answer_buf,
+    once = true,
+    callback = function()
+      finish(nil)
+    end,
+  })
+  vim.cmd.startinsert()
+end
+
 local function statement_window()
   for _, win in ipairs(vim.api.nvim_tabpage_list_wins(0)) do
     if vim.w[win].btb_statement then
