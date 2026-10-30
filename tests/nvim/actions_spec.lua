@@ -179,6 +179,11 @@ describe("back-to-basics actions", function()
     }, actions.event_data(data))
   end)
 
+  it("carries the day's summary on the pass that ends Claire's day", function()
+    local day = { solved = 2, clean = 2, skipped = 0, hints = 0, xp = 40, goal = 40 }
+    assert.are.same(day, actions.event_data({ id = "node/anniversary", ok = true, day = day }).day)
+  end)
+
   it("marks a redo in the BtbResult payload so the config can skip the fanfare", function()
     assert.is_true(actions.event_data({ id = "node/date-night", ok = true, redo = true }).redo)
   end)

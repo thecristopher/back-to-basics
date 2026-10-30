@@ -7,6 +7,8 @@ local cli = require("back-to-basics.cli")
 local lesson = require("back-to-basics.lesson")
 local library = require("back-to-basics.library")
 local ui = require("back-to-basics.ui")
+local winbar = require("back-to-basics.winbar")
+local winbar_actions = require("back-to-basics.actions.winbar")
 
 local M = {}
 
@@ -18,7 +20,11 @@ M.defaults = {
   node = "node",
   -- prefix for the keymaps, false for none
   keys = "<leader>k",
-  submit_on_save = true,
+  -- what saving a solution does: "test" tries the tests without counting an attempt, "submit"
+  -- records the round, false does nothing
+  on_save = "test",
+  -- the solution's winbar: title, level, clock, hints left, the last test run and the keys
+  winbar = true,
   -- a pass takes you to the next exercise, and the last one of the day to its summary
   auto_advance = true,
   -- how long the pass gets on screen before the coach takes the stage with what comes next
@@ -97,6 +103,13 @@ local function run(args, on_done, on_progress)
     on_progress, on_done = tracked(task, on_done)
   end
   local name = coach_actions.persona_name(opts.persona)
+  local answered = on_done
+  on_done = function(data)
+    if opts.winbar then
+      winbar.update(data)
+    end
+    answered(data)
+  end
   cli.run(opts, coach_actions.with_persona(args, name), on_done, on_progress)
 end
 
@@ -344,6 +357,42 @@ function M.submit(id, redo)
   run(actions.submit_args(id, redo), submitted(id), progress)
 end
 
+-- a practice run on save says how it went in one line, the explicit one shows the failures in full
+local function tried(quiet)
+  return function(data)
+    if data.error then
+      return notify(data.error, vim.log.levels.ERROR)
+    end
+    if data.ok then
+      return notify(opts.messages.trial_passed:format(data.passed, data.total))
+    end
+    if not quiet then
+      return show(data, "test")
+    end
+    local first = data.failures and data.failures[1]
+    local why = first and first.name or actions.text_lines(data)[1] or ""
+    notify(
+      opts.messages.trial_failed:format(data.passed or 0, data.total or 0, why),
+      vim.log.levels.WARN
+    )
+  end
+end
+
+---Tries the tests on an exercise without counting an attempt, the one in the current buffer by default.
+---@param id? string
+---@param redo? boolean try the redo instead of the solution
+---@param quiet? boolean one line instead of the failures in full, for saves
+function M.test(id, redo, quiet)
+  if not id then
+    id, redo = current_target()
+  end
+  if not id then
+    return notify(opts.messages.not_exercise, vim.log.levels.WARN)
+  end
+  local args = redo and { "test", id, "--redo" } or { "test", id }
+  run(args, tried(quiet), not quiet and progress or nil)
+end
+
 -- commands that act on an exercise get the current buffer's one, so btb never guesses
 local function on_exercise(name, filetype)
   return function(args)
@@ -382,6 +431,9 @@ M.subcommands = {
   submit = function(args)
     M.submit(args[1], args[2] == "--redo")
   end,
+  test = function(args)
+    M.test(args[1], args[2] == "--redo")
+  end,
   hint = on_exercise("hint"),
   skip = on_exercise("skip"),
   reveal = on_exercise("reveal"),
@@ -416,6 +468,7 @@ local KEYS = {
   { "n", "next", "Next exercise" },
   { "N", "next --more", "One more new exercise" },
   { "s", "submit", "Submit the exercise" },
+  { "T", "test", "Try the tests without counting an attempt" },
   { "h", "hint", "Next hint" },
   { "x", "skip", "Skip for today" },
   { "v", "reveal", "Reveal the reference" },
@@ -462,6 +515,9 @@ local function set_autocmds()
         vim.b[event.buf].btb_exercise = id
         vim.b[event.buf].btb_redo = redo
         M.focus(event.buf)
+        if opts.winbar then
+          winbar.attach(event.buf, id)
+        end
       end
     end,
   })
@@ -469,8 +525,11 @@ local function set_autocmds()
     group = group,
     callback = function(event)
       local id = vim.b[event.buf].btb_exercise
-      if opts.submit_on_save and id then
-        M.submit(id, vim.b[event.buf].btb_redo == true)
+      local redo = vim.b[event.buf].btb_redo == true
+      if id and opts.on_save == "submit" then
+        M.submit(id, redo)
+      elseif id and opts.on_save == "test" then
+        M.test(id, redo, true)
       end
     end,
   })
@@ -496,11 +555,13 @@ end
 ---@param user_opts? table overrides for M.defaults
 function M.setup(user_opts)
   opts = vim.tbl_deep_extend("force", vim.deepcopy(M.defaults), user_opts or {})
+  opts.on_save = winbar_actions.save_mode(user_opts)
   local settings = actions.settings(read_config(opts.root), opts.root)
   opts.workspace = opts.workspace or settings.workspace
   opts.messages = actions.messages(settings.language)
   host.messages = opts.messages
   coach.setup(opts.coach, opts.messages, { portrait = opts.portrait, sound = opts.sound })
+  winbar.setup(opts.messages, opts.keys)
   vim.api.nvim_create_user_command("Btb", function(command)
     dispatch(command.args)
   end, {

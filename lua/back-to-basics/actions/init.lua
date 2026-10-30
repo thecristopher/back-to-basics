@@ -32,8 +32,15 @@ M.MESSAGES = {
     library_review = "Ver la revisión de Claude",
     library_reveal = "Ver la referencia",
     library_redo = "Resolverlo otra vez",
+    library_keys = "<CR> coach · l lección · o abrir · s mía · R revisión · v referencia · r otra vez",
     clean = "Limpio",
     struggled = "Con batalla",
+    winbar_level = "nivel %d",
+    winbar_hints = "%d pistas",
+    winbar_keys = "s envía · T prueba · h pista · L lección",
+    working_test = "Probando…",
+    trial_passed = "✓ %d/%d pasan. Envíalo cuando quieras.",
+    trial_failed = "✗ %d/%d pasan · %s",
   },
   en = {
     not_exercise = "This buffer is not a back-to-basics exercise.",
@@ -65,8 +72,15 @@ M.MESSAGES = {
     library_review = "See Claude's review",
     library_reveal = "See the reference",
     library_redo = "Solve it again",
+    library_keys = "<CR> coach · l lesson · o open · s mine · R review · v reference · r redo",
     clean = "Clean",
     struggled = "Hard fought",
+    winbar_level = "level %d",
+    winbar_hints = "%d hints",
+    winbar_keys = "s submit · T test · h hint · L lesson",
+    working_test = "Trying it…",
+    trial_passed = "✓ %d/%d pass. Submit whenever you are ready.",
+    trial_failed = "✗ %d/%d pass · %s",
   },
 }
 
@@ -237,7 +251,7 @@ end
 
 ---Payload of the User BtbResult event, so the rest of the config can react to a submit.
 ---@param data table btb submit --json
----@return { id: string, title: string|nil, ok: boolean, outcome: string|nil, xp: number, level_up: number|nil, mastered: boolean, placement_finished: boolean, redo: boolean }
+---@return { id: string, title: string|nil, ok: boolean, outcome: string|nil, xp: number, level_up: number|nil, mastered: boolean, placement_finished: boolean, redo: boolean, day: table|nil }
 function M.event_data(data)
   local placement = type(data.placement) == "table" and data.placement or {}
   return {
@@ -250,6 +264,8 @@ function M.event_data(data)
     mastered = data.mastered == true,
     placement_finished = placement.finished == true,
     redo = data.redo == true,
+    -- the pass that ends the day carries its summary, so the config can close the day its own way
+    day = data.day,
   }
 end
 

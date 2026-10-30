@@ -260,6 +260,33 @@ export async function submit(ctx, [query], flags = {}) {
   return result.ok ? passed(ctx, exercise, record, result) : failed(ctx, exercise, record, result);
 }
 
+function renderTrial({ t, paint }, data) {
+  if (data.ok) return [paint.green(t.trialPassed(data.passed, data.total)), paint.dim(t.trialAfterPass)];
+  if (data.timedOut) return [paint.red(t.timedOut(data.timeoutSeconds))];
+  if (data.crashed) return [paint.red(t.crashed), ...excerpt(data.stderr, 12)];
+  const lines = [paint.red(t.trialFailed(data.passed, data.total))];
+  for (const test of data.failures) {
+    lines.push(`  ${paint.red("✗")} ${test.name}`, ...excerpt(test.message, 8).map(paint.dim));
+  }
+  if (data.logs.length > 0) lines.push(t.yourConsole, ...excerpt(data.logs.join("\n"), 10));
+  return lines;
+}
+
+/**
+ * `btb test [id]`: runs the tests without counting an attempt, so trying things out costs nothing.
+ * The round, the clock and the schedule stay as they are, only submit records. --redo tests the redo.
+ */
+export async function test(ctx, [query], flags = {}) {
+  const target = targetExercise(ctx, query);
+  if (target.error) return failure(target.error);
+  const { exercise } = target;
+  const solution = flags.redo ? redoPath(ctx.config, exercise) : solutionPath(ctx.config, exercise);
+  if (!existsSync(solution)) return failure(flags.redo ? ctx.t.redoNotStarted(exercise.id) : ctx.t.notStarted(exercise.slug));
+  const result = await testsOf(ctx, exercise, solution);
+  const data = { ...failureData(ctx, exercise, result), ok: result.ok, practice: true };
+  return { code: result.ok ? 0 : 1, data, text: renderTrial(ctx, data) };
+}
+
 /**
  * `btb hint [id]`: reveals the next hint of the round. Each one costs XP, none during placement.
  */

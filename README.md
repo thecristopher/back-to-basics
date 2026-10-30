@@ -37,7 +37,8 @@ btb                       # today's plan
 btb               # the recap of what is due, then the new exercises per track
 btb next          # opens the next one, Claude forges it if it does not exist yet
 # edit workspace/<track>/<exercise>/solution.js (or .jsx, .py) in your editor
-btb submit        # runs the tests
+btb test          # tries the tests, nothing is recorded
+btb submit        # runs the tests and records the round
 btb hint          # stuck? each hint costs XP
 btb skip          # not today: it returns tomorrow and unlocks the reference
 btb reveal        # compare with the reference once solved or skipped
@@ -65,7 +66,8 @@ If the toolchain is missing, `setup` tells you what to install. If the commands 
 | `btb today` | Today's queue, streak and XP. The default. |
 | `btb next [--more]` | Opens the next pending exercise, forging it when needed. `--more` adds one. |
 | `btb start <id>` | Opens a specific exercise (`node/group-by-key` or just `group-by-key`). |
-| `btb submit [id]` | Runs the tests against your solution. |
+| `btb test [id]` | Runs the tests without counting an attempt: the round, the clock and the schedule stay as they are. |
+| `btb submit [id]` | Runs the tests against your solution and records the round. |
 | `btb hint [id]` | Reveals the next hint. None during placement. |
 | `btb skip [id]` | Leaves it for tomorrow and unlocks its reference. |
 | `btb reveal [id]` | Prints the reference solution, once solved or skipped. |
@@ -149,13 +151,14 @@ Pass the persona of the day (a function in `persona`) and each day stays in one 
 
 The screenshots come from [Eldentree](https://github.com/thecristopher/nvim-config), recorded with vhs over a made up world that `node scripts/demo-sandbox.mjs <dir> <persona> <track> <example>` builds: its own config, a drawn path, one forged exercise and the coach's briefing, with the fake Claude from the tests, so no real progress shows up and nothing calls Claude.
 
-`<leader>kb` opens the library: pick a lesson and read it, have the coach walk you through it again, open your solution, see the review or the reference, or solve it again in a redo buffer that saves into `btb submit --redo`.
+`<leader>kb` opens the library (with [snacks.nvim](https://github.com/folke/snacks.nvim) the lesson reads in the preview and every action is one key: Enter the coach, `l` lesson, `o` open, `s` your solution, `R` review, `v` reference, `r` redo): pick a lesson and read it, have the coach walk you through it again, open your solution, see the review or the reference, or solve it again in a redo buffer that saves into `btb submit --redo`.
 
 | Key | Does |
 |---|---|
 | `<leader>kk` | The lesson with the coach |
 | `<leader>kn` / `kN` | Next exercise without the stage / one more new one |
-| `<leader>ks` | Submit (also on every save) |
+| `<leader>ks` | Submit, the round is recorded |
+| `<leader>kT` | Try the tests without counting an attempt (also on every save) |
 | `<leader>kh` / `kx` | Hint / skip for today |
 | `<leader>kv` / `kr` | Reveal the reference / Claude reviews your solution |
 | `<leader>kL` / `kb` | The coach explains this lesson again / the lesson library |
@@ -170,7 +173,8 @@ The screenshots come from [Eldentree](https://github.com/thecristopher/nvim-conf
 | `root` | this repo | The back-to-basics clone. |
 | `node` | `"node"` | Node to run btb with. |
 | `keys` | `"<leader>k"` | Prefix of the keymaps, `false` for none. |
-| `submit_on_save` | `true` | Run the tests on every save of a solution. |
+| `on_save` | `"test"` | What saving a solution does: `"test"` tries the tests without counting an attempt, `"submit"` records the round, `false` nothing. `submit_on_save = true` still means `"submit"`. |
+| `winbar` | `true` | The solution's winbar: title, level, clock, hints left, the last test run and the keys. |
 | `forge_ahead` | `true` | Forge and brief the next new exercise in the background. |
 | `completion` | `false` | `false` turns completion off in solution buffers (sets `b:completion` and `b:copilot_enabled`). |
 | `persona` | `nil` | The coach, a name or a function that returns one each time (to follow a theme, say). `nil` uses `persona` in btb.config.json. |
@@ -184,7 +188,8 @@ Four `User` events let the rest of your config join in:
 vim.api.nvim_create_autocmd("User", {
   pattern = "BtbResult",
   callback = function(event)
-    -- event.data: { id, title, ok, outcome = "clean" | "struggled", xp, level_up, mastered, placement_finished, redo }
+    -- event.data: { id, title, ok, outcome = "clean" | "struggled", xp, level_up, mastered, placement_finished, redo, day }
+    -- day is the day's summary on the pass that ends it: solved, clean, struggled, skipped, failures, hints, xp, goal
     if event.data.ok then
       vim.notify("Solved " .. event.data.id)
     end
