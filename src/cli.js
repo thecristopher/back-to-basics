@@ -5,7 +5,7 @@ import { brief, lesson, lessons, redo } from "./commands/lessons.js";
 import { forge, learn, path, setup } from "./commands/path.js";
 import { persona } from "./commands/persona.js";
 import { placement } from "./commands/placement.js";
-import { hint, next, reveal, skip, start, submit } from "./commands/practice.js";
+import { hint, next, reveal, skip, start, submit, test } from "./commands/practice.js";
 import { list, plan, status, today } from "./commands/progress.js";
 import { review } from "./commands/review.js";
 import { leaveLockedTracks } from "./commands/shared.js";
@@ -20,7 +20,7 @@ import { createPaint } from "./utils/text.js";
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
 
-const COMMANDS = { today, next, start, submit, hint, skip, reveal, review, placement, path, forge, learn, setup, status, plan, list, persona, lesson, lessons, brief, redo };
+const COMMANDS = { today, next, start, submit, test, hint, skip, reveal, review, placement, path, forge, learn, setup, status, plan, list, persona, lesson, lessons, brief, redo };
 
 // --persona=none silences the one in btb.config.json for a single run
 async function personaFor(config, t, flags) {
@@ -52,7 +52,7 @@ async function createContext(config, t, flags) {
 }
 
 // these run in the background from editors while the learner keeps practicing, so they never write progress
-const READS_PROGRESS_ONLY = new Set(["forge", "brief", "lesson", "lessons"]);
+const READS_PROGRESS_ONLY = new Set(["forge", "brief", "lesson", "lessons", "test"]);
 
 function print(report, json) {
   // the text rides along so an editor can show exactly what the terminal would

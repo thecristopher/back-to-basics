@@ -248,6 +248,9 @@ export async function openExercise(ctx, exercise) {
     lesson: existsSync(exerciseFiles(exercise).lesson) ? exerciseFiles(exercise).lesson : null,
     review: Boolean(record.firstSolvedAt),
     placement: isPlacementQuestion(ctx.state, exercise.id),
+    // an editor keeps the clock and the hints in sight while the learner writes
+    startedAt: record.startedAt,
+    hintsLeft: isPlacementQuestion(ctx.state, exercise.id) ? 0 : Math.max(0, exercise.hints.length - record.round.hints),
   };
   return { data, text: renderOpen(ctx, data) };
 }

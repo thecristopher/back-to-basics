@@ -60,6 +60,53 @@ local function choose_action(host, entry)
   end)
 end
 
+local function act(host, entry, key)
+  if library.allows(entry, key) then
+    return handlers(host, entry)[key]()
+  end
+  -- what was asked does not fit this lesson yet, so the choices that do are offered instead
+  choose_action(host, entry)
+end
+
+-- with snacks the lesson reads in the preview and each action is one key away
+local function open_picker(host, lessons)
+  local picker_actions, keys = {}, {}
+  for _, binding in ipairs(library.KEYS) do
+    picker_actions["btb_" .. binding.key] = function(picker, item)
+      picker:close()
+      if item then
+        act(host, item.entry, binding.key)
+      end
+    end
+    keys[binding.lhs] = "btb_" .. binding.key
+  end
+  Snacks.picker({
+    title = host.messages.library_title .. "  " .. host.messages.library_keys,
+    items = vim.tbl_map(function(entry)
+      return { text = library.format(entry), file = entry.lesson, entry = entry }
+    end, lessons),
+    format = function(item)
+      return { { item.text } }
+    end,
+    preview = "file",
+    focus = "list",
+    actions = picker_actions,
+    win = { list = { keys = keys } },
+  })
+end
+
+local function choose_lesson(host, lessons)
+  vim.ui.select(
+    lessons,
+    { prompt = host.messages.library_title, format_item = library.format },
+    function(entry)
+      if entry then
+        choose_action(host, entry)
+      end
+    end
+  )
+end
+
 ---Opens the library: pick a lesson, then what to do with it.
 ---@param host BtbHost
 ---@param track? string only this track's lessons
@@ -71,15 +118,10 @@ function M.open(host, track)
     if #(data.lessons or {}) == 0 then
       return host.notify(table.concat(actions.text_lines(data), "\n"))
     end
-    vim.ui.select(
-      data.lessons,
-      { prompt = host.messages.library_title, format_item = library.format },
-      function(entry)
-        if entry then
-          choose_action(host, entry)
-        end
-      end
-    )
+    if rawget(_G, "Snacks") and Snacks.picker then
+      return open_picker(host, data.lessons)
+    end
+    choose_lesson(host, data.lessons)
   end, host.progress)
 end
 

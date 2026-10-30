@@ -8,7 +8,8 @@ Práctica
   today                 el plan de hoy (por defecto)
   next [--more]         abre el siguiente ejercicio, Claude lo forja si hace falta. --more agrega uno nuevo
   start <id>            abre un ejercicio en particular
-  submit [id]           corre los tests sobre tu solución
+  test [id]             corre los tests sin contar un intento
+  submit [id]           corre los tests sobre tu solución y registra el round
   hint [id]             revela la siguiente pista, cuesta XP
   skip [id]             lo dejas por hoy y regresa mañana
   reveal [id]           la solución de referencia, solo después de resolver o saltar
@@ -73,6 +74,9 @@ Coach
   afterPass: "Sigue: btb next   Compara: btb reveal   Revisión: btb review",
   alreadySolved: (passed) => `✓ ${passed} tests pasan. Ya lo resolviste hoy, sin XP extra.`,
 
+  trialPassed: (passed, total) => `✓ ${passed}/${total} tests pasan. Aún no se registró nada.`,
+  trialFailed: (passed, total) => `✗ ${passed}/${total} tests pasan (prueba, no cuenta)`,
+  trialAfterPass: "Regístralo con btb submit",
   failedCount: (passed, total, attempt) => `✗ ${passed}/${total} tests pasan (intento ${attempt})`,
   yourConsole: "Tu consola:",
   timedOut: (seconds) => `✗ Tardó más de ${seconds}s. ¿Un bucle que nunca termina?`,

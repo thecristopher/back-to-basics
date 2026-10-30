@@ -34,4 +34,28 @@ function M.choices(entry, messages)
   return choices
 end
 
+-- one key per action in the picker, the list keeps j k / and Enter has the coach explain it
+M.KEYS = {
+  { lhs = "<CR>", key = "brief" },
+  { lhs = "l", key = "lesson" },
+  { lhs = "o", key = "start" },
+  { lhs = "s", key = "solution" },
+  { lhs = "R", key = "review" },
+  { lhs = "v", key = "reveal" },
+  { lhs = "r", key = "redo" },
+}
+
+---Whether an action makes sense for a lesson where it stands.
+---@param entry table one of btb lessons --json
+---@param key string like "redo"
+---@return boolean
+function M.allows(entry, key)
+  for _, choice in ipairs(M.choices(entry, {})) do
+    if choice.key == key then
+      return true
+    end
+  end
+  return false
+end
+
 return M

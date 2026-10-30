@@ -8,7 +8,8 @@ Practice
   today                 today's plan (default)
   next [--more]         opens the next exercise, Claude forges it when needed. --more adds a new one
   start <id>            opens a specific exercise
-  submit [id]           runs the tests against your solution
+  test [id]             runs the tests without counting an attempt
+  submit [id]           runs the tests against your solution and records the round
   hint [id]             reveals the next hint, costs XP
   skip [id]             leave it for today, it comes back tomorrow
   reveal [id]           the reference solution, only after solving or skipping
@@ -73,6 +74,9 @@ Coach
   afterPass: "Next: btb next   Compare: btb reveal   Review: btb review",
   alreadySolved: (passed) => `✓ ${passed} tests pass. Already solved today, no extra XP.`,
 
+  trialPassed: (passed, total) => `✓ ${passed}/${total} tests pass. Nothing was recorded yet.`,
+  trialFailed: (passed, total) => `✗ ${passed}/${total} tests pass (practice run, it does not count)`,
+  trialAfterPass: "Record it with btb submit",
   failedCount: (passed, total, attempt) => `✗ ${passed}/${total} tests pass (attempt ${attempt})`,
   yourConsole: "Your console:",
   timedOut: (seconds) => `✗ Took longer than ${seconds}s. A loop that never ends?`,
