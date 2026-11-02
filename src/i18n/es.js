@@ -11,6 +11,7 @@ Práctica
   test [id]             corre los tests sin contar un intento
   submit [id]           corre los tests sobre tu solución y registra el round
   hint [id]             revela la siguiente pista, cuesta XP
+  preview [id]          React: ve tu componente en el navegador, se recarga al guardar. --again lo reescribe
   skip [id]             lo dejas por hoy y regresa mañana
   reveal [id]           la solución de referencia, solo después de resolver o saltar
   review [id]           Claude califica tu solución, solo después de resolver. --again para otra
@@ -22,7 +23,8 @@ Práctica
 Camino
   placement [pista]     examen de ubicación: Claude te mide y traza tu camino. --restart para repetirlo
   path [pista]          el camino que trazó Claude. --redraw para trazarlo de nuevo
-  forge [pista]         forja ejercicios por adelantado. --count=n, --lessons para las lecciones que falten
+  forge [pista]         forja ejercicios por adelantado. --count=n, --lessons para las lecciones que falten,
+                        --rewrite para que los enunciados y pistas viejos expliquen el problema
   learn <lenguaje>      una pista nueva para cualquier lenguaje. --goal="..." y --again
   setup [pista] --yes   aprueba e instala lo que necesita un lenguaje
 
@@ -93,6 +95,7 @@ Coach
 
   hintHeader: (shown, total, cost) => `Pista ${shown} de ${total} (-${cost} XP)`,
   noMoreHints: "Ya viste todas las pistas. Si hoy no sale, btb skip y mañana regresa.",
+  hintsEarlier: "Las que ya viste:",
   noHintsInPlacement: "En la ubicación no hay pistas. Si no sabes, btb skip, nadie te juzga.",
   skipped: (date) => `Lo dejamos por hoy. Regresa el ${date}.`,
   revealHint: "Si quieres ver cómo se resuelve: btb reveal",
@@ -192,6 +195,14 @@ Coach
   briefing: (name, title) => `${name} te está preparando "${title}"...`,
   writingLesson: (who, title) => `${who} está escribiendo la lección de "${title}"...`,
   lessonsComplete: "Todos los ejercicios ya tienen su lección.",
+  rewritingStatement: (who, title) => `${who} está reescribiendo el enunciado y las pistas de "${title}"...`,
+  statementsComplete: "Todos los enunciados ya explican su problema.",
+  statementsRewritten: (count) => `${count} ${count === 1 ? "enunciado reescrito" : "enunciados reescritos"}:`,
+  noPreview: (track) => `${track} no tiene nada que ver en el navegador, la preview es para React.`,
+  writingPreview: (who, title) => `${who} está armando la preview de "${title}"...`,
+  previewAt: (title, url) => `${title} en ${url}, se recarga cada vez que guardas. Ctrl+C para cerrarla.`,
+  previewSubtitle: "Tu componente, tal como lo llevas. Se recarga cada vez que guardas.",
+  previewBroken: "Tu componente truena al dibujarse:",
   lessonsWritten: (count) => `${count} ${count === 1 ? "lección escrita" : "lecciones escritas"}:`,
   writingMoments: (who, title) => `${who} está escribiendo lo que te va a decir en "${title}"...`,
   momentsWritten: (who, count) => `${count} ${count === 1 ? "ejercicio" : "ejercicios"} donde ${who} ya habla de lo que estás peleando:`,

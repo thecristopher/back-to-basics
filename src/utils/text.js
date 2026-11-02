@@ -58,3 +58,14 @@ export function excerpt(text, limit, spaces = 4) {
   if (lines.length > limit) kept.push("...");
   return kept.map((line) => " ".repeat(spaces) + line);
 }
+
+/**
+ * Drops the code fence around a whole answer, when the model wrapped it in one anyway.
+ * @param {string} text
+ * @returns {string}
+ */
+export function withoutFences(text) {
+  const trimmed = String(text).trim();
+  const fenced = trimmed.match(/^```[\w-]*\n([\s\S]*?)\n```$/);
+  return `${(fenced ? fenced[1] : trimmed).trimEnd()}\n`;
+}

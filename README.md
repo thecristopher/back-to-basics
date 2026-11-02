@@ -40,6 +40,7 @@ btb next          # opens the next one, Claude forges it if it does not exist ye
 btb test          # tries the tests, nothing is recorded
 btb submit        # runs the tests and records the round
 btb hint          # stuck? each hint costs XP
+btb preview       # React: your component in the browser, it reloads on every save
 btb skip          # not today: it returns tomorrow and unlocks the reference
 btb reveal        # compare with the reference once solved or skipped
 btb review        # Claude reviews your solution once solved
@@ -69,6 +70,7 @@ If the toolchain is missing, `setup` tells you what to install. If the commands 
 | `btb test [id]` | Runs the tests without counting an attempt: the round, the clock and the schedule stay as they are. |
 | `btb submit [id]` | Runs the tests against your solution and records the round. |
 | `btb hint [id]` | Reveals the next hint. None during placement. |
+| `btb preview [id] [--again] [--port=n] [--no-open]` | React only: serves the component you are building in the browser with the data of the statement's example, and reloads it every time you save. `--again` has Claude write the preview again. Runs until Ctrl+C. |
 | `btb skip [id]` | Leaves it for tomorrow and unlocks its reference. |
 | `btb reveal [id]` | Prints the reference solution, once solved or skipped. |
 | `btb review [id] [--again]` | Claude reviews your solution, once solved. The review is kept, `--again` asks for a new one. |
@@ -78,7 +80,7 @@ If the toolchain is missing, `setup` tells you what to install. If the commands 
 | `btb recall <id> [--answer="..."]` | Your coach answers what you remembered of the question that closes the lesson: what you got right, what is missing and the key idea. A blank answer gets the answer back. |
 | `btb placement [track] [--restart]` | Probes of rising difficulty, then Claude draws the path. |
 | `btb path [track] [--redraw]` | The path Claude drew, with the reason it starts where it does. |
-| `btb forge [track] [--count=n] [--lessons]` | Forges exercises for the current level ahead of time. `--lessons` writes the lessons older exercises are missing. |
+| `btb forge [track] [--count=n] [--lessons] [--rewrite]` | Forges exercises for the current level ahead of time. `--lessons` writes the lessons older exercises are missing. `--rewrite` has Claude rewrite the statement and hints of exercises forged before they had to explain the problem, leaving tests and reference untouched. |
 | `btb learn <language> [--goal=...] [--again]` | A new track for any language. |
 | `btb setup [track] --yes` | Approves a learned language and proves its toolchain. |
 | `btb lessons [track]` | Every lesson forged so far, with your solution and Claude's review when they exist. |
@@ -91,6 +93,14 @@ If the toolchain is missing, `setup` tells you what to install. If the commands 
 | `btb list` | Everything forged and where you stand on it. |
 | `btb persona [name]` | The coach in use, or another one. `list` shows them all. |
 | `btb persona new <name> --from="..."` | Claude drafts a new coach from a description. |
+
+## Statements that explain, hints that stand alone
+
+Every statement Claude forges walks you through the problem before you write a line: the story, what you will build with each input and output explained, how it behaves, an example worked step by step and the concept you will use, with a tiny example on other data. Hints come in 3 steps, each one readable on its own: where to start, the tool and where it goes, and the shape of the solution with the key part left for you. The hint you just bought shows first and the earlier ones sit below it. `btb forge --rewrite` brings the exercises forged before this up to the same bar.
+
+## See your React component
+
+React exercises come with a `preview.jsx` that renders your component with the data of the statement's example. `btb preview` copies it beside your solution (tweak it to try other props) and serves both with the Vite that the React runtime already installs, so nothing new is downloaded. The browser reloads on every save, and when your component throws, the page says what broke instead of going blank. Exercises forged before previews existed get theirs from Claude the first time you ask.
 
 ## Lessons to come back to
 
@@ -166,6 +176,7 @@ The screenshots come from [Eldentree](https://github.com/thecristopher/nvim-conf
 | `<leader>kh` / `kx` | Hint / skip for today |
 | `<leader>kv` / `kr` | Reveal the reference / Claude reviews your solution |
 | `<leader>kd` | Your solution beside the reference as a diff, with the remarks of Claude's review on the lines they name |
+| `<leader>ko` | React: your component in the browser, reloading on every save. One preview at a time, it stops with Neovim |
 | `<leader>kL` / `kb` | The coach explains this lesson again / the lesson library |
 | `<leader>kc` | Show or hide the coach |
 | `<leader>kt` `kp` `kS` `kP` `kl` | Today, path, status, plan, list |

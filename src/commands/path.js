@@ -5,7 +5,7 @@ import { exerciseFiles } from "../lib/catalog.js";
 import { forgeExercises } from "../lib/forge.js";
 import { franchiseOf } from "../actions/cast.js";
 import { lacksMoments } from "../actions/moments.js";
-import { writeMissingLesson, writeMissingMoments } from "../lib/library.js";
+import { rewriteStatement, writeMissingLesson, writeMissingMoments } from "../lib/library.js";
 import { loadProfile, saveProfile } from "../lib/profiles.js";
 import { saveTrack } from "../lib/tracks.js";
 import { toSlug } from "../utils/slug.js";
@@ -118,14 +118,29 @@ async function forgeLessons(ctx, query) {
   return { data: { lessons: missing.map((exercise) => exercise.id), moments: voiced.map((exercise) => exercise.id) }, text };
 }
 
+// one at a time, so an answer that did not hold leaves the rest rewritten and the next run picks it up
+async function rewriteStatements(ctx, query) {
+  const pending = ctx.catalog.exercises.filter((exercise) => (!query || exercise.track === query) && !exercise.explained);
+  const rewritten = [];
+  for (const exercise of pending) {
+    if (await rewriteStatement(ctx, exercise)) rewritten.push(exercise);
+  }
+  const data = { rewritten: rewritten.map((exercise) => exercise.id) };
+  if (pending.length === 0) return { data, text: [ctx.t.statementsComplete] };
+  if (rewritten.length === 0) return { data, text: [ctx.t.statementsRewritten(0)] };
+  return { data, text: listed(ctx, ctx.t.statementsRewritten(rewritten.length), rewritten) };
+}
+
 /**
  * `btb forge [track] [--count=n]`: has Claude forge exercises ahead of time for the current level, so next opens instantly.
  * --lessons writes the lesson of every exercise forged before lessons existed, and the coach's
  * lines for every exercise of her franchise that has none from her yet.
+ * --rewrite has Claude rewrite the statement and hints of every exercise forged before they explained the problem.
  */
 export async function forge(ctx, [query], flags) {
   if (query && !trackOf(ctx, query)) return failure(ctx.t.unknownTrack(query));
   if (flags.lessons) return forgeLessons(ctx, query);
+  if (flags.rewrite) return rewriteStatements(ctx, query);
   const lock = query ? lockOf(ctx, trackOf(ctx, query)) : null;
   if (lock) return failure(ctx.t.trackLocked(trackOf(ctx, query).title, lock));
   const tracks = query ? [trackOf(ctx, query)] : ctx.catalog.tracks.filter((track) => track.path && !lockOf(ctx, track));

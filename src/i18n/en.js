@@ -11,6 +11,7 @@ Practice
   test [id]             runs the tests without counting an attempt
   submit [id]           runs the tests against your solution and records the round
   hint [id]             reveals the next hint, costs XP
+  preview [id]          React: see your component in the browser, it reloads on save. --again rewrites it
   skip [id]             leave it for today, it comes back tomorrow
   reveal [id]           the reference solution, only after solving or skipping
   review [id]           Claude grades your solution, only after solving. --again for a new review
@@ -22,7 +23,8 @@ Practice
 Path
   placement [track]     placement test: Claude measures you and draws your path. --restart to take it again
   path [track]          the path Claude drew. --redraw to draw it again
-  forge [track]         forge exercises ahead of time. --count=n, --lessons for missing lessons
+  forge [track]         forge exercises ahead of time. --count=n, --lessons for missing lessons,
+                        --rewrite so old statements and hints explain the problem
   learn <language>      a new track for any language. --goal="..." and --again
   setup [track] --yes   approve and install what a language needs
 
@@ -93,6 +95,7 @@ Coach
 
   hintHeader: (shown, total, cost) => `Hint ${shown} of ${total} (-${cost} XP)`,
   noMoreHints: "You have seen every hint. If it does not come today, btb skip and it returns tomorrow.",
+  hintsEarlier: "The ones you already saw:",
   noHintsInPlacement: "No hints during placement. If you do not know, btb skip, nobody judges.",
   skipped: (date) => `Leaving it for today. It returns on ${date}.`,
   revealHint: "To see how it is solved: btb reveal",
@@ -192,6 +195,14 @@ Coach
   briefing: (name, title) => `${name} is getting "${title}" ready for you...`,
   writingLesson: (who, title) => `${who} is writing the lesson of "${title}"...`,
   lessonsComplete: "Every exercise already has its lesson.",
+  rewritingStatement: (who, title) => `${who} is rewriting the statement and hints of "${title}"...`,
+  statementsComplete: "Every statement already explains its problem.",
+  statementsRewritten: (count) => `${count} ${count === 1 ? "statement rewritten" : "statements rewritten"}:`,
+  noPreview: (track) => `${track} has nothing to see in the browser, the preview is for React.`,
+  writingPreview: (who, title) => `${who} is putting together the preview of "${title}"...`,
+  previewAt: (title, url) => `${title} at ${url}, it reloads every time you save. Ctrl+C to close it.`,
+  previewSubtitle: "Your component, as it stands. It reloads every time you save.",
+  previewBroken: "Your component breaks while drawing:",
   lessonsWritten: (count) => `${count} ${count === 1 ? "lesson written" : "lessons written"}:`,
   writingMoments: (who, title) => `${who} is writing what you will hear in "${title}"...`,
   momentsWritten: (who, count) => `${count} ${count === 1 ? "exercise" : "exercises"} where ${who} now talks about what you are fighting:`,
