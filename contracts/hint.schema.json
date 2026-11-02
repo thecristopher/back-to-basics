@@ -1,0 +1,42 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://back-to-basics/contracts/hint.schema.json",
+  "type": "object",
+  "required": [
+    "id",
+    "hints",
+    "total",
+    "cost"
+  ],
+  "properties": {
+    "id": {
+      "type": "string"
+    },
+    "hints": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "the general hints bought so far, oldest first"
+    },
+    "total": {
+      "type": "integer"
+    },
+    "cost": {
+      "type": "integer"
+    },
+    "nudge": {
+      "type": "string",
+      "description": "a hint aimed at the mistake the latest run looks like"
+    },
+    "text": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "the same lines the terminal shows"
+    }
+  },
+  "title": "btb hint --json",
+  "description": "The hint just bought."
+}

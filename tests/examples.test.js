@@ -8,6 +8,7 @@ import { exerciseFiles, loadExample } from "../src/lib/catalog.js";
 import { listDirs, readJsonIfExists } from "../src/lib/files.js";
 import { ensureRuntime, loadProfile } from "../src/lib/profiles.js";
 import { runTests } from "../src/lib/runner.js";
+import { exampleProblems } from "../src/actions/validate.js";
 
 const ROOT = new URL("..", import.meta.url).pathname;
 // runtimes like React's packages install once and stay cached between runs
@@ -44,6 +45,11 @@ for (const id of await listDirs(join(ROOT, "examples"))) {
     test(`${id}/${slug} has what Claude is asked to write`, async () => {
       assert.ok(meta.title && meta.minutes > 0 && meta.hints.length > 0 && meta.concepts.length > 0);
       assert.ok((await readFile(files.lesson, "utf8")).trim().length > 0, "lesson.md is missing");
+    });
+
+    test(`${id}/${slug} has a worked example that one of its tests asserts`, async () => {
+      const [readme, testCode] = await Promise.all([readFile(files.readme, "utf8"), readFile(files.test, "utf8")]);
+      assert.deepEqual(exampleProblems({ example: meta.example, readme, test: testCode }), []);
     });
 
     if (profile.previewFile) {

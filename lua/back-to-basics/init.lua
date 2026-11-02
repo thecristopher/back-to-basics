@@ -5,6 +5,7 @@ local arena = require("back-to-basics.arena")
 local coach = require("back-to-basics.coach")
 local coach_actions = require("back-to-basics.actions.coach")
 local hint_actions = require("back-to-basics.actions.hint")
+local active = require("back-to-basics.actions.active")
 local cli = require("back-to-basics.cli")
 local lesson = require("back-to-basics.lesson")
 local library = require("back-to-basics.library")
@@ -47,8 +48,9 @@ M.defaults = {
   portrait = nil,
   -- fun(event) that plays a sound: "coach_open", or the moment the coach reacts to
   sound = nil,
-  -- fun(info, buy) asked before a hint is revealed, info is { id, hints_left, cost }; call buy() to
-  -- go ahead. nil reveals it right away
+  -- fun(info, buy) asked before a hint is revealed, info is { id, hints_left, cost, nudge_ready };
+  -- nudge_ready says a hint aimed at the learner's mistake is waiting. Call buy() to go ahead, nil
+  -- reveals it right away
   before_hint = nil,
   -- fun({ id, title, message }) that starts a progress bar with update(message), done(message)
   -- and fail(message); without it btb's progress lines come as plain notifications
@@ -336,6 +338,22 @@ local function after_run(data, redo)
   arena.announce_fight(data)
 end
 
+-- the active clock of each exercise, counted while its solution buffer shows signs of life
+local clocks = {}
+
+local function clock_of(id)
+  clocks[id] = clocks[id] or active.new()
+  return clocks[id]
+end
+
+-- a run of the solution carries the work done since the last one, a redo races its own clock
+local function with_activity(args, id, redo)
+  if redo or not id then
+    return args
+  end
+  return active.args(args, active.take(clock_of(id)))
+end
+
 local function submitted(id, redo)
   return function(data)
     local verdict = actions.verdict(data)
@@ -369,7 +387,7 @@ function M.submit(id, redo)
   if not opts.progress then
     notify(opts.messages.running_tests)
   end
-  run(actions.submit_args(id, redo), submitted(id, redo), progress)
+  run(with_activity(actions.submit_args(id, redo), id, redo), submitted(id, redo), progress)
 end
 
 -- a practice run on save says how it went in one line, the explicit one shows the failures in full
@@ -406,14 +424,19 @@ function M.test(id, redo, quiet)
     return notify(opts.messages.not_exercise, vim.log.levels.WARN)
   end
   local args = redo and { "test", id, "--redo" } or { "test", id }
-  run(args, tried(quiet, redo), not quiet and progress or nil)
+  run(with_activity(args, id, redo), tried(quiet, redo), not quiet and progress or nil)
 end
 
 -- commands that act on an exercise get the current buffer's one, so btb never guesses
 local function on_exercise(name, filetype)
   return function(args)
     local id = args[1] or current_id()
-    run(id and { name, id } or { name }, function(data)
+    local cli_args = id and { name, id } or { name }
+    -- a skip still tells btb how long the fight went before giving up
+    if name == "skip" then
+      cli_args = with_activity(cli_args, id, false)
+    end
+    run(cli_args, function(data)
       show(data, name, filetype)
     end, progress)
   end
@@ -452,7 +475,12 @@ function M.hint(id)
     return buy()
   end
   local info = winbar.info(id) or {}
-  opts.before_hint({ id = id, hints_left = info.hintsLeft, cost = info.hintCost }, buy)
+  opts.before_hint({
+    id = id,
+    hints_left = info.hintsLeft,
+    cost = info.hintCost,
+    nudge_ready = info.nudgeReady == true,
+  }, buy)
 end
 
 ---Shows the React component of an exercise in the browser, reloading on every save. The current
@@ -603,6 +631,28 @@ local function set_autocmds()
         if opts.winbar then
           winbar.attach(event.buf, id)
         end
+      end
+    end,
+  })
+  -- the active clock only runs on the solution itself, the editor out of focus is a pause
+  vim.api.nvim_create_autocmd(
+    { "CursorMoved", "CursorMovedI", "TextChanged", "TextChangedI", "InsertEnter" },
+    {
+      group = group,
+      callback = function(event)
+        local id = vim.b[event.buf].btb_exercise
+        if id and vim.b[event.buf].btb_redo ~= true then
+          local edited = event.event == "TextChanged" or event.event == "TextChangedI"
+          active.touch(clock_of(id), vim.uv.now() / 1000, edited)
+        end
+      end,
+    }
+  )
+  vim.api.nvim_create_autocmd("FocusLost", {
+    group = group,
+    callback = function()
+      for _, clock in pairs(clocks) do
+        active.pause(clock)
       end
     end,
   })

@@ -1,4 +1,22 @@
 /**
+ * The general hints of a round already shown, the nudges at a known mistake count apart.
+ * @param {{ hints: number, nudges?: string[] }} round
+ * @returns {number}
+ */
+export function generalHintsSeen(round) {
+  return Math.max(0, round.hints - (round.nudges?.length ?? 0));
+}
+
+/**
+ * A nudge at the mistake the learner's tests look like, as the terminal shows it.
+ * @param {{ nudge: string, header: string, after: string, paint: Record<string, (text: string) => string> }} input
+ * @returns {string[]}
+ */
+export function nudgeLines({ nudge, header, after, paint }) {
+  return [paint.yellow(header), "", paint.bold(`  → ${nudge}`), "", paint.dim(after)];
+}
+
+/**
  * The hints of a round as the terminal shows them: the one just bought first and bright, the earlier
  * ones dimmed below so the new one is the thing to read.
  * @param {{ shown: string[], fresh: boolean, header: string, earlierLabel: string, paint: Record<string, (text: string) => string> }} input

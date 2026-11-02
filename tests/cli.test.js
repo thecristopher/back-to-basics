@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { execFile } from "node:child_process";
-import { copyFile, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import { appendFile, copyFile, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { after, before, test } from "node:test";
@@ -99,15 +99,18 @@ test("the exercise teaches the first concept of the level, by its title", async 
 });
 
 test("the empty starter fails and the reference stays locked", async () => {
-  assert.equal((await btb(["submit"])).ok, false);
+  assert.equal((await btb(["submit", "--active=40", "--edits=6"])).ok, false);
   assert.ok((await btb(["reveal"])).error);
 });
 
 test("a correct solution passes, earns XP and feeds the review", async () => {
   await solve(practice);
-  const result = await btb(["submit"]);
+  const result = await btb(["submit", "--active=80", "--edits=3"]);
   assert.equal(result.ok, true);
   assert.ok(result.xp > 0);
+  assert.equal(result.activeSeconds, 120, "the work the editor measured adds up over the round");
+  const state = JSON.parse(await readFile(join(sandbox, "data/state.json"), "utf8"));
+  assert.deepEqual([state.mastery.node.recent[0].activeSeconds, state.mastery.node.recent[0].edits], [120, 9]);
   assert.match((await btb(["review"])).review, /Calificación/);
 });
 
@@ -116,6 +119,7 @@ test("status shows the concept Inde solved once as still being learned", async (
   const loop = status.concepts.find((row) => row.id === "for-over-array");
   assert.equal(loop.standing, "learning");
   assert.equal(status.tracks[0].levels[1].clean, 0);
+  assert.deepEqual(status.tracks[0].levels[1].items[0], { id: "for-over-array", title: "Bucle for con índice sobre un array", standing: "learning" });
 });
 
 test("every run lands in the log, practice runs included", async () => {
@@ -128,6 +132,29 @@ test("every run lands in the log, practice runs included", async () => {
 test("forge fixes an exercise whose reference Claude got wrong", async () => {
   const forged = await btb(["forge", "node", "--count=1"], { FAKE_CLAUDE_BROKEN: "1" });
   assert.equal(forged.forged.length, 1);
+});
+
+test("forge throws back tests that let a wrong solution through, and keeps the ones that catch it", async () => {
+  const forged = await btb(["forge", "node", "--count=1"], { FAKE_CLAUDE_WEAK: "1" });
+  assert.equal(forged.forged.length, 1);
+  const mutants = JSON.parse(await readFile(join(sandbox, "data/exercises", forged.forged[0], "mutants.json"), "utf8"));
+  assert.equal(mutants.length, 2);
+  assert.ok(mutants.every((mutant) => mutant.caughtBy.length > 0));
+});
+
+test("a hint aims first at the known mistake the latest run looks like, then the general ones follow", async () => {
+  const id = (await btb(["forge", "node", "--count=1"])).forged[0];
+  const folder = join(sandbox, "data/exercises", id);
+  const mutants = JSON.parse(await readFile(join(folder, "mutants.json"), "utf8"));
+  mutants[0].caughtBy = ["Claire no tiene cartas"];
+  await writeFile(join(folder, "mutants.json"), JSON.stringify(mutants));
+  const partial = { at: new Date().toISOString(), id, track: "node", kind: "test", ok: false, passed: 3, total: 4, failing: ["Claire no tiene cartas"], error: null };
+  await appendFile(join(sandbox, "data/log/runs.jsonl"), `${JSON.stringify(partial)}\n`);
+  const nudge = await btb(["hint", id]);
+  assert.deepEqual([nudge.nudge, nudge.cost, nudge.hints], ["¿Qué pasa cuando Inde no escribió ninguna carta?", 3, []]);
+  const general = await btb(["hint", id]);
+  assert.equal(general.nudge, undefined);
+  assert.equal(general.hints.length, 1);
 });
 
 test("forge leaves progress alone so it can run beside practice", async () => {

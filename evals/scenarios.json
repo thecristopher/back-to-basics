@@ -1,0 +1,62 @@
+[
+  {
+    "name": "first-steps",
+    "about": "A total beginner's first exercise: one idea, tiny, guided.",
+    "track": "node",
+    "level": 1,
+    "fromBasics": true,
+    "expect": { "concept": "return-a-value", "maxReferenceLines": 8, "maxMinutes": 10 }
+  },
+  {
+    "name": "second-clean-day",
+    "about": "A concept solved clean once: same idea in a new situation, a little more.",
+    "track": "node",
+    "level": 2,
+    "learning": "for-over-array",
+    "expect": { "concept": "for-over-array", "maxMinutes": 20 }
+  },
+  {
+    "name": "bug-hunt",
+    "about": "A weak concept with a known mistake comes back as code carrying that mistake.",
+    "track": "node",
+    "level": 5,
+    "weak": { "concept": "array-reduce", "mistake": "olvida el valor inicial de reduce y truena con un array vacío" },
+    "expect": { "concept": "array-reduce", "format": "debug" }
+  },
+  {
+    "name": "spaced-review",
+    "about": "An owned concept of a passed level comes back as a fresh exercise, solvable from memory.",
+    "track": "node",
+    "level": 8,
+    "review": "closures",
+    "expect": { "concept": "closures", "review": true }
+  },
+  {
+    "name": "onsite-complexity",
+    "about": "An interview pattern level: the solution declares its Big O and a test checks it.",
+    "track": "node",
+    "level": 12,
+    "expect": { "complexity": true }
+  },
+  {
+    "name": "onsite-python",
+    "about": "A real onsite problem in Python: several parts, product data, a complexity limit.",
+    "track": "python",
+    "level": 13,
+    "expect": { "complexity": true }
+  },
+  {
+    "name": "python-dicts",
+    "about": "Python basics with data a working programmer handles today.",
+    "track": "python",
+    "level": 3,
+    "expect": { "concept": "build-a-list", "maxMinutes": 25 }
+  },
+  {
+    "name": "react-state",
+    "about": "React state with a preview, graded by Testing Library.",
+    "track": "react",
+    "level": 2,
+    "expect": { "concept": "lists-and-keys" }
+  }
+]

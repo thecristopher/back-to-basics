@@ -1,0 +1,185 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://back-to-basics/contracts/status.schema.json",
+  "type": "object",
+  "required": [
+    "xp",
+    "streak",
+    "solved",
+    "mastered",
+    "tracks",
+    "concepts"
+  ],
+  "properties": {
+    "xp": {
+      "type": "integer"
+    },
+    "streak": {
+      "type": "integer"
+    },
+    "solved": {
+      "type": "integer"
+    },
+    "mastered": {
+      "type": "integer",
+      "description": "concepts owned across every track"
+    },
+    "tracks": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "id",
+          "title",
+          "drawn",
+          "current",
+          "levels"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "drawn": {
+            "type": "boolean"
+          },
+          "current": {
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "levels": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "level",
+                "title",
+                "concepts",
+                "clean",
+                "target",
+                "done",
+                "items"
+              ],
+              "properties": {
+                "level": {
+                  "type": "integer"
+                },
+                "title": {
+                  "type": "string"
+                },
+                "summary": {
+                  "type": "string"
+                },
+                "concepts": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "clean": {
+                  "type": "integer"
+                },
+                "target": {
+                  "type": "integer"
+                },
+                "remaining": {
+                  "type": "integer"
+                },
+                "placedOut": {
+                  "type": "boolean"
+                },
+                "done": {
+                  "type": "boolean"
+                },
+                "items": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "required": [
+                      "id",
+                      "title",
+                      "standing"
+                    ],
+                    "properties": {
+                      "id": {
+                        "type": "string"
+                      },
+                      "title": {
+                        "type": "string"
+                      },
+                      "standing": {
+                        "enum": [
+                          "new",
+                          "learning",
+                          "weak",
+                          "owned"
+                        ]
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "locked": {}
+        }
+      }
+    },
+    "concepts": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "track",
+          "id",
+          "concept",
+          "clean",
+          "struggled",
+          "skipped",
+          "standing"
+        ],
+        "properties": {
+          "track": {
+            "type": "string"
+          },
+          "id": {
+            "type": "string"
+          },
+          "concept": {
+            "type": "string"
+          },
+          "clean": {
+            "type": "integer"
+          },
+          "struggled": {
+            "type": "integer"
+          },
+          "skipped": {
+            "type": "integer"
+          },
+          "standing": {
+            "enum": [
+              "new",
+              "learning",
+              "weak",
+              "owned"
+            ]
+          }
+        }
+      }
+    },
+    "text": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "the same lines the terminal shows"
+    }
+  },
+  "title": "btb status --json",
+  "description": "Levels per track with each concept's standing."
+}

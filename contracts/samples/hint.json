@@ -1,0 +1,13 @@
+{
+  "id": "node/create-counter",
+  "hints": [
+    "Declara una variable con let dentro de createCounter: las funciones que regreses la recuerdan."
+  ],
+  "total": 3,
+  "cost": 3,
+  "text": [
+    "Pista 1 de 3 (-3 XP)",
+    "",
+    "  1. Declara una variable con let dentro de createCounter: las funciones que regreses la recuerdan."
+  ]
+}

@@ -31,6 +31,18 @@ describe("hint actions", function()
     }, lines)
   end)
 
+  it("puts the nudge at Inde's mistake on top and the general hints she saw below", function()
+    local nudge = "¿Qué pasa cuando Claire no escribió ninguna carta?"
+    local lines = hint.lines({ hints = { hints[1] }, total = 3, cost = 3, nudge = nudge }, messages)
+    assert.are.same({ "# Pista para tu error · -3 XP", "", nudge }, vim.list_slice(lines, 1, 3))
+    assert.are.equal("1. " .. hints[1], lines[#lines])
+  end)
+
+  it("shows the nudge alone when no general hint was bought yet", function()
+    local lines = hint.lines({ hints = {}, total = 3, cost = 3, nudge = "¿Y Malenia?" }, messages)
+    assert.are.same({ "# Pista para tu error · -3 XP", "", "¿Y Malenia?" }, lines)
+  end)
+
   it("lists every hint in order once they were all bought", function()
     local lines = hint.lines({ hints = { hints[1], hints[2] }, total = 2, cost = 0 }, messages)
     assert.are.same({

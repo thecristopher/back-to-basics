@@ -66,7 +66,7 @@ export function findExercise(catalog, query) {
 /**
  * Paths of an exercise's stored files. Starter and reference keep the solution's extension.
  * @param {{ folder: string, files: { solution: string, test: string, preview?: string } }} exercise
- * @returns {{ readme: string, lesson: string, starter: string, reference: string, test: string, preview: string | null }}
+ * @returns {{ readme: string, lesson: string, starter: string, reference: string, test: string, mutants: string, preview: string | null }}
  *   preview is null for exercises that have nothing to show in the browser
  */
 export function exerciseFiles(exercise) {
@@ -77,6 +77,7 @@ export function exerciseFiles(exercise) {
     starter: join(exercise.folder, `starter${ext}`),
     reference: join(exercise.folder, `reference${ext}`),
     test: join(exercise.folder, exercise.files.test),
+    mutants: join(exercise.folder, "mutants.json"),
     preview: exercise.files.preview ? join(exercise.folder, exercise.files.preview) : null,
   };
 }
@@ -111,6 +112,7 @@ export async function loadExample(config, profileId, preferred) {
     minutes: exercise.minutes,
     concepts: exercise.concepts,
     hints: exercise.hints,
+    ...(exercise.example ? { example: exercise.example } : {}),
     readme: await read(files.readme),
     lesson: await read(files.lesson),
     starter: await read(files.starter),

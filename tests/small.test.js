@@ -146,3 +146,10 @@ test("text helpers draw bars, durations and excerpts", () => {
   assert.equal(duration(42), "42s");
   assert.deepEqual(excerpt("a\nb\nc", 2, 1), [" a", " b", " ..."]);
 });
+
+test("a run that dies before its report keeps what it said on stdout, so Claude knows why", () => {
+  const stdout = "ImportError while importing test module test_solution.py\nE   NameError: name 'claire' is not defined\n";
+  const result = summarize("btb-json", { code: 4, stdout, stderr: "", timedOut: false, report: null });
+  assert.equal(result.crashed, true);
+  assert.match(result.stderr, /NameError: name 'claire' is not defined/);
+});

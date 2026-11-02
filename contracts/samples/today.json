@@ -1,0 +1,36 @@
+{
+  "today": "2026-11-01",
+  "streak": 1,
+  "xp": 7,
+  "goal": 40,
+  "queue": [
+    {
+      "id": "node/create-counter",
+      "track": "node",
+      "title": "Contador con closure",
+      "done": true,
+      "review": false,
+      "slot": false
+    },
+    {
+      "id": null,
+      "track": "node",
+      "title": null,
+      "done": false,
+      "review": false,
+      "slot": true,
+      "ready": true
+    }
+  ],
+  "recap": [],
+  "current": "node/create-counter",
+  "placement": "done",
+  "undrawn": [],
+  "locked": [],
+  "text": [
+    "Hoy, 2026-11-01   racha 1 día   XP 7/40",
+    "  ✓ [node] Contador con closure  (nuevo)",
+    "  → [node] nuevo, Claude lo forja al abrirlo",
+    "Siguiente: btb next"
+  ]
+}

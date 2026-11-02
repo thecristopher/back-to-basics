@@ -1,0 +1,99 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://back-to-basics/contracts/submit-failed.schema.json",
+  "type": "object",
+  "required": [
+    "id",
+    "ok",
+    "passed",
+    "total",
+    "failures",
+    "hintsLeft",
+    "timedOut",
+    "crashed"
+  ],
+  "properties": {
+    "id": {
+      "type": "string"
+    },
+    "title": {
+      "type": "string"
+    },
+    "track": {
+      "type": "string"
+    },
+    "ok": {
+      "const": false
+    },
+    "passed": {
+      "type": "integer"
+    },
+    "total": {
+      "type": "integer"
+    },
+    "failures": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "name",
+          "ok"
+        ],
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "ok": {
+            "type": "boolean"
+          },
+          "message": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      }
+    },
+    "logs": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "timedOut": {
+      "type": "boolean"
+    },
+    "crashed": {
+      "type": "boolean"
+    },
+    "stderr": {
+      "type": "string"
+    },
+    "placement": {
+      "type": "boolean"
+    },
+    "onsite": {
+      "type": "boolean"
+    },
+    "hintsLeft": {
+      "type": "integer"
+    },
+    "attempt": {
+      "type": "integer"
+    },
+    "nudgeReady": {
+      "type": "boolean",
+      "description": "the run failed like a known mistake, btb hint aims at it"
+    },
+    "text": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "the same lines the terminal shows"
+    }
+  },
+  "title": "btb submit --json, a failed run",
+  "description": "Which tests failed and what help is left."
+}

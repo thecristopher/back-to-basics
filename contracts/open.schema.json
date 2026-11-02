@@ -1,0 +1,108 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://back-to-basics/contracts/open.schema.json",
+  "type": "object",
+  "required": [
+    "id",
+    "track",
+    "title",
+    "level",
+    "minutes",
+    "concepts",
+    "path",
+    "readme",
+    "review",
+    "placement",
+    "onsite",
+    "startedAt",
+    "hintsLeft",
+    "hintCost"
+  ],
+  "properties": {
+    "id": {
+      "type": "string"
+    },
+    "track": {
+      "type": "string"
+    },
+    "title": {
+      "type": "string"
+    },
+    "level": {
+      "type": "integer"
+    },
+    "difficulty": {
+      "type": [
+        "integer",
+        "null"
+      ]
+    },
+    "minutes": {
+      "type": "number"
+    },
+    "concepts": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "path": {
+      "type": "string",
+      "description": "the solution file to edit"
+    },
+    "readme": {
+      "type": "string"
+    },
+    "lesson": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "review": {
+      "type": "boolean"
+    },
+    "reviewOf": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "description": "the concept a fresh exercise reviews, by title"
+    },
+    "placement": {
+      "type": "boolean"
+    },
+    "onsite": {
+      "type": "boolean"
+    },
+    "startedAt": {
+      "type": "integer",
+      "description": "ms since the epoch"
+    },
+    "hintsLeft": {
+      "type": "integer"
+    },
+    "hintCost": {
+      "type": "integer"
+    },
+    "resumed": {
+      "type": "boolean"
+    },
+    "text": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "the same lines the terminal shows"
+    },
+    "format": {
+      "enum": [
+        "build",
+        "debug"
+      ],
+      "description": "debug opens on code that carries the learner's last mistake on the concept"
+    }
+  },
+  "title": "btb next / btb start --json",
+  "description": "An exercise opened: where to write and what the winbar shows."
+}

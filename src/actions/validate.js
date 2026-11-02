@@ -1,3 +1,5 @@
+import { mutantShapeProblems } from "./mutants.js";
+
 const SLUG = /^[a-z0-9]+(-[a-z0-9]+)*$/;
 const FILE_NAME = /^[A-Za-z0-9_.-]+$/;
 const LEARNED_REPORTS = ["tap", "exit-code"];
@@ -25,11 +27,47 @@ function conceptIdProblems(concepts, { allowed, primary }) {
   return problems;
 }
 
+function squeezed(text) {
+  return String(text ?? "").replace(/\s+/g, "");
+}
+
+/**
+ * Checks that the readme's worked example is real: its call and its result appear in the readme and in the
+ * tests, so the reference passing the tests proves the example right. Spaces do not count.
+ * @param {{ example?: { call?: string, result?: string }, readme?: string, test?: string }} draft
+ * @returns {string[]}
+ */
+export function exampleProblems(draft) {
+  const { call, result } = draft?.example ?? {};
+  if (typeof call !== "string" || !call.trim() || typeof result !== "string" || !result.trim()) {
+    return ['"example" must name the "call" of the readme\'s worked example and its "result", both copied from a test that asserts it'];
+  }
+  const missing = [];
+  for (const [where, text] of [["readme", draft.readme], ["tests", draft.test]]) {
+    for (const [what, part] of [["call", call], ["result", result]]) {
+      if (!squeezed(text).includes(squeezed(part))) missing.push(`the example's ${what} \`${part}\` is not in the ${where}`);
+    }
+  }
+  return missing.length > 0 ? [`The worked example must be asserted by a test, word for word: ${missing.join("; ")}`] : [];
+}
+
+/**
+ * Checks that an exercise of the onsite levels declares its time complexity and tests it.
+ * @param {{ reference?: string, test?: string }} draft
+ * @returns {string[]}
+ */
+export function complexityProblems(draft) {
+  const missing = [["reference", draft?.reference], ["tests", draft?.test]].filter(([, text]) => !String(text ?? "").includes("COMPLEXITY"));
+  return missing.map(([where]) => `The ${where} must use COMPLEXITY: the solution declares its Big O and one test checks it`);
+}
+
 /**
  * Lists what is wrong with an exercise draft before running anything.
  * @param {object} draft
- * @param {{ preview?: boolean, allowed?: string[], primary?: string | null }} [needs] preview when the language shows the
- *   component in the browser, allowed the concept ids the exercise may use and primary the one it must teach
+ * @param {{ preview?: boolean, allowed?: string[], primary?: string | null, mutants?: boolean, complexity?: boolean }} [needs] preview
+ *   when the language shows the component in the browser, allowed the concept ids the exercise may use, primary the one it
+ *   must teach, mutants when the tests report by name, so the wrong solutions they catch can be named, and complexity on
+ *   the levels where the solution declares its Big O
  * @returns {string[]} empty when the shape is fine
  */
 export function draftProblems(draft, needs = {}) {
@@ -39,6 +77,9 @@ export function draftProblems(draft, needs = {}) {
   if (!isList(draft?.concepts)) problems.push('"concepts" must list at least one concept');
   else problems.push(...conceptIdProblems(draft.concepts.map(String), needs));
   if (!(draft?.minutes > 0)) problems.push('"minutes" must be a positive number');
+  if (needs.mutants) problems.push(...mutantShapeProblems(draft));
+  problems.push(...exampleProblems(draft));
+  if (needs.complexity) problems.push(...complexityProblems(draft));
   return problems;
 }
 

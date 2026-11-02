@@ -1,0 +1,61 @@
+{
+  "id": "node/create-counter",
+  "title": "Contador con closure",
+  "track": "node",
+  "ok": false,
+  "passed": 0,
+  "total": 5,
+  "failures": [
+    {
+      "name": "empieza en 0 sin argumento",
+      "ok": false,
+      "message": "Cannot read properties of undefined (reading 'value')"
+    },
+    {
+      "name": "Claire e Inde llegan a su aniversario 365",
+      "ok": false,
+      "message": "Cannot read properties of undefined (reading 'increment')"
+    },
+    {
+      "name": "decrement regresa el valor nuevo",
+      "ok": false,
+      "message": "Cannot read properties of undefined (reading 'decrement')"
+    },
+    {
+      "name": "reset vuelve al valor inicial",
+      "ok": false,
+      "message": "Cannot read properties of undefined (reading 'increment')"
+    },
+    {
+      "name": "dos contadores no comparten la cuenta",
+      "ok": false,
+      "message": "Cannot read properties of undefined (reading 'increment')"
+    }
+  ],
+  "logs": [],
+  "timedOut": false,
+  "timeoutSeconds": 15,
+  "crashed": false,
+  "unsupported": false,
+  "unapproved": false,
+  "stderr": "",
+  "placement": false,
+  "onsite": false,
+  "hintsLeft": 3,
+  "attempt": 1,
+  "nudgeReady": false,
+  "text": [
+    "✗ 0/5 tests pasan (intento 1)",
+    "  ✗ empieza en 0 sin argumento",
+    "    Cannot read properties of undefined (reading 'value')",
+    "  ✗ Claire e Inde llegan a su aniversario 365",
+    "    Cannot read properties of undefined (reading 'increment')",
+    "  ✗ decrement regresa el valor nuevo",
+    "    Cannot read properties of undefined (reading 'decrement')",
+    "  ✗ reset vuelve al valor inicial",
+    "    Cannot read properties of undefined (reading 'increment')",
+    "  ✗ dos contadores no comparten la cuenta",
+    "    Cannot read properties of undefined (reading 'increment')",
+    "Ajusta y corre btb submit otra vez. Pista: btb hint   Por hoy no: btb skip"
+  ]
+}

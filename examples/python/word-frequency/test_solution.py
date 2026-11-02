@@ -18,8 +18,7 @@ def no_counter(monkeypatch):
 
 def test_most_frequent_first():
     """pone primero la palabra que más se repite"""
-    note = "Malenia ama el Haligtree. Malenia te ama, y tú amas a Malenia."
-    assert top_words(note, 2) == [("malenia", 3), ("ama", 2)]
+    assert top_words("Malenia ama el Haligtree. Malenia te ama, y tú amas a Malenia.", 2) == [("malenia", 3), ("ama", 2)]
 
 
 def test_ignores_case():

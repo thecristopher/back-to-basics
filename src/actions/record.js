@@ -1,11 +1,33 @@
 import { nextReview } from "./schedule.js";
 
 /**
- * An empty round: no failed submits, no hints.
- * @returns {{ failures: number, hints: number }}
+ * An empty round: no failed submits, no hints, no nudges at a known mistake.
+ * @returns {{ failures: number, hints: number, nudges: string[] }}
  */
 export function freshRound() {
-  return { failures: 0, hints: 0 };
+  return { failures: 0, hints: 0, nudges: [] };
+}
+
+// a single report never counts more than this, a clock left running all night is not work
+const MAX_ACTIVE_SECONDS = 4 * 60 * 60;
+
+function countOf(value, max) {
+  const number = Math.floor(Number(value));
+  return Number.isFinite(number) && number > 0 ? Math.min(number, max) : 0;
+}
+
+/**
+ * Adds the work an editor measured since its last report to the round: active seconds in the
+ * solution buffer and how many edits it took.
+ * @param {{ round: { active?: number, edits?: number } }} record mutated in place
+ * @param {{ active?: string | boolean, edits?: string | boolean }} flags --active and --edits
+ */
+export function noteActivity(record, flags) {
+  const seconds = countOf(flags.active, MAX_ACTIVE_SECONDS);
+  const edits = countOf(flags.edits, Number.MAX_SAFE_INTEGER);
+  if (seconds === 0 && edits === 0) return;
+  record.round.active = (record.round.active ?? 0) + seconds;
+  record.round.edits = (record.round.edits ?? 0) + edits;
 }
 
 /**
@@ -22,13 +44,13 @@ function fastest(best, seconds) {
 }
 
 /**
- * Marks an exercise solved: schedules its next review and closes the round.
+ * Marks an exercise solved and closes the round. A solved exercise never comes back as is,
+ * its concepts are reviewed with fresh exercises instead, see dueConcepts.
  * @param {object} record mutated in place
  * @param {{ outcome: "clean" | "struggled", seconds: number | null, today: string }} pass
  */
 export function applyPass(record, { outcome, seconds, today }) {
-  const step = record.firstSolvedAt ? record.step : undefined;
-  Object.assign(record, nextReview(step, outcome, today));
+  record.dueAt = null;
   record.passes += 1;
   record.firstSolvedAt ??= today;
   record.lastSolvedAt = today;

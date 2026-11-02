@@ -1,0 +1,28 @@
+{
+  "id": "node/create-counter",
+  "track": "node",
+  "title": "Contador con closure",
+  "level": 1,
+  "difficulty": null,
+  "minutes": 15,
+  "concepts": [
+    "Devolver un valor con return"
+  ],
+  "path": "/sandbox/workspace/node/create-counter/solution.js",
+  "readme": "/sandbox/workspace/node/create-counter/README.md",
+  "lesson": "/sandbox/data/exercises/node/create-counter/lesson.md",
+  "review": false,
+  "reviewOf": null,
+  "placement": false,
+  "onsite": false,
+  "startedAt": 1793589891491,
+  "hintsLeft": 3,
+  "hintCost": 3,
+  "text": [
+    "[node Nivel 1] Contador con closure  nuevo  ~15 min",
+    "Conceptos: Devolver un valor con return",
+    "Enunciado: /sandbox/workspace/node/create-counter/README.md",
+    "Tu archivo: /sandbox/workspace/node/create-counter/solution.js",
+    "Cuando esté listo: btb submit"
+  ]
+}

@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { allocateNew, dueReviews, freshExercises, isUnfinished, nextPending, slotFor, slotTrack, undrawnSlotTrack } from "../src/actions/queue.js";
+import { allocateNew, conceptReviewSlots, dueReviews, pendingTrack, reviewSlotFor, reviewSlotOf, freshExercises, isUnfinished, nextPending, slotFor, slotTrack, undrawnSlotTrack } from "../src/actions/queue.js";
 
 const exercises = [
   { id: "node/love-note", track: "node", level: 1 },
@@ -9,17 +9,17 @@ const exercises = [
   { id: "react/anniversary", track: "react", level: 2 },
 ];
 
-test("reviews come oldest first and skip mastered ones", () => {
+test("skipped exercises come back oldest first, a solved one never comes back as is", () => {
   const records = {
-    "node/love-note": { firstSolvedAt: "2026-10-01", dueAt: "2026-10-26" },
-    "node/playlist": { firstSolvedAt: "2026-10-01", dueAt: "2026-10-20" },
-    "react/anniversary": { firstSolvedAt: "2026-10-01", dueAt: null, mastered: true },
+    "node/love-note": { skips: 1, dueAt: "2026-10-26" },
+    "node/playlist": { skips: 2, dueAt: "2026-10-20" },
+    "react/anniversary": { skips: 1, firstSolvedAt: "2026-10-01", dueAt: "2026-10-20" },
   };
   assert.deepEqual(dueReviews(exercises, records, "2026-10-27", 5), ["node/playlist", "node/love-note"]);
 });
 
 test("reviews due in the future wait", () => {
-  const records = { "node/love-note": { firstSolvedAt: "2026-10-01", dueAt: "2026-10-28" } };
+  const records = { "node/love-note": { skips: 1, dueAt: "2026-10-28" } };
   assert.deepEqual(dueReviews(exercises, records, "2026-10-27", 5), []);
 });
 
@@ -89,4 +89,21 @@ test("the first pending slot of a track with no path asks for its placement", ()
   assert.equal(undrawnSlotTrack(queue, ["node/love-note"], () => false), "react");
   assert.equal(undrawnSlotTrack(queue, ["node/love-note"], () => true), null);
   assert.equal(undrawnSlotTrack(queue, [], () => false), null);
+});
+
+test("a review slot names its track and concept, and still has to be forged", () => {
+  const slot = reviewSlotFor("node", "closures");
+  assert.deepEqual(reviewSlotOf(slot), { track: "node", concept: "closures" });
+  assert.equal(slotTrack(slot), null);
+  assert.equal(pendingTrack(slot), "node");
+  assert.equal(pendingTrack("node/love-note"), null);
+});
+
+test("the day's concept reviews take turns across tracks up to the limit", () => {
+  const byTrack = [
+    { track: "node", due: [{ id: "closures" }, { id: "reduce" }, { id: "loops" }] },
+    { track: "python", due: [{ id: "dicts" }] },
+  ];
+  assert.deepEqual(conceptReviewSlots(byTrack, 3), ["review:node:closures", "review:python:dicts", "review:node:reduce"]);
+  assert.deepEqual(conceptReviewSlots(byTrack, 0), []);
 });

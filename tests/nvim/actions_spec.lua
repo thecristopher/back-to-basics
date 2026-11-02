@@ -252,6 +252,11 @@ describe("back-to-basics actions", function()
       assert.is_nil(actions.forge_target({ error = "offline" }))
     end)
 
+    it("leaves a concept review to be forged when it opens", function()
+      local today = { queue = { { slot = true, review = true, track = "node", ready = false } } }
+      assert.is_nil(actions.forge_target(today))
+    end)
+
     it("leaves a track with no path for its placement", function()
       local today =
         { undrawn = { "react" }, queue = { { slot = true, track = "react", ready = false } } }

@@ -1,10 +1,10 @@
 import { currentLevel, levelProgress } from "../actions/levels.js";
 import { conceptTitle } from "../actions/graph.js";
-import { focusConcept, standingOf } from "../actions/mastery.js";
-import { allocateNew, dueReviews, freshExercises, slotFor, slotTrack } from "../actions/queue.js";
+import { dueConcepts, focusConcept, standingOf } from "../actions/mastery.js";
+import { allocateNew, conceptReviewSlots, dueReviews, freshExercises, pendingTrack, reviewSlotOf, slotFor } from "../actions/queue.js";
 import { isOnsite } from "../actions/arena.js";
-import { applyRecap, isRecap } from "../actions/recap.js";
 import { HINT_COST } from "../actions/xp.js";
+import { generalHintsSeen } from "../actions/hints.js";
 import { franchiseOf } from "../actions/cast.js";
 import { waitingFor } from "../actions/unlock.js";
 import { drawPath } from "../lib/architect.js";
@@ -159,51 +159,68 @@ function isOpenSlot(ctx, trackId) {
   return Boolean(track) && !lockOf(ctx, track);
 }
 
+// the concepts of passed levels that are due, on every open track with a path. A concept whose
+// skipped exercise already comes back today needs no second review
+function conceptReviews(ctx, limit, reviews) {
+  const comingBack = new Set(reviews.map((id) => ctx.catalog.byId[id]?.conceptIds?.[0]));
+  const byTrack = openTracksWithPath(ctx).map((track) => ({
+    track: track.id,
+    due: dueConcepts(progressOf(ctx, track), ctx.state.mastery[track.id]?.concepts, ctx.today).filter((due) => !comingBack.has(due.id)),
+  }));
+  return conceptReviewSlots(byTrack, limit);
+}
+
+function openTracksWithPath(ctx) {
+  return ctx.catalog.tracks.filter((track) => track.path && !lockOf(ctx, track));
+}
+
 function buildQueue(ctx, day) {
   const reviews = dueReviews(ctx.catalog.exercises, ctx.state.exercises, ctx.today, ctx.config.dailyReviews);
+  const concepts = conceptReviews(ctx, ctx.config.dailyReviews - reviews.length, reviews);
   const daysQueued = Object.values(ctx.state.days).filter((logged) => logged.queue).length;
   const slots = allocateNew(openTracks(ctx), ctx.config.dailyNew, daysQueued).map(slotFor);
   day.reviews = reviews;
-  return [...reviews, ...slots];
+  return [...reviews, ...concepts, ...slots];
 }
 
 /**
- * The reviews of the day that were only recapped, never queued to be solved again.
+ * The concepts the day reviews with a fresh exercise, the ones still waiting and the ones already forged.
  * @param {object} ctx
  * @param {object} day
- * @returns {string[]} ids
+ * @returns {{ track: string, concept: string, id: string | null }[]} id is the exercise once forged
  */
-export function recappedToday(ctx, day) {
-  return (day.reviews ?? []).filter((id) => ctx.state.exercises[id]?.recappedAt === ctx.today);
-}
-
-// a review already solved before is recapped instead of sent again, a day queued before recaps existed gets them too
-function recapReviews(ctx, day) {
-  for (const id of day.reviews ?? []) {
-    const record = ctx.state.exercises[id];
-    if (day.done.includes(id) || !isRecap(record) || record.recappedAt === ctx.today) continue;
-    applyRecap(record, ctx.today);
-  }
-}
-
-function isQueued(ctx, entry, recapped) {
-  if (slotTrack(entry)) return isOpenSlot(ctx, slotTrack(entry));
-  return Boolean(ctx.catalog.byId[entry]) && !recapped.includes(entry);
+export function conceptReviewsOf(ctx, day) {
+  const waiting = (day.queue ?? []).map(reviewSlotOf).filter(Boolean).map((slot) => ({ ...slot, id: null }));
+  const forged = Object.entries(day.reviewOf ?? {}).map(([id, concept]) => ({ track: ctx.catalog.byId[id]?.track, concept, id }));
+  return [...forged.filter((entry) => entry.track), ...waiting];
 }
 
 /**
- * The day's queue, built on its first use of the day and kept stable after that.
- * New exercises start as slots that Claude forges when they are opened, and reviews of exercises
- * already solved are recapped rather than queued.
+ * How many concepts the day already reviewed with a fresh exercise.
+ * @param {object} ctx
+ * @param {object} day
+ * @returns {number}
+ */
+export function reviewedToday(ctx, day) {
+  return Object.keys(day.reviewOf ?? {}).filter((id) => day.solved?.includes(id)).length;
+}
+
+function isQueued(ctx, entry) {
+  const track = pendingTrack(entry);
+  if (track) return isOpenSlot(ctx, track);
+  return Boolean(ctx.catalog.byId[entry]);
+}
+
+/**
+ * The day's queue, built on its first use of the day and kept stable after that. New exercises and
+ * concept reviews start as slots that Claude forges when they are opened, a skipped exercise comes back as is.
  * @param {object} ctx
  * @param {object} day
  * @returns {string[]}
  */
 export function ensureQueue(ctx, day) {
   day.queue ??= buildQueue(ctx, day);
-  recapReviews(ctx, day);
-  const recapped = recappedToday(ctx, day);
-  day.queue = day.queue.filter((entry) => isQueued(ctx, entry, recapped));
+  day.queue = day.queue.filter((entry) => isQueued(ctx, entry));
   return day.queue;
 }
 
@@ -227,6 +244,48 @@ async function exerciseForSlot(ctx, track, queued) {
 }
 
 /**
+ * The level of the path a concept belongs to.
+ * @param {object} track
+ * @param {string} concept
+ * @returns {object | undefined}
+ */
+export function levelOfConcept(track, concept) {
+  return track.path?.levels.find((level) => level.concepts.includes(concept));
+}
+
+// a review never sends back an exercise already fought: one forged for the concept and never opened, or a new one
+async function exerciseForReview(ctx, track, concept, queued) {
+  const level = levelOfConcept(track, concept);
+  if (!level) return null;
+  const records = ctx.state.exercises;
+  const unused = ctx.catalog.exercises.find(
+    (exercise) =>
+      exercise.track === track.id &&
+      !exercise.placement &&
+      exercise.conceptIds?.[0] === concept &&
+      exercise.level <= level.level &&
+      !records[exercise.id]?.startedAt &&
+      !records[exercise.id]?.firstSolvedAt &&
+      !records[exercise.id]?.skips &&
+      !queued.includes(exercise.id),
+  );
+  if (unused) return unused;
+  const forged = await forgeExercises(ctx, { track, purpose: "review", level, concept, count: 1 });
+  return forged[0] ?? null;
+}
+
+async function exerciseForEntry(ctx, day, entry) {
+  const review = reviewSlotOf(entry);
+  if (!review) return exerciseForSlot(ctx, trackOf(ctx, pendingTrack(entry)), day.queue);
+  const exercise = await exerciseForReview(ctx, trackOf(ctx, review.track), review.concept, day.queue);
+  if (exercise) {
+    day.reviewOf ??= {};
+    day.reviewOf[exercise.id] = review.concept;
+  }
+  return exercise;
+}
+
+/**
  * Turns a queue entry into an exercise, forging one with Claude when the entry is a slot.
  * @param {object} ctx
  * @param {object} day its queue is updated with the forged id
@@ -234,21 +293,28 @@ async function exerciseForSlot(ctx, track, queued) {
  * @returns {Promise<object | null>} null when the track is finished or nothing valid came out of the forge
  */
 export async function resolveEntry(ctx, day, entry) {
-  const trackId = slotTrack(entry);
-  if (!trackId) return ctx.catalog.byId[entry];
-  const exercise = await exerciseForSlot(ctx, trackOf(ctx, trackId), day.queue);
+  if (!pendingTrack(entry)) return ctx.catalog.byId[entry];
+  const exercise = await exerciseForEntry(ctx, day, entry);
   const index = day.queue.indexOf(entry);
   if (exercise) day.queue[index] = exercise.id;
   else day.queue.splice(index, 1);
   return exercise;
 }
 
+function tagOf(t, data) {
+  if (data.placement) return t.tagPlacement;
+  if (data.review) return t.tagReview;
+  return data.format === "debug" ? t.tagBugHunt : t.tagNew;
+}
+
 function renderOpen({ t, paint }, data) {
-  const tag = data.placement ? t.tagPlacement : data.review ? t.tagReview : t.tagNew;
+  const tag = tagOf(t, data);
+  const reviewing = data.reviewOf ? [paint.dim(t.reviewingConcept(data.reviewOf))] : [];
   const rank = data.difficulty ? t.difficulty(data.difficulty) : t.level(data.level);
   return [
     `${paint.bold(`[${data.track} ${rank}] ${data.title}`)}  ${paint.yellow(tag)}  ${paint.dim(t.minutes(data.minutes))}`,
     `${t.concepts}: ${data.concepts.join(", ")}`,
+    ...reviewing,
     `${t.statement}: ${paint.cyan(data.readme)}`,
     `${t.yourFile}: ${paint.cyan(data.path)}`,
     paint.dim(t.whenReady),
@@ -266,6 +332,7 @@ export async function openExercise(ctx, exercise) {
   const record = recordOf(ctx.state, exercise.id);
   record.startedAt ??= Date.now();
   ctx.state.current = exercise.id;
+  const reviewConcept = ctx.state.days[ctx.today]?.reviewOf?.[exercise.id] ?? null;
   const data = {
     id: exercise.id,
     track: exercise.track,
@@ -277,13 +344,17 @@ export async function openExercise(ctx, exercise) {
     path: solution,
     readme,
     lesson: existsSync(exerciseFiles(exercise).lesson) ? exerciseFiles(exercise).lesson : null,
-    review: Boolean(record.firstSolvedAt),
+    review: Boolean(record.firstSolvedAt || record.skips || reviewConcept),
+    // the concept a fresh exercise brings back from a level already passed
+    reviewOf: reviewConcept ? conceptTitle(trackOf(ctx, exercise.track), reviewConcept) : null,
+    // a bug hunt opens on code that already carries the learner's last mistake on this concept
+    format: exercise.format ?? "build",
     placement: isPlacementQuestion(ctx.state, exercise.id),
     // the last 2 levels of the path are onsite fights, an editor can stage them as one
     onsite: isOnsite(trackOf(ctx, exercise.track), exercise),
     // an editor keeps the clock and the hints in sight while the learner writes
     startedAt: record.startedAt,
-    hintsLeft: isPlacementQuestion(ctx.state, exercise.id) ? 0 : Math.max(0, exercise.hints.length - record.round.hints),
+    hintsLeft: isPlacementQuestion(ctx.state, exercise.id) ? 0 : Math.max(0, exercise.hints.length - generalHintsSeen(record.round)),
     hintCost: HINT_COST,
   };
   return { data, text: renderOpen(ctx, data) };

@@ -1,0 +1,169 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://back-to-basics/contracts/today.schema.json",
+  "type": "object",
+  "required": [
+    "today",
+    "streak",
+    "xp",
+    "goal",
+    "queue",
+    "recap",
+    "placement",
+    "undrawn",
+    "locked"
+  ],
+  "properties": {
+    "today": {
+      "type": "string"
+    },
+    "streak": {
+      "type": "integer"
+    },
+    "xp": {
+      "type": "integer"
+    },
+    "goal": {
+      "type": "integer"
+    },
+    "queue": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "track",
+          "done",
+          "review",
+          "slot"
+        ],
+        "properties": {
+          "id": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "track": {
+            "type": "string"
+          },
+          "title": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "concept": {
+            "type": "string"
+          },
+          "done": {
+            "type": "boolean"
+          },
+          "review": {
+            "type": "boolean"
+          },
+          "slot": {
+            "type": "boolean"
+          },
+          "ready": {
+            "type": "boolean"
+          }
+        }
+      }
+    },
+    "recap": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "track",
+          "concept",
+          "title",
+          "standing"
+        ],
+        "properties": {
+          "id": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "track": {
+            "type": "string"
+          },
+          "concept": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "last": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "review": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "standing": {
+            "enum": [
+              "new",
+              "learning",
+              "weak",
+              "owned"
+            ]
+          },
+          "dueAt": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "question": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      },
+      "description": "the concepts reviewed today with a fresh exercise"
+    },
+    "current": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "placement": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "undrawn": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "locked": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    },
+    "text": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "the same lines the terminal shows"
+    }
+  },
+  "title": "btb today --json",
+  "description": "The day's queue, its concept reviews and the streak."
+}

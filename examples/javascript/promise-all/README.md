@@ -9,6 +9,7 @@ Escribe `promiseAll(values)`: igual que `Promise.all`.
 
 ```js
 await promiseAll([Promise.resolve("Claire"), "Inde"]); // ["Claire", "Inde"]
+await promiseAll([1, Promise.resolve(2), 3]); // [1, 2, 3]
 ```
 
 Sin `Promise.all`, `allSettled`, `any` ni `race`: los tests los desactivan.

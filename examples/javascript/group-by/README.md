@@ -10,6 +10,8 @@ const roster = [
 ];
 
 groupBy(roster, (character) => character.game);
+// con const claire = roster[0], malenia = roster[1] y leon = roster[2], es lo mismo que
+// groupBy([claire, malenia, leon], (character) => character.game)
 // {
 //   "Resident Evil": [claire, leon],
 //   "Elden Ring": [malenia],

@@ -7,12 +7,12 @@ AI made writing code fast and remembering how to write it optional. This is the 
 ![Claire briefs a Bedrock exercise in Neovim](docs/images/btb_re_coach.png)
 
 - **Nothing fixed.** There is no static exercise list. Claude forges each exercise for the next concept you need, sized by how you did on it last time and aimed at the tests that tripped you.
-- **Trusted before you see it.** Every exercise Claude forges is run first: its reference must pass the tests and its starter must fail them. When one does not hold, Claude gets the failure and fixes it, or it is thrown away.
+- **Trusted before you see it.** Every exercise Claude forges is run first: its reference must pass the tests, its starter must fail them, and 2 or 3 wrong solutions a learner would really write (forgetting the empty case, an off by one, mutating the input) must each fail at least one test. When one does not hold, Claude gets the failure and fixes it, or it is thrown away.
 - **A path with clear limits.** Every bundled track is a hand written graph of concepts, designed backwards from an Amazon or Capital One onsite: the basics first, then what a working programmer uses every day, then the interview patterns. A placement test says where you start, and a level is passed once you own each of its concepts.
 - **Every path ends at an onsite.** The last 2 levels of every track are interview levels: multi part problems like the ones in an Amazon, Zillow or Capital One loop, over realistic data, with edge cases and complexity limits the tests enforce.
 - **Node, React, Python and LLM apps at the base, any language on top.** `btb learn rust` has Claude work out how to run Rust tests on your machine. You approve the commands before anything runs.
 - **LLMs on Amazon Bedrock, by hand.** The `llm` track drills the Converse API with boto3, streaming, tool use, pydantic validated output, backoff, RAG, evals and agents. Bedrock is faked with botocore's `Stubber`, so it needs no AWS account and costs nothing. It opens once half of your Python path is done, so you get there with the language in hand.
-- **Spaced review, without busywork.** Clean solves come back in 3, 7 and 21 days, struggles come back tomorrow. A review of something you already solved shows up as a recap in `btb today` (what it was, its concepts, how it went) instead of asking you to send the same solution again. Only exercises you skipped and never solved go back in the queue.
+- **Spaced review of concepts, with fresh exercises.** What comes back is the concept, never the exercise you already solved. Once you own a concept it returns 3, 7, 21 and then every 60 days as a new exercise Claude forges for it, solvable from memory, and a miss brings it back tomorrow a step smaller. `btb today` lists the concepts due with the last exercise you solved on each one, and in Neovim its lesson question is asked from memory before the fresh one opens. Only exercises you skipped and never solved come back as they are.
 - **AI only after the fight.** `btb review` has Claude grade your solution once the tests pass.
 - **Editor friendly.** Every command takes `--json`, progress goes to stderr.
 
@@ -34,12 +34,12 @@ btb                       # today's plan
 ## A day of practice
 
 ```sh
-btb               # the recap of what is due, then the new exercises per track
+btb               # the concepts due for review, then the new exercises per track
 btb next          # opens the next one, Claude forges it if it does not exist yet
 # edit workspace/<track>/<exercise>/solution.js (or .jsx, .py) in your editor
 btb test          # tries the tests, nothing is recorded
 btb submit        # runs the tests and records the round
-btb hint          # stuck? each hint costs XP
+btb hint          # stuck? each hint costs XP, and it aims at your mistake when btb spots it
 btb preview       # React: your component in the browser, it reloads on every save
 btb skip          # not today: it returns tomorrow and unlocks the reference
 btb reveal        # compare with the reference once solved or skipped
@@ -47,7 +47,7 @@ btb review        # Claude reviews your solution once solved
 btb forge         # forge ahead of time so tomorrow's next opens instantly
 ```
 
-The pass that ends the day brings its summary: how many you solved, how many clean, what you skipped, failed submits, hints and the concepts worth another look. A round is **clean** when you pass with no hints and at most one failed submit. A concept is **owned** once you solve it clean on 2 different days and your last round on it was clean, and a level is passed when every one of its concepts is owned.
+The pass that ends the day brings its summary: how many you solved, how many clean, what you skipped, failed submits, hints and the concepts worth another look. A round is **clean** when you pass with no hints and at most one failed submit. A concept is **owned** once you solve it clean on 2 different days and your last round on it was clean, and a level is passed when every one of its concepts is owned. A passed level stays passed: when a concept of it slips later, that concept comes back in review instead of sending you back.
 
 ## Learning any language
 
@@ -68,8 +68,8 @@ If the toolchain is missing, `setup` tells you what to install. If the commands 
 | `btb next [--more]` | Opens the next pending exercise, forging it when needed. `--more` adds one. |
 | `btb start <id>` | Opens a specific exercise (`node/group-by-key` or just `group-by-key`). |
 | `btb test [id]` | Runs the tests without counting an attempt: the round, the clock and the schedule stay as they are. |
-| `btb submit [id]` | Runs the tests against your solution and records the round. |
-| `btb hint [id]` | Reveals the next hint. None during placement. |
+| `btb submit [id] [--active=s] [--edits=n]` | Runs the tests against your solution and records the round. An editor passes the seconds of real work and the edits it measured since its last run with `--active` and `--edits` (`test` and `skip` take them too), and they add up over the round. |
+| `btb hint [id]` | Reveals the next hint. When your latest run failed exactly like one of the exercise's known mistakes, the hint points at that mistake first and the general hints wait for the next one. None during placement. |
 | `btb preview [id] [--again] [--port=n] [--no-open]` | React only: serves the component you are building in the browser with the data of the statement's example, and reloads it every time you save. `--again` has Claude write the preview again. Runs until Ctrl+C. |
 | `btb skip [id]` | Leaves it for tomorrow and unlocks its reference. |
 | `btb reveal [id]` | Prints the reference solution, once solved or skipped. |
@@ -100,7 +100,9 @@ Every bundled track lives in `tracks/<id>.json` as a graph of concepts: levels i
 
 Each new exercise teaches one concept, picked in this order: one you missed last time, then one you solved clean only once, then the next new one. How big the step is depends on where you stand on it. A first exercise is the gentlest version, a second one asks a little more in a new situation, and after a miss the next one comes back a step smaller and aimed straight at what tripped you. The exercise may lean on what you already met, never on what comes later.
 
-Every test run, practice runs included, goes to `.btb/log/runs.jsonl` with the tests that failed. When you pass, the tests that tripped you on the way and how many runs it took become part of the evidence Claude reads for your next exercises. `btb path` shows each level with a mark per concept, so you always know what is left and what comes next.
+Every test run, practice runs included, goes to `.btb/log/runs.jsonl` with the tests that failed. Each exercise keeps its wrong solutions in `mutants.json` with the tests that catch them, so when a run of yours fails exactly what catches one of them, btb knows the mistake you most likely made. Each of those wrong solutions carries a nudge, a question that points at the case you missed without the fix: the failed submit tells you a hint for it is waiting, and `btb hint` shows it before any general hint. When you pass, the tests that tripped you, those likely mistakes and how many runs it took become part of the evidence Claude reads for your next exercises. `btb path` shows each level with a mark per concept, so you always know what is left and what comes next.
+
+Two formats grow out of how you fail. When a concept went weak and your runs matched one of its known mistakes, the next exercise on it is a **bug hunt**: the starter is a complete solution carrying that very mistake, it passes some tests and fails others, and the statement shows the symptom without saying where the bug is. And on the last 4 levels, the ones that prepare the onsite, every solution declares its time complexity in a `COMPLEXITY` constant that a test checks, the way an interviewer asks for it.
 
 Learned languages (`btb learn`) have no graph written by hand, so Claude draws one with the same shape: concept ids, titles and uses, designed backwards from the interview levels.
 
@@ -108,7 +110,7 @@ Upgrading from a version before the graph moves your old progress, forged exerci
 
 ## Statements that explain, hints that stand alone
 
-Every statement Claude forges walks you through the problem before you write a line: the story, what you will build with each input and output explained, how it behaves, an example worked step by step and the concept you will use, with a tiny example on other data. Hints come in 3 steps, each one readable on its own: where to start, the tool and where it goes, and the shape of the solution with the key part left for you. The hint you just bought shows first and the earlier ones sit below it. `btb forge --rewrite` brings the exercises forged before this up to the same bar.
+Every statement Claude forges walks you through the problem before you write a line: the story, what you will build with each input and output explained, how it behaves, an example worked step by step and the concept you will use, with a tiny example on other data. The worked example is never made up: its call and its result must appear word for word in one of the tests, and since the reference passes them, the example you read is true. An exercise whose example no test asserts goes back to Claude. Hints come in 3 steps, each one readable on its own: where to start, the tool and where it goes, and the shape of the solution with the key part left for you. The hint you just bought shows first and the earlier ones sit below it. `btb forge --rewrite` brings the exercises forged before this up to the same bar.
 
 ## See your React component
 
@@ -134,7 +136,7 @@ A persona is a JSON file in `personas/`: a `name`, a `voice` that the reviewer r
 | `flavor` | `"js"` | `"ts"` forges TypeScript exercises for Node and React. Node strips the types, no build step. |
 | `tracks` | `["node", "react"]` | Bundled tracks, in path order: `node`, `react`, `python`, `llm`. Tracks from `btb learn` are added after them. |
 | `dailyNew` | `2` | New exercises per day, shared by the tracks in turns. One per track (`4` with every bundled track) keeps each one moving daily. |
-| `dailyReviews` | `3` | Reviews per day at most. |
+| `dailyReviews` | `3` | Reviews per day at most: skipped exercises first, then concepts due, taking turns across tracks. |
 | `daysPerWeek` | `6` | Practice days a week, used by `btb plan`. |
 | `dailyGoalXp` | `40` | The XP you aim for each day. |
 | `cleanMaxFailures` | `1` | Failed submits that still count as a clean round. |
@@ -194,6 +196,8 @@ The screenshots come from [Eldentree](https://github.com/thecristopher/nvim-conf
 | `<leader>kt` `kp` `kS` `kP` `kl` | Today, path, status, plan, list |
 | `<leader>kf` | Forge ahead |
 
+The plugin keeps an active clock per exercise: the time between signs of life in the solution buffer (moving, typing, editing) counts, gaps over 90 seconds and time with the editor out of focus do not. Each submit, practice run and skip sends what it counted since the last one, so btb and Claude can tell 20 minutes of real work from a solution left open over lunch. `before_hint` also learns when a hint aimed at your mistake is waiting.
+
 Every test run puts the failing tests on your solution as warnings, on the line the failure broke at when its stack or traceback reaches the solution, and on the first line when it never did. A pass clears them. A redo's winbar races its ghost, the best time of your first solve, green while you are ahead of it. When some reviews of the day left a question at the end of their lesson, `<leader>kk` asks each one first, sends each answer to your coach while you type the next, and shows what you answered from memory with her feedback above the recap. The lesson opens with the coach's greeting from `btb greet`, the last pass of the day ends on her goodbye from `btb debrief`, and the plugin's own messages come in her voice when her persona has `texts`.
 
 `:Btb <command> [args]` runs any btb command, `:Btb placement react` for example. `:checkhealth back-to-basics` checks Node, Claude and the coach.
@@ -211,7 +215,7 @@ Every test run puts the failing tests on your solution as warnings, on the line 
 | `coach` | `{ enabled = true, speed = 12, toast_ms = 4500 }` | Whether the coach shows, how fast it types (ms per tick) and how long a reaction stays. |
 | `portrait` | `nil` | `fun(buf, win, persona)` that draws the coach on the left of the stage. Without it the stage is text only. |
 | `sound` | `nil` | `fun(event)` called with `"coach_open"` or the moment the coach reacts to. |
-| `before_hint` | `nil` | `fun(info, buy)` asked before a hint is revealed, with `info` as `{ id, hints_left, cost }`. Calling `buy()` reveals it, not calling it leaves it. `nil` reveals it right away. |
+| `before_hint` | `nil` | `fun(info, buy)` asked before a hint is revealed, with `info` as `{ id, hints_left, cost, nudge_ready }`. Calling `buy()` reveals it, not calling it leaves it. `nil` reveals it right away. |
 
 Six `User` events let the rest of your config join in:
 
@@ -255,7 +259,7 @@ vim.api.nvim_create_autocmd("User", {
 
 vim.api.nvim_create_autocmd("User", {
   pattern = "BtbHint",
-  -- event.data: { id, hints, total, cost }, every hint revealed, cost is the XP it took (0 when
+  -- event.data: { id, hints, total, cost, nudge? }, every hint revealed (nudge when it aimed at your mistake), cost is the XP it took (0 when
   -- it was one already bought)
   callback = function(event) end,
 })
@@ -267,6 +271,8 @@ vim.api.nvim_create_autocmd("User", {
 personas/     the bundled coaches: voice, portrait, lines per moment and the world of their franchise
 tracks/       seeds of the bundled tracks: focus, suggested stages, the example to show and what they wait for, Claude adapts them
 profiles/     how to run tests per language: files, command, report format, runtime (python/ holds the pytest plugin)
+contracts/    JSON Schemas of the --json answers editors read, and a sample of each
+evals/        the learners the prompt evals play
 examples/     hand written exercises with their lessons, the quality bar Claude is shown and the engine's fixtures
 src/actions/  pure logic: scheduling, the concept graph, mastery, levels, placement, run log entries, prompts, validation
 src/lib/      disk, processes and Claude: runner, forge, architect
@@ -280,10 +286,19 @@ A language profile names the solution and test files, the test command (with `{t
 
 Tests always run in a fresh folder holding only the solution and the test, and the whole process tree is killed at the timeout. They still run code Claude wrote on your machine, which is the point of the tool, so read what `btb setup` shows you before approving a language.
 
+## Contracts with the editors
+
+`contracts/` holds a JSON Schema for each `--json` answer an editor reads: `open` (next and start), `submit-failed`, `submit-passed`, `hint`, `today` and `status`, plus a sample of each from a real run in `contracts/samples/`. The tests check that btb's live answers keep their contract, and the Neovim specs, here and in an editor config, feed the samples to their own views through `require("back-to-basics.contract")`. A contract only names what editors rely on, so btb can add fields freely. `node scripts/contract-samples.mjs` writes the samples again after a change to the answers.
+
+## Prompt evals
+
+`npm run eval` plays every scenario in `evals/scenarios.json` with the real Claude: each one seeds a learner in a throwaway sandbox (a total beginner, a concept solved clean once, a weak concept with a known mistake, a spaced review, the onsite levels in Node and Python, React state), lets btb forge what that learner needs next and grades it with deterministic checks: it survived validation, on the first try or not, its statement has the 5 sections, 3 hints, minutes that fit the level, a worked example a test asserts, mutants caught with their nudges, and what the scenario expects on top (the concept, a bug hunt, a declared Big O, a small enough reference). `--only=<name>` plays one, and the report lands in `.btb/evals/` with the rate of every check, so a prompt change shows what it improved or broke. Your real progress is never touched.
+
 ## Development
 
 ```sh
 npm test                          # unit and end to end tests, with a fake Claude
+npm run eval                      # prompt evals with the real Claude, see above
 BTB_TEST_RUNTIMES=1 npm test      # also installs the React and Python runtimes and runs their examples
 ./scripts/test-nvim.sh            # the Neovim plugin specs (plenary.nvim, or PLENARY_DIR)
 ```

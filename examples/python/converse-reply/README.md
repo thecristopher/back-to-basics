@@ -19,6 +19,10 @@ Regresa un dict con:
 client = boto3.client("bedrock-runtime", region_name="us-east-1")
 ask(client, "anthropic.claude-haiku", "Ayudas a escribirle a Claire.", "Una nota para Claire")
 # {"text": "Claire, cada playlist...", "stop_reason": "end_turn", "tokens": 42}
+
+# cuando Bedrock contesta con el bloque {"text": "Claire, feliz aniversario"}:
+ask(client, MODEL, SYSTEM, prompt)["text"]
+# "Claire, feliz aniversario"
 ```
 
 Los tests simulan Bedrock con `botocore.stub.Stubber`, no hace falta cuenta de AWS.

@@ -112,7 +112,9 @@ export function summarize(kind, run) {
   const passed = tests.filter((test) => test.ok).length;
   const crashed = !run.timedOut && tests.length === 0;
   const ok = !run.timedOut && tests.length > 0 && passed === tests.length;
-  const stderr = (crash || run.stderr).trim();
+  // a runner that dies before writing its report often says why on stdout, and Claude needs the why to fix it
+  const said = (crash || run.stderr).trim();
+  const stderr = said || (crashed ? tail(run.stdout ?? "", 30).trim() : "");
   return { ok, tests, logs, passed, timedOut: run.timedOut, crashed, stderr };
 }
 

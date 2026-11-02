@@ -1,8 +1,9 @@
-import { daysToOwn, standingOf } from "./mastery.js";
+import { daysToOwn, standingOf, wasOwned } from "./mastery.js";
 
 /**
- * Summarizes each level of a track's path. A level is done once every one of its concepts is owned,
- * or when the placement put the learner past it. clean counts the owned concepts and target all of them.
+ * Summarizes each level of a track's path. A level is done once every one of its concepts was owned,
+ * or when the placement put the learner past it. A later miss sends a concept to review but keeps the
+ * level passed. clean counts the concepts owned now and target all of them.
  * @param {{ path: { startLevel: number, levels: { level: number, title: string, concepts: string[] }[] } | null }} track
  * @param {Record<string, object> | undefined} concepts the track's mastery by concept id
  * @returns {Array<object & { clean: number, target: number, remaining: number, placedOut: boolean, done: boolean }>}
@@ -13,8 +14,9 @@ export function levelProgress(track, concepts = {}) {
   return track.path.levels.map((info) => {
     const placedOut = info.level < track.path.startLevel;
     const owned = info.concepts.filter((id) => standingOf(concepts[id]) === "owned").length;
-    const remaining = placedOut ? 0 : info.concepts.reduce((sum, id) => sum + daysToOwn(concepts[id]), 0);
-    return { ...info, clean: owned, target: info.concepts.length, remaining, placedOut, done: placedOut || owned === info.concepts.length };
+    const done = placedOut || info.concepts.every((id) => wasOwned(concepts[id]));
+    const remaining = done ? 0 : info.concepts.reduce((sum, id) => sum + daysToOwn(concepts[id]), 0);
+    return { ...info, clean: owned, target: info.concepts.length, remaining, placedOut, done };
   });
 }
 

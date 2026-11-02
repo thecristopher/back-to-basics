@@ -2,11 +2,23 @@
   "title": "Botón de me gusta",
   "level": 1,
   "minutes": 15,
-  "concepts": ["useState", "eventos onClick", "props con valor por defecto"],
+  "concepts": [
+    "useState",
+    "eventos onClick",
+    "props con valor por defecto"
+  ],
   "hints": [
     "Empieza por lo que el botón tiene que recordar: cuántos me gusta lleva. Ese número cambia con cada click, así que no puede ser una variable normal que se reinicia en cada render.",
     "Guarda el conteo con useState, empezando en initial, y cámbialo dentro de onClick. Con otros datos se ve así: `const [visitas, setVisitas] = useState(0);` y `onClick={() => setVisitas(visitas + 1)}`.",
     "La forma queda `const [likes, setLikes] = useState(initial);` y `<button aria-pressed={...} onClick={...}>Me gusta ({likes})</button>`. Para aria-pressed compara likes contra initial: es true en cuanto el conteo es mayor."
   ],
-  "files": { "solution": "solution.jsx", "test": "solution.test.jsx", "preview": "preview.jsx" }
+  "files": {
+    "solution": "solution.jsx",
+    "test": "solution.test.jsx",
+    "preview": "preview.jsx"
+  },
+  "example": {
+    "call": "<LikeButton initial={41} />",
+    "result": "Me gusta (42)"
+  }
 }

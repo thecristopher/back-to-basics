@@ -1,4 +1,5 @@
 const SLOT = "forge:";
+const REVIEW = "review:";
 
 /**
  * A queue entry waiting for Claude to forge a new exercise for a track.
@@ -18,12 +19,57 @@ export function slotTrack(entry) {
   return entry.startsWith(SLOT) ? entry.slice(SLOT.length) : null;
 }
 
-function isDue(record, today) {
-  return Boolean(record?.dueAt) && !record.mastered && record.dueAt <= today;
+/**
+ * A queue entry waiting for a fresh exercise that reviews one concept from a level already passed.
+ * @param {string} track
+ * @param {string} concept concept id
+ * @returns {string}
+ */
+export function reviewSlotFor(track, concept) {
+  return `${REVIEW}${track}:${concept}`;
 }
 
 /**
- * Exercises waiting for review today, the most overdue first.
+ * The track and concept of a review slot, null when the entry is something else.
+ * @param {string} entry
+ * @returns {{ track: string, concept: string } | null}
+ */
+export function reviewSlotOf(entry) {
+  if (!entry.startsWith(REVIEW)) return null;
+  const [track, concept] = entry.slice(REVIEW.length).split(":");
+  return { track, concept };
+}
+
+/**
+ * The track an entry still has to be forged for, a new exercise or a review, null for an exercise id.
+ * @param {string} entry
+ * @returns {string | null}
+ */
+export function pendingTrack(entry) {
+  return slotTrack(entry) ?? reviewSlotOf(entry)?.track ?? null;
+}
+
+/**
+ * Picks the day's concept reviews across tracks, taking turns so no track hogs them, up to the limit.
+ * @param {{ track: string, due: { id: string }[] }[]} byTrack each track's due concepts, see dueConcepts
+ * @param {number} limit
+ * @returns {string[]} review slots
+ */
+export function conceptReviewSlots(byTrack, limit) {
+  const slots = [];
+  for (let round = 0; slots.length < limit && byTrack.some(({ due }) => due.length > round); round += 1) {
+    for (const { track, due } of byTrack) if (due[round] && slots.length < limit) slots.push(reviewSlotFor(track, due[round].id));
+  }
+  return slots;
+}
+
+// a solved exercise is never queued again as is: its concepts come back in fresh exercises instead
+function isDue(record, today) {
+  return Boolean(record?.dueAt) && !record.firstSolvedAt && record.dueAt <= today;
+}
+
+/**
+ * Exercises skipped and never solved that are waiting to be fought again today, the most overdue first.
  * @param {{ id: string }[]} exercises
  * @param {Record<string, object>} records
  * @param {string} today
@@ -104,6 +150,7 @@ export function isUnfinished(id, record, day) {
  */
 export function undrawnSlotTrack(queue, done, hasPath) {
   const entry = nextPending(queue, done);
+  // a review slot only exists for a track that already has a path
   const trackId = entry ? slotTrack(entry) : null;
   return trackId && !hasPath(trackId) ? trackId : null;
 }

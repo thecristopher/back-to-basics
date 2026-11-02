@@ -54,3 +54,30 @@ export function runsThisRound(runs, id, startedAt) {
   const since = startedAt ?? 0;
   return runs.filter((run) => run.id === id && run.kind !== "redo" && Date.parse(run.at) >= since).length;
 }
+
+/**
+ * The failing tests of each run of the round that failed some tests but not all of them, the runs that show a mistake.
+ * @param {object[]} runs
+ * @param {string} id
+ * @param {number | null} startedAt
+ * @returns {string[][]}
+ */
+export function partialFailures(runs, id, startedAt) {
+  const since = startedAt ?? 0;
+  return runs
+    .filter((run) => run.id === id && run.kind !== "redo" && Date.parse(run.at) >= since)
+    .filter((run) => !run.error && run.failing.length > 0 && run.passed > 0)
+    .map((run) => run.failing);
+}
+
+/**
+ * The latest run of the round that tested the learner's own solution, null when there is none yet.
+ * @param {object[]} runs oldest first
+ * @param {string} id
+ * @param {number | null} startedAt
+ * @returns {object | null}
+ */
+export function lastRun(runs, id, startedAt) {
+  const since = startedAt ?? 0;
+  return runs.findLast((run) => run.id === id && run.kind !== "redo" && Date.parse(run.at) >= since) ?? null;
+}

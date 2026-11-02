@@ -20,14 +20,21 @@ function trippedPart(result) {
   return `; tripped on: ${result.tripped.slice(0, 4).map((name) => `"${name}"`).join(", ")}`;
 }
 
+function mistakesPart(result) {
+  if (!result.mistakes?.length) return "";
+  return `; likely mistakes: ${result.mistakes.join(", ")}`;
+}
+
 function recentLine(result) {
   const extras = [
     result.failures ? `${result.failures} failed submits` : "",
     result.hints ? `${result.hints} hints` : "",
     result.runs ? `${result.runs} test runs` : "",
   ].filter(Boolean);
-  const time = result.seconds ? `, ${result.seconds}s` : "";
-  return `- "${result.title}" (level ${result.level}): ${result.outcome}${extras.length ? `, ${extras.join(", ")}` : ""}${time}${trippedPart(result)}`;
+  const active = result.activeSeconds ? ` (${result.activeSeconds}s of real work, ${result.edits ?? 0} edits)` : "";
+  const time = result.seconds ? `, ${result.seconds}s${active}` : active ? `,${active}` : "";
+  const format = result.format ? ` [${result.format}]` : "";
+  return `- "${result.title}"${format} (level ${result.level}): ${result.outcome}${extras.length ? `, ${extras.join(", ")}` : ""}${time}${trippedPart(result)}${mistakesPart(result)}`;
 }
 
 /**
@@ -42,7 +49,7 @@ export function masteryLines(summary, track) {
     `Owned concepts: ${titles(track, summary.strong) || "none confirmed yet"}`,
     `Weak concepts, they missed them last time: ${titles(track, summary.weak) || "none detected"}`,
     `Concepts still being learned: ${titles(track, summary.learning ?? []) || "none"}`,
-    "Recent results, newest first (the tripped tests are the ones they failed before passing):",
+    "Recent results, newest first (the tripped tests are the ones they failed before passing, the likely mistakes are known wrong solutions their runs matched):",
     ...summary.recent.map(recentLine),
   ];
 }

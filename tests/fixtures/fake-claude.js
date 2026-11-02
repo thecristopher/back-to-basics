@@ -16,6 +16,7 @@ function example(slug) {
     minutes: meta.minutes,
     concepts: meta.concepts,
     hints: meta.hints,
+    example: meta.example,
     readme: read("README.md"),
     lesson: read("lesson.md"),
     starter: read("starter.js"),
@@ -32,6 +33,15 @@ function aimedConcepts(fallback) {
   return allowed ? [allowed] : fallback;
 }
 
+// stands in for the wrong solutions Claude writes: the starter fails every test without crashing, so it is caught.
+// FAKE_CLAUDE_WEAK makes the first one the reference, a wrong solution the tests would let through
+function mutants(draft, weak = false) {
+  return [
+    { mistake: "olvida la carta vacía de Inde", nudge: "¿Qué pasa cuando Inde no escribió ninguna carta?", code: `${weak ? draft.reference : draft.starter}\n// olvida el caso vacío\n` },
+    { mistake: "se pasa por uno al contar las runas de Malenia", nudge: "¿Dónde empieza y dónde termina tu cuenta de runas?", code: `${draft.starter}\n// se pasa por uno\n` },
+  ];
+}
+
 // rotates through the examples across calls so each forge brings new ones
 function nextSlugs(count) {
   const slugs = readdirSync(EXAMPLES).sort();
@@ -41,10 +51,26 @@ function nextSlugs(count) {
   return Array.from({ length: count }, (_, index) => slugs[(start + index) % slugs.length]);
 }
 
+// a bug hunt hands back sum-evens with the mistake of dropping the negative evens: it passes every test but one
+function bugHunt() {
+  const draft = example("sum-evens");
+  draft.starter = "export function sumEvens(numbers) {\n  let total = 0;\n  for (const n of numbers) if (n % 2 === 0 && n > 0) total += n;\n  return total;\n}\n";
+  return draft;
+}
+
+// the onsite levels declare their Big O, and one test checks it
+function declareComplexity(draft) {
+  draft.starter += 'export const COMPLEXITY = "";\n';
+  draft.reference += 'export const COMPLEXITY = "O(n)";\n';
+  draft.test += '\nimport { COMPLEXITY } from "./solution.js";\ntest("declara su complejidad", () => assert.equal(COMPLEXITY, "O(n)"));\n';
+}
+
 function exercises() {
   const count = Number(prompt.match(/^Write (\d+)/m)?.[1] ?? 2);
-  const drafts = nextSlugs(count).map(example);
+  const drafts = prompt.includes("Format: bug hunt") ? [bugHunt()] : nextSlugs(count).map(example);
+  if (prompt.includes("Complexity: the solution also declares")) drafts.forEach(declareComplexity);
   for (const draft of drafts) draft.concepts = aimedConcepts(draft.concepts);
+  if (prompt.includes('"mutants"')) for (const draft of drafts) draft.mutants = mutants(draft, Boolean(process.env.FAKE_CLAUDE_WEAK));
   if (process.env.FAKE_CLAUDE_BROKEN) drafts[0].reference = drafts[0].starter;
   // a coach with a voice is asked for her lines about each exercise
   if (prompt.includes('"moments"')) for (const draft of drafts) draft.moments = moments(draft.title);
@@ -66,7 +92,8 @@ function moments(title = prompt.match(/^Exercise: (.+)$/m)?.[1]) {
 function fix() {
   const lines = prompt.split("\n");
   const draft = JSON.parse(lines[lines.indexOf("The exercise:") + 1]);
-  return { ...example(draft.slug), concepts: draft.concepts };
+  const fixed = { ...example(draft.slug), concepts: draft.concepts };
+  return draft.mutants ? { ...fixed, mutants: mutants(fixed) } : fixed;
 }
 
 function path() {

@@ -1,4 +1,4 @@
-import { slotTrack } from "./queue.js";
+import { reviewSlotOf, slotTrack } from "./queue.js";
 
 /**
  * Each round of a day with the exercise's title and concepts, in the order they were fought.
@@ -34,8 +34,10 @@ export function plannedOf(day, byId, trackTitles) {
   return (day?.queue ?? []).map((entry) => {
     const track = slotTrack(entry);
     if (track) return `a new exercise of ${trackTitles[track] ?? track}`;
-    const review = day.reviews?.includes(entry) ? " (review)" : "";
-    return `${byId[entry]?.title ?? entry}${review}`;
+    const review = reviewSlotOf(entry);
+    if (review) return `a fresh exercise reviewing ${review.concept} on ${trackTitles[review.track] ?? review.track}`;
+    const tag = day.reviews?.includes(entry) || day.reviewOf?.[entry] ? " (review)" : "";
+    return `${byId[entry]?.title ?? entry}${tag}`;
   });
 }
 
