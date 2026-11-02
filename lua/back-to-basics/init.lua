@@ -4,9 +4,11 @@ local actions = require("back-to-basics.actions")
 local arena = require("back-to-basics.arena")
 local coach = require("back-to-basics.coach")
 local coach_actions = require("back-to-basics.actions.coach")
+local hint_actions = require("back-to-basics.actions.hint")
 local cli = require("back-to-basics.cli")
 local lesson = require("back-to-basics.lesson")
 local library = require("back-to-basics.library")
+local preview = require("back-to-basics.preview")
 local ui = require("back-to-basics.ui")
 local winbar = require("back-to-basics.winbar")
 local winbar_actions = require("back-to-basics.actions.winbar")
@@ -417,6 +419,19 @@ local function on_exercise(name, filetype)
   end
 end
 
+-- the hint just bought reads first, as markdown so its snippets look like code
+local function show_hint(data)
+  if data.error then
+    return notify(data.error, vim.log.levels.ERROR)
+  end
+  local lines = vim.list_extend(
+    actions.coach_lines(data, coach.enabled()),
+    hint_actions.lines(data, opts.messages)
+  )
+  ui.float(lines, { title = "hint", filetype = "markdown" })
+  moment(data)
+end
+
 ---Reveals the next hint of an exercise, the one in the current buffer by default. The config may
 ---ask first through before_hint, and hears about every hint bought through User BtbHint.
 ---@param id? string
@@ -427,7 +442,7 @@ function M.hint(id)
   end
   local function buy()
     run({ "hint", id }, function(data)
-      show(data, "hint")
+      show_hint(data)
       if not data.error then
         vim.api.nvim_exec_autocmds("User", { pattern = "BtbHint", data = data })
       end
@@ -438,6 +453,17 @@ function M.hint(id)
   end
   local info = winbar.info(id) or {}
   opts.before_hint({ id = id, hints_left = info.hintsLeft, cost = info.hintCost }, buy)
+end
+
+---Shows the React component of an exercise in the browser, reloading on every save. The current
+---buffer's exercise by default, and only one preview runs at a time.
+---@param id? string
+function M.preview(id)
+  id = id or current_id()
+  if not id then
+    return notify(opts.messages.not_exercise, vim.log.levels.WARN)
+  end
+  preview.open(opts, id, notify)
 end
 
 ---Opens your solution beside the reference as a diff, the current buffer's exercise by default.
@@ -487,6 +513,9 @@ M.subcommands = {
   compare = function(args)
     M.compare(args[1])
   end,
+  preview = function(args)
+    M.preview(args[1])
+  end,
   skip = on_exercise("skip"),
   reveal = on_exercise("reveal"),
   review = on_exercise("review", "markdown"),
@@ -525,6 +554,7 @@ local KEYS = {
   { "x", "skip", "Skip for today" },
   { "v", "reveal", "Reveal the reference" },
   { "d", "compare", "Your solution beside the reference" },
+  { "o", "preview", "See the React component in the browser" },
   { "r", "review", "Claude reviews the solution" },
   { "L", "brief", "The coach explains this lesson again" },
   { "b", "lessons", "Lesson library" },
@@ -560,6 +590,8 @@ end
 
 local function set_autocmds()
   local group = vim.api.nvim_create_augroup("BackToBasics", { clear = true })
+  -- the preview's server would outlive the editor otherwise
+  vim.api.nvim_create_autocmd("VimLeavePre", { group = group, callback = preview.stop })
   vim.api.nvim_create_autocmd({ "BufReadPost", "BufNewFile" }, {
     group = group,
     callback = function(event)
