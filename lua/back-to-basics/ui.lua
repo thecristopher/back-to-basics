@@ -85,12 +85,21 @@ function M.ask(question, opts, on_answer)
       return
     end
     finished = true
-    vim.cmd.stopinsert()
+    local function hand_over()
+      vim.schedule(function()
+        on_answer(answer)
+      end)
+    end
+    -- stopinsert only lands once the mapping returns, so a next question opened before that
+    -- would start in insert and drop to normal right after
+    if vim.api.nvim_get_mode().mode:sub(1, 1) == "i" then
+      vim.api.nvim_create_autocmd("InsertLeave", { once = true, callback = hand_over })
+      vim.cmd.stopinsert()
+    else
+      hand_over()
+    end
     pcall(vim.api.nvim_win_close, answer_win, true)
     pcall(vim.api.nvim_win_close, question_win, true)
-    vim.schedule(function()
-      on_answer(answer)
-    end)
   end
 
   vim.keymap.set({ "i", "n" }, "<CR>", function()
