@@ -40,10 +40,11 @@ export async function saveProfile(config, profile) {
  * File names and import hint for a profile in the configured flavor.
  * @param {object} profile
  * @param {"js" | "ts"} flavor
- * @returns {{ name: string, solutionFile: string, testFile: string, importHint: string }}
+ * @returns {{ name: string, solutionFile: string, testFile: string, importHint: string, previewFile?: string }}
+ *   previewFile only for languages that render something to look at, React for example
  */
 export function filesFor(profile, flavor) {
-  const base = { name: profile.name, solutionFile: profile.solutionFile, testFile: profile.testFile, importHint: profile.importHint };
+  const base = { name: profile.name, solutionFile: profile.solutionFile, testFile: profile.testFile, importHint: profile.importHint, previewFile: profile.previewFile };
   return { ...base, ...profile.variants?.[flavor] };
 }
 

@@ -2,11 +2,18 @@
   "title": "Palabras más frecuentes",
   "level": 2,
   "minutes": 15,
-  "concepts": ["dict para contar", "sorted con key", "métodos de str"],
-  "hints": [
-    "Pasa todo a minúsculas y quédate solo con letras y espacios antes de partir en palabras.",
-    "Cuenta con un dict: counts[word] = counts.get(word, 0) + 1.",
-    "Ordena con key=lambda pair: (-pair[1], pair[0]) y corta los primeros n."
+  "concepts": [
+    "dict para contar",
+    "sorted con key",
+    "métodos de str"
   ],
-  "files": { "solution": "solution.py", "test": "test_solution.py" }
+  "hints": [
+    "Empieza por limpiar el texto antes de contar: si no pasas todo a minúsculas y quitas la puntuación, \"Malenia\" y \"malenia,\" van a contar como palabras distintas.",
+    "Cuenta con un dict recorriendo las palabras ya limpias: `counts[word] = counts.get(word, 0) + 1`. Para limpiar, `text.lower()` y quedarte solo con letras y espacios antes de `split()`.",
+    "Para ordenar usa `sorted(counts.items(), key=lambda pair: (-pair[1], pair[0]))` y corta con `[:n]`. El signo menos pone primero las más frecuentes y la palabra desempata en orden alfabético."
+  ],
+  "files": {
+    "solution": "solution.py",
+    "test": "test_solution.py"
+  }
 }

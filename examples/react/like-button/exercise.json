@@ -4,9 +4,9 @@
   "minutes": 15,
   "concepts": ["useState", "eventos onClick", "props con valor por defecto"],
   "hints": [
-    "useState(initial) te da el valor y la función para cambiarlo.",
-    "El texto del botón sale del estado: Me gusta (N).",
-    "aria-pressed recibe un booleano: true en cuanto hay al menos un like propio."
+    "Empieza por lo que el botón tiene que recordar: cuántos me gusta lleva. Ese número cambia con cada click, así que no puede ser una variable normal que se reinicia en cada render.",
+    "Guarda el conteo con useState, empezando en initial, y cámbialo dentro de onClick. Con otros datos se ve así: `const [visitas, setVisitas] = useState(0);` y `onClick={() => setVisitas(visitas + 1)}`.",
+    "La forma queda `const [likes, setLikes] = useState(initial);` y `<button aria-pressed={...} onClick={...}>Me gusta ({likes})</button>`. Para aria-pressed compara likes contra initial: es true en cuanto el conteo es mayor."
   ],
-  "files": { "solution": "solution.jsx", "test": "solution.test.jsx" }
+  "files": { "solution": "solution.jsx", "test": "solution.test.jsx", "preview": "preview.jsx" }
 }

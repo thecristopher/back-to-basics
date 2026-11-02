@@ -46,6 +46,13 @@ for (const id of await listDirs(join(ROOT, "examples"))) {
       assert.ok((await readFile(files.lesson, "utf8")).trim().length > 0, "lesson.md is missing");
     });
 
+    if (profile.previewFile) {
+      test(`${id}/${slug} brings the preview that shows it in the browser`, async () => {
+        assert.ok(files.preview, "exercise.json names no preview");
+        assert.match(await readFile(files.preview, "utf8"), /export default function Preview/);
+      });
+    }
+
     test(`${id}/${slug} passes with its reference`, { skip }, async () => {
       const result = await run(files.reference);
       assert.equal(result.ok, true, JSON.stringify(result, null, 2));

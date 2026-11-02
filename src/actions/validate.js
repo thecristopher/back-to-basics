@@ -19,10 +19,12 @@ function isCommand(value) {
 /**
  * Lists what is wrong with an exercise draft before running anything.
  * @param {object} draft
+ * @param {{ preview?: boolean }} [needs] preview when the language shows the component in the browser
  * @returns {string[]} empty when the shape is fine
  */
-export function draftProblems(draft) {
-  const problems = missingStrings(draft, ["title", "readme", "lesson", "starter", "reference", "test"]);
+export function draftProblems(draft, needs = {}) {
+  const keys = ["title", "readme", "lesson", "starter", "reference", "test", ...(needs.preview ? ["preview"] : [])];
+  const problems = missingStrings(draft, keys);
   if (!isList(draft?.hints)) problems.push('"hints" must list at least one hint');
   if (!isList(draft?.concepts)) problems.push('"concepts" must list at least one concept');
   if (!(draft?.minutes > 0)) problems.push('"minutes" must be a positive number');
