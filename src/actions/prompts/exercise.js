@@ -4,16 +4,61 @@ import { MOMENTS_SCHEMA, momentGuide } from "./moments.js";
 
 const DRAFT =
   '"slug":"kebab-case-name","title":"...","difficulty":1,"minutes":10,' +
-  '"concepts":["..."],"hints":["..."],"readme":"markdown statement with examples","lesson":"markdown lesson on the concept","starter":"code","reference":"code","test":"code"';
+  '"concepts":["..."],"hints":["..."],"readme":"markdown statement that explains the problem","lesson":"markdown lesson on the concept","starter":"code","reference":"code","test":"code"';
 
-// a coach with a voice also writes what she says at each moment of this exercise
-function schemaFor(cast) {
-  return `{"exercises":[{${DRAFT}${cast?.coach ? `,"moments":${MOMENTS_SCHEMA}` : ""}}]}`;
+/**
+ * How the readme explains the problem: a patient walk through, never a cryptic spec.
+ * Shared with the prompt that rewrites the statements of exercises already forged.
+ */
+export const STATEMENT_RULES = [
+  "- The readme explains the problem the way a patient teacher would, sitting next to the learner and laying the groundwork before they write a line. Full sentences, never cryptic, never shorthand. These sections, in this order, with headings in the prose language:",
+  "  1. The story: 2 to 4 sentences that set the scene and say why this piece of code matters in it.",
+  "  2. What you will build: the signature, then in plain words what it receives, what each parameter or field means with its type, and what it gives back.",
+  "  3. How it behaves: one bullet per behavior the tests check, each with a short reason or a concrete value. Name the edge cases in words (an empty list, a missing prop).",
+  "  4. An example, step by step: a code block with a call and its result, then 2 to 4 lines walking through why the result is that one.",
+  "  5. What you will use: the concept or built in behind it, explained in plain words with a tiny example on other data. Never the solution.",
+  "- Define each term the first time it appears. Write real values, never placeholders like NAME or N on their own.",
+];
+
+/**
+ * What makes a hint clear: it stands on its own and names exactly what to do next.
+ * Shared with the prompt that rewrites the hints of exercises already forged.
+ */
+export const HINT_RULES = [
+  "- 3 hints, read one at a time by someone stuck, so each one makes sense on its own:",
+  "  1. Where to start: the first step to take and why, in plain words, no code.",
+  "  2. The tool: the built in, hook or pattern that does it and where it goes in their code, with a tiny snippet on other data in backticks.",
+  "  3. The shape: the skeleton of the solution in backticks with the key part left for them, plus one line on the trap to avoid.",
+  "- Each hint is 1 to 3 sentences, uses the exact names of the exercise (function, props, fields) and never stays vague like \"think about the state\". Never the full code.",
+];
+
+// a coach with a voice also writes what she says at each moment, and a profile with a preview asks for one
+function schemaFor(cast, preview) {
+  const moments = cast?.coach ? `,"moments":${MOMENTS_SCHEMA}` : "";
+  return `{"exercises":[{${DRAFT}${preview ? ',"preview":"code"' : ""}${moments}}]}`;
 }
 
 function momentLines(cast) {
   if (!cast?.coach) return [];
   return [`- "moments" is what ${cast.coach} tells the learner while they fight this exercise. ${cast.voice ?? ""}`.trimEnd(), ...momentGuide(cast.coach)];
+}
+
+/**
+ * What the preview module must do so the learner sees their component in the browser.
+ * Shared with the prompt that writes the preview of exercises forged before previews existed.
+ * @param {{ solutionFile: string, previewFile: string }} files
+ * @returns {string[]}
+ */
+export function previewRules(files) {
+  return [
+    `- "preview" is ${files.previewFile}, a page that shows the learner's component in the browser while they build it. It is never graded.`,
+    `- It imports the component from "./${files.solutionFile}" and default exports a function Preview that renders it 1 to 3 times with the data of the readme's example, each case under an <h2> that says in a few words what that case shows.`,
+    "- Interactive where the component is (clicks, typing), plain data inline, only react, no styles, no tests, no fetch.",
+  ];
+}
+
+function previewLines(files) {
+  return files.previewFile ? previewRules(files) : [];
 }
 
 /**
@@ -53,7 +98,7 @@ const WARM_UP = [
 
 function basicsLines(level, fromBasics) {
   if (!fromBasics || level.level > 2) return [];
-  return [...WARM_UP, "- 3 hints, the last one almost the answer."];
+  return WARM_UP;
 }
 
 function placementLines({ track, count, difficulty, size, avoid, fromBasics }) {
@@ -120,17 +165,19 @@ export function exercisePrompt(input) {
     "- When the point is to build something by hand, the tests disable the built in that would make it trivial, and the readme says so.",
     "- The starter has the signature and a doc comment with an empty body, so every test fails without crashing the run.",
     "- The reference is a clean, idiomatic solution that passes every test.",
-    "- 2 or 3 hints, from a nudge to almost the answer, never the full code.",
+    ...STATEMENT_RULES,
+    ...HINT_RULES,
     "- The lesson teaches the concept behind the exercise so the learner can come back to it later: what it is, a small example on a different problem, the typical mistakes and one question to think about. It never solves the exercise.",
     theme ? `- Test data and examples: ${theme}` : null,
     ...castLines(input.cast ?? null),
     ...momentLines(input.cast),
+    ...previewLines(files),
     "",
     "One exercise at the quality bar, as JSON. Keep its spirit in any language:",
     JSON.stringify(example),
     "",
     "Respond with JSON only, no prose and no code fences, in this shape:",
-    schemaFor(input.cast),
+    schemaFor(input.cast, Boolean(files.previewFile)),
   ]
     .filter((line) => line !== null)
     .join("\n");

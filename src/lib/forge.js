@@ -25,7 +25,7 @@ async function runProblems(ctx, profile, files, draft) {
 }
 
 async function problemsOf(ctx, profile, files, draft) {
-  const shape = draftProblems(draft);
+  const shape = draftProblems(draft, { preview: Boolean(files.previewFile) });
   return shape.length > 0 ? shape : runProblems(ctx, profile, files, draft);
 }
 
@@ -66,6 +66,8 @@ async function saveExercise(ctx, track, draft, meta) {
     files: meta.files,
     franchise: meta.franchise,
     moments: withMoments(undefined, meta.persona, draft.moments),
+    // written with the rules that explain the statement and the hints, so a rewrite can skip it
+    explained: true,
     // a timestamp keeps forge order without touching progress, so forging can run beside practice
     seq: Date.now(),
     forgedAt: ctx.today,
@@ -77,6 +79,7 @@ async function saveExercise(ctx, track, draft, meta) {
   await writeFile(join(folder, `starter${ext}`), draft.starter);
   await writeFile(join(folder, `reference${ext}`), draft.reference);
   await writeFile(join(folder, meta.files.test), draft.test);
+  if (meta.files.preview) await writeFile(join(folder, meta.files.preview), draft.preview);
   const exercise = { hints: [], concepts: [], ...stored, id: `${track.id}/${slug}`, slug, track: track.id, folder };
   ctx.catalog.exercises.push(exercise);
   ctx.catalog.byId[exercise.id] = exercise;
@@ -121,7 +124,7 @@ export async function forgeExercises(ctx, { track, purpose, level, count, diffic
     language: profile.id,
     franchise,
     persona: ctx.persona?.id ?? null,
-    files: { solution: files.solutionFile, test: files.testFile },
+    files: { solution: files.solutionFile, test: files.testFile, ...(files.previewFile ? { preview: files.previewFile } : {}) },
   };
   const saved = [];
   for (const [index, draft] of drafts.entries()) {

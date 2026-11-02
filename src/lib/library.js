@@ -4,6 +4,7 @@ import { dirname, join } from "node:path";
 import { withoutEmDashes } from "../actions/json.js";
 import { momentsPrompt } from "../actions/prompts/moments.js";
 import { lessonPrompt } from "../actions/prompts/lesson.js";
+import { statementPrompt } from "../actions/prompts/statement.js";
 import { withMoments } from "../actions/moments.js";
 import { exerciseFiles } from "./catalog.js";
 import { ask, askJson } from "./claude.js";
@@ -103,5 +104,31 @@ export async function writeMissingMoments(ctx, exercise) {
   const file = join(exercise.folder, "exercise.json");
   await writeJson(file, { ...(await readJsonIfExists(file)), moments });
   exercise.moments = moments;
+  return true;
+}
+
+function isRewrite(answer) {
+  return typeof answer?.readme === "string" && answer.readme.trim() !== "" && Array.isArray(answer.hints) && answer.hints.length > 0;
+}
+
+/**
+ * Has Claude rewrite the statement and the hints of an exercise forged before they had to explain the
+ * problem. Tests, starter and reference stay as they are.
+ * @param {object} ctx
+ * @param {object} exercise updated in place, and in its exercise.json and README.md
+ * @returns {Promise<boolean>} false when Claude's answer did not hold
+ */
+export async function rewriteStatement(ctx, exercise) {
+  const files = exerciseFiles(exercise);
+  const [readme, reference, test] = await Promise.all([files.readme, files.reference, files.test].map((file) => readFile(file, "utf8")));
+  const prompt = statementPrompt({ title: exercise.title, readme, hints: exercise.hints, reference, test, language: ctx.config.language, theme: ctx.config.theme });
+  ctx.log(ctx.paint.dim(ctx.t.rewritingStatement(ctx.coach, exercise.title)));
+  const answer = await askJson(ctx.config.claude, prompt);
+  if (!isRewrite(answer)) return false;
+  const hints = answer.hints.map((hint) => withoutEmDashes(String(hint)));
+  await writeText(files.readme, withoutEmDashes(answer.readme.trim()));
+  const meta = join(exercise.folder, "exercise.json");
+  await writeJson(meta, { ...(await readJsonIfExists(meta)), hints, explained: true });
+  Object.assign(exercise, { hints, explained: true });
   return true;
 }

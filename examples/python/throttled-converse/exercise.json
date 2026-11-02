@@ -2,11 +2,19 @@
   "title": "Bedrock con backoff",
   "level": 6,
   "minutes": 20,
-  "concepts": ["ThrottlingException", "backoff exponencial", "ClientError de botocore", "inyectar el reloj"],
-  "hints": [
-    "Atrapa botocore.exceptions.ClientError y lee el código en error.response[\"Error\"][\"Code\"].",
-    "Cualquier código que no sea ThrottlingException se relanza con raise, sin esperar.",
-    "En el intento i (desde 0) espera base_delay * 2 ** i, pero no esperes después del último: relanza el error."
+  "concepts": [
+    "ThrottlingException",
+    "backoff exponencial",
+    "ClientError de botocore",
+    "inyectar el reloj"
   ],
-  "files": { "solution": "solution.py", "test": "test_solution.py" }
+  "hints": [
+    "Empieza por separar los dos tipos de error: ThrottlingException significa que Bedrock está saturado y vale la pena esperar, cualquier otro código significa que reintentar no va a arreglar nada.",
+    "Envuelve la llamada en un `try` dentro de un `for attempt in range(attempts)` y atrapa `botocore.exceptions.ClientError`. El código del error está en `error.response[\"Error\"][\"Code\"]`.",
+    "La forma queda `try: return client.converse(**request)` y en el `except`: si es el último intento o no es throttling, `raise`; si no, `sleep(base_delay * 2 ** attempt)`. La trampa es esperar después del último intento: ahí ya no se espera, se relanza."
+  ],
+  "files": {
+    "solution": "solution.py",
+    "test": "test_solution.py"
+  }
 }

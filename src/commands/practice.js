@@ -6,6 +6,7 @@ import { isUnfinished, nextPending, slotFor, undrawnSlotTrack } from "../actions
 import { daySummary } from "../actions/recap.js";
 import { applyPass, applySkip, awardXp } from "../actions/record.js";
 import { roundOutcome } from "../actions/schedule.js";
+import { hintLines } from "../actions/hints.js";
 import { HINT_COST, xpFor } from "../actions/xp.js";
 import { exerciseFiles, findExercise } from "../lib/catalog.js";
 import { runTests } from "../lib/runner.js";
@@ -314,7 +315,7 @@ export async function hint(ctx, [query]) {
   const header = fresh ? ctx.t.hintHeader(shown.length, exercise.hints.length, HINT_COST) : ctx.t.noMoreHints;
   return {
     data: { id: exercise.id, hints: shown, total: exercise.hints.length, cost: fresh ? HINT_COST : 0 },
-    text: [ctx.paint.yellow(header), ...shown.map((text, index) => `  ${index + 1}. ${text}`)],
+    text: hintLines({ shown, fresh, header, earlierLabel: ctx.t.hintsEarlier, paint: ctx.paint }),
   };
 }
 

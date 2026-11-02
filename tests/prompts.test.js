@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import { exercisePrompt, fixPrompt, isInterviewLevel } from "../src/actions/prompts/exercise.js";
+import { statementPrompt } from "../src/actions/prompts/statement.js";
 import { pathPrompt } from "../src/actions/prompts/path.js";
 import { profilePrompt } from "../src/actions/prompts/profile.js";
 
@@ -46,6 +47,38 @@ test("an interview level asks for an Amazon, Zillow or Capital One onsite proble
 test("an early level stays small and focused", () => {
   const prompt = exercisePrompt({ ...base, purpose: "practice" });
   assert.doesNotMatch(prompt, /onsite problem/);
+});
+
+test("every exercise prompt asks for a statement that explains the problem and hints that stand alone", () => {
+  const prompt = exercisePrompt({ ...base, purpose: "practice" });
+  assert.match(prompt, /patient teacher/);
+  assert.match(prompt, /What you will build/);
+  assert.match(prompt, /An example, step by step/);
+  assert.match(prompt, /3 hints, read one at a time/);
+  assert.doesNotMatch(prompt, /"preview"/);
+});
+
+test("a React prompt asks for the preview that shows the component", () => {
+  const react = { ...files, solutionFile: "solution.jsx", previewFile: "preview.jsx" };
+  const prompt = exercisePrompt({ ...base, files: react, purpose: "practice" });
+  assert.match(prompt, /"preview" is preview.jsx/);
+  assert.match(prompt, /,"preview":"code"/);
+});
+
+test("a statement prompt keeps the behavior and carries the tests", () => {
+  const prompt = statementPrompt({
+    title: "Cartas de Claire",
+    readme: "# Cartas\nNOMBRE aceptó",
+    hints: ["usa filter"],
+    reference: "export const letters = () => [];",
+    test: "test('Inde recibe sus cartas', () => {});",
+    language: "es",
+  });
+  assert.match(prompt, /^BTB_TASK: statement/);
+  assert.match(prompt, /Never add a requirement the tests do not check/);
+  assert.match(prompt, /1\. usa filter/);
+  assert.match(prompt, /Inde recibe sus cartas/);
+  assert.match(prompt, /in Spanish/);
 });
 
 test("a fix prompt carries the problems and the draft on its own line", () => {

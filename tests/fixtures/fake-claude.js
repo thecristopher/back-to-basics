@@ -92,7 +92,14 @@ function persona() {
   return { name: "Melina", voice: "Calm and kind, she guides without carrying you.", lines: { es: lines } };
 }
 
-const answers = { exercises, fix, path, profile, persona, moments: () => moments() };
+function statement() {
+  return {
+    readme: "# Explicado\n\n## La historia\n\nClaire le explica a Inde, paso a paso, qué hay que construir.\n",
+    hints: ["Empieza por la carta de Claire.", "Usa un for...of: `for (const nota of notas) {}`.", "La forma: `let total = 0; ... return total;`."],
+  };
+}
+
+const answers = { exercises, fix, path, profile, persona, statement, moments: () => moments() };
 const MARKDOWN = {
   review: "## Calificación\nCorrección 9/10, Inde estaría orgullosa.\n",
   lesson: "# Closures\nUna función recuerda dónde nació, como Claire recuerda Raccoon City.\n",
@@ -100,6 +107,7 @@ const MARKDOWN = {
   recall: "Casi, Inde: la función recuerda su scope, no una copia.\n",
   greet: "Hola, Inde. Ayer peleaste bonito, hoy seguimos.\n",
   debrief: "Cerramos el día, Inde. Mañana más.\n",
+  preview: '```jsx\nimport { LikeButton } from "./solution.jsx";\n\nexport default function Preview() {\n  return <LikeButton initial={14} />;\n}\n```\n',
 };
 if (MARKDOWN[task]) process.stdout.write(MARKDOWN[task]);
 else process.stdout.write(JSON.stringify(answers[task]()));

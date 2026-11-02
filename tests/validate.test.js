@@ -20,6 +20,12 @@ test("a draft missing pieces lists each one", () => {
   ]);
 });
 
+test("a React draft without its preview is refused, a Node one does not need it", () => {
+  assert.deepEqual(draftProblems(draft, { preview: true }), ['"preview" must be a non empty string']);
+  assert.deepEqual(draftProblems({ ...draft, preview: "export default function Preview() {}" }, { preview: true }), []);
+  assert.deepEqual(draftProblems(draft, { preview: false }), []);
+});
+
 const level = { title: "t", summary: "s", concepts: ["c"], target: 3 };
 
 test("a path needs at least three valid levels and a start among them", () => {

@@ -3,12 +3,14 @@
   "name": "React",
   "solutionFile": "solution.jsx",
   "testFile": "solution.test.jsx",
+  "previewFile": "preview.jsx",
   "importHint": "import { Component } from \"./solution.jsx\";",
   "variants": {
     "ts": {
       "name": "React (TypeScript)",
       "solutionFile": "solution.tsx",
       "testFile": "solution.test.tsx",
+      "previewFile": "preview.tsx",
       "importHint": "import { Component } from \"./solution.tsx\";"
     }
   },

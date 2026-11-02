@@ -169,6 +169,30 @@ test("forge --lessons gives Claire her lines on an exercise forged without them"
   assert.match(JSON.parse(await readFile(metaFile, "utf8")).moments.claire.passed_clean, /cayó limpio/);
 });
 
+test("forge --rewrite explains the statement and hints of an exercise forged before the rules", async () => {
+  const metaFile = join(sandbox, "data/exercises", solved.id, "exercise.json");
+  const { explained, ...meta } = JSON.parse(await readFile(metaFile, "utf8"));
+  assert.equal(explained, true, "forged with the rules, it needs no rewrite");
+  await writeFile(metaFile, JSON.stringify(meta));
+  const written = await btb(["forge", "--rewrite"]);
+  assert.deepEqual(written.rewritten, [solved.id]);
+  const stored = JSON.parse(await readFile(metaFile, "utf8"));
+  assert.equal(stored.explained, true);
+  assert.equal(stored.hints[0], "Empieza por la carta de Claire.");
+  assert.match(await readFile(join(sandbox, "data/exercises", solved.id, "README.md"), "utf8"), /Claire le explica a Inde/);
+});
+
+test("forge --rewrite leaves alone what already explains itself", async () => {
+  const written = await btb(["forge", "--rewrite"]);
+  assert.deepEqual(written.rewritten, []);
+  assert.match(written.text.join("\n"), /ya explican su problema/);
+});
+
+test("preview is only for React, a Node exercise has nothing to show", async () => {
+  const shown = await btb(["preview", solved.id]);
+  assert.match(shown.error, /la preview es para React/);
+});
+
 test("Claire greets Inde once a day and keeps the greeting", async () => {
   const first = await btb(["greet"]);
   const again = await btb(["greet"]);
