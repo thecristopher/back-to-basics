@@ -1,5 +1,6 @@
 import { castLines } from "../cast.js";
-import { aptitudeLines, languageName } from "./evidence.js";
+import { conceptTitle } from "../graph.js";
+import { languageName, masteryLines } from "./evidence.js";
 import { MOMENTS_SCHEMA, momentGuide } from "./moments.js";
 
 const DRAFT =
@@ -101,6 +102,36 @@ function basicsLines(level, fromBasics) {
   return WARM_UP;
 }
 
+// how big the next step on a concept is depends on how the last one went
+const STEPS = {
+  new: "This is their first exercise on this concept: the gentlest version of it, one idea, and a readme example very close to the task.",
+  learning: "They solved this concept clean once: same idea in a new situation and a little more to do, so a second clean day proves it stuck.",
+  weak: "They missed this concept last time: go a step smaller than before, aim straight at what tripped them in the recent results, and make the readme walk through more guided.",
+};
+
+function allowedLine(track, allowed) {
+  return allowed.map((id) => `${id} (${conceptTitle(track, id)})`).join(", ");
+}
+
+/**
+ * The lines that point an exercise at the concept it teaches and the ones it may lean on.
+ * @param {{ track: object, focus?: { id: string, standing: string } | null, allowed?: string[] }} input
+ * @returns {string[]}
+ */
+export function conceptLines({ track, focus, allowed }) {
+  if (!allowed?.length) return [];
+  const lines = [];
+  if (focus) {
+    const use = track.graph?.[focus.id]?.use;
+    lines.push(`This exercise teaches one concept: "${conceptTitle(track, focus.id)}" (id ${focus.id}).${use ? ` Where it is used: ${use}` : ""}`);
+    lines.push(STEPS[focus.standing] ?? STEPS.new);
+    lines.push("Ground the story in a practical use of it, something a working programmer does with it today.");
+  }
+  lines.push(`It may lean on concepts the learner has already met, never on later ones: ${allowedLine(track, allowed)}.`);
+  lines.push(`Set "concepts" to 1 to 3 ids from that list only${focus ? `, "${focus.id}" first` : ""}.`);
+  return lines;
+}
+
 function placementLines({ track, count, difficulty, size, avoid, fromBasics }) {
   const ladder = `${track.ladder?.join("; ") || track.focus}`;
   if (!difficulty) {
@@ -122,13 +153,13 @@ function placementLines({ track, count, difficulty, size, avoid, fromBasics }) {
   ];
 }
 
-function purposeLines({ purpose, track, level, count, avoid, fromBasics, difficulty, size }) {
-  if (purpose === "placement") return placementLines({ track, count, difficulty, size, avoid, fromBasics });
+function purposeLines({ purpose, track, level, count, avoid, fromBasics, difficulty, size, focus, allowed }) {
+  if (purpose === "placement") return [...placementLines({ track, count, difficulty, size, avoid, fromBasics }), ...conceptLines({ track, allowed })];
   return [
     "BTB_PURPOSE: practice",
     `Write ${count} exercises for level ${level.level} of their path: "${level.title}". ${level.summary}`,
-    `Concepts of this level: ${level.concepts.join(", ")}.`,
-    "Lean into their weak concepts when they belong to this level, and stretch a little past their strong ones.",
+    `Concepts of this level: ${level.concepts.map((id) => conceptTitle(track, id)).join(", ")}.`,
+    ...conceptLines({ track, focus, allowed }),
     ...basicsLines(level, fromBasics),
     ...interviewLines(track, level),
     avoid.length > 0 ? `Do not repeat these, already written: ${avoid.join("; ")}.` : null,
@@ -137,7 +168,8 @@ function purposeLines({ purpose, track, level, count, avoid, fromBasics, difficu
 
 /**
  * The prompt that asks Claude to forge exercises fitted to the learner.
- * @param {{ purpose: "practice" | "placement", track: object, profile: object, files: object, level?: object, count: number, summary: object, avoid?: string[], language: string, theme?: string, example: object, fromBasics?: boolean, difficulty?: number, size?: number, cast?: { leads: string[], supporting: string[] } | null }} input
+ * @param {{ purpose: "practice" | "placement", track: object, profile: object, files: object, level?: object, count: number, summary: object, avoid?: string[], language: string, theme?: string, example: object, fromBasics?: boolean, difficulty?: number, size?: number, cast?: { leads: string[], supporting: string[] } | null, focus?: { id: string, standing: string } | null, allowed?: string[] }} input
+ *   focus is the concept the exercise teaches and how the learner stands on it, allowed the concept ids it may use
  * @returns {string}
  */
 export function exercisePrompt(input) {
@@ -156,7 +188,7 @@ export function exercisePrompt(input) {
     ...purposeLines({ ...input, avoid: input.avoid ?? [] }),
     "",
     "What the learner has shown so far:",
-    ...aptitudeLines(summary),
+    ...masteryLines(summary, track),
     "",
     "Rules:",
     "- Small and focused, solvable in the minutes you set (5 to 30, 30 to 60 on the last 2 levels of the path).",

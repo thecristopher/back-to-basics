@@ -4,16 +4,116 @@
   "example": "throttled-converse",
   "after": { "track": "python", "share": 0.5 },
   "focus": "Building production LLM applications in Python on Amazon Bedrock, the way AI engineering roles ask for it: the Converse API with boto3, prompts and message history, streaming, tool use, structured output validated with pydantic, retries and cost control, embeddings and RAG, evals, guardrails and agents. Every exercise fakes Bedrock with botocore's Stubber or a small fake client, so the learner writes the real request and response handling with no network and no AWS account.",
-  "ladder": [
-    "Messages and prompts: Converse API request shape, system prompts, roles, templating, history trimming",
-    "Calling Bedrock with boto3: converse, reading output, stopReason, token usage and cost",
-    "Streaming with converse_stream: assembling text deltas, metadata and stop events",
-    "Structured output: JSON in the answer, pydantic validation, repair and retry on invalid output",
-    "Tool use: toolConfig specs, toolUse and toolResult blocks, the agent loop with a step limit",
-    "Resilience and cost: ThrottlingException, exponential backoff with jitter, timeouts, token budgets, model fallback",
-    "Embeddings and vector search: chunking, cosine similarity, top k, metadata filters",
-    "RAG: retrieval, grounded prompts with citations, Knowledge Bases retrieve and generate responses",
-    "Evals and guardrails: golden sets, LLM as judge, scoring, prompt injection defenses, PII redaction",
-    "Interview level at Amazon, Zillow or Capital One: multi part LLM systems like a rate limited Bedrock gateway with model fallback and cost caps, a RAG service with citations and evals, a tool using agent with guardrails over real product data"
+  "levels": [
+    {
+      "title": { "es": "Mensajes y prompts", "en": "Messages and prompts" },
+      "summary": { "es": "La forma de un request de Converse, el system prompt y el historial.", "en": "The shape of a Converse request, the system prompt and the history." },
+      "concepts": [
+        { "id": "converse-request-shape", "es": "La forma de un request de Converse", "en": "The shape of a Converse request", "use": "Every Bedrock call starts with modelId, messages and content blocks." },
+        { "id": "system-prompts", "es": "System prompts", "en": "System prompts", "use": "Setting the role, tone and rules of an assistant." },
+        { "id": "message-history", "es": "Roles e historial de mensajes", "en": "Roles and message history", "use": "Chats that remember the conversation." },
+        { "id": "prompt-templates", "es": "Plantillas de prompt con datos", "en": "Prompt templates with data", "use": "Reusable prompts filled with user and product data." },
+        { "id": "history-trimming", "es": "Recortar el historial por presupuesto", "en": "Trimming history to a budget", "use": "Long chats that stay under the context window and the bill." }
+      ]
+    },
+    {
+      "title": { "es": "Llamar a Bedrock", "en": "Calling Bedrock" },
+      "summary": { "es": "converse con boto3, leer la respuesta, el stopReason y el costo.", "en": "converse with boto3, reading the answer, the stopReason and the cost." },
+      "concepts": [
+        { "id": "boto3-converse", "es": "converse con boto3", "en": "converse with boto3", "use": "The call behind every Bedrock app." },
+        { "id": "read-output", "es": "Leer los content blocks de la respuesta", "en": "Reading the content blocks of the answer", "use": "Getting text, tool calls and more out of a response." },
+        { "id": "stop-reason", "es": "stopReason: end_turn, max_tokens y tool_use", "en": "stopReason: end_turn, max_tokens and tool_use", "use": "Knowing whether the answer is complete or cut." },
+        { "id": "token-usage-cost", "es": "Uso de tokens y costo", "en": "Token usage and cost", "use": "Tracking spend per request and per user." },
+        { "id": "inference-config", "es": "inferenceConfig: maxTokens, temperature y stopSequences", "en": "inferenceConfig: maxTokens, temperature and stopSequences", "use": "Controlling length and creativity." }
+      ]
+    },
+    {
+      "title": { "es": "Streaming", "en": "Streaming" },
+      "summary": { "es": "Armar la respuesta de converse_stream evento por evento.", "en": "Assembling a converse_stream answer event by event." },
+      "concepts": [
+        { "id": "stream-deltas", "es": "Juntar los deltas de texto", "en": "Joining text deltas", "use": "Chat UIs that type the answer live." },
+        { "id": "stream-events", "es": "Eventos messageStart, contentBlockStop y messageStop", "en": "messageStart, contentBlockStop and messageStop events", "use": "Knowing when a block and a message end." },
+        { "id": "stream-metadata", "es": "Metadata del stream: uso y latencia", "en": "Stream metadata: usage and latency", "use": "Cost and latency of streamed calls." },
+        { "id": "stream-errors", "es": "Errores a mitad del stream", "en": "Errors halfway through a stream", "use": "Not showing half an answer as if it were whole." }
+      ]
+    },
+    {
+      "title": { "es": "Salida estructurada", "en": "Structured output" },
+      "summary": { "es": "Pedir JSON, validarlo con pydantic y reparar lo que no cumple.", "en": "Asking for JSON, validating it with pydantic and repairing what fails." },
+      "concepts": [
+        { "id": "json-from-answer", "es": "Extraer JSON de la respuesta", "en": "Pulling JSON out of the answer", "use": "Turning model text into data your code can use." },
+        { "id": "pydantic-output", "es": "Validar la salida con pydantic", "en": "Validating the output with pydantic", "use": "Never trusting the model's shape blindly." },
+        { "id": "repair-retry", "es": "Reparar y reintentar con el error", "en": "Repairing and retrying with the error", "use": "Recovering from invalid output without failing the user." },
+        { "id": "schema-in-prompt", "es": "El schema dentro del prompt", "en": "The schema inside the prompt", "use": "Getting the right shape on the first try more often." }
+      ]
+    },
+    {
+      "title": { "es": "Tool use", "en": "Tool use" },
+      "summary": { "es": "Definir herramientas, ejecutar las que pide el modelo y cerrar el loop.", "en": "Defining tools, running the ones the model asks for and closing the loop." },
+      "concepts": [
+        { "id": "tool-config", "es": "toolConfig y el spec de cada tool", "en": "toolConfig and each tool's spec", "use": "Letting the model call your functions." },
+        { "id": "tool-use-blocks", "es": "Leer bloques toolUse", "en": "Reading toolUse blocks", "use": "Knowing which tool to run with which input." },
+        { "id": "tool-results", "es": "Devolver toolResult, también con error", "en": "Sending back toolResult, also with an error", "use": "Closing the loop so the model can answer." },
+        { "id": "agent-loop", "es": "El loop del agente con límite de pasos", "en": "The agent loop with a step limit", "use": "Agents that finish and never loop forever." }
+      ]
+    },
+    {
+      "title": { "es": "Resiliencia y costo", "en": "Resilience and cost" },
+      "summary": { "es": "Throttling, backoff con jitter, timeouts, presupuestos y fallback de modelo.", "en": "Throttling, backoff with jitter, timeouts, budgets and model fallback." },
+      "concepts": [
+        { "id": "throttling-backoff", "es": "ThrottlingException y backoff con jitter", "en": "ThrottlingException and backoff with jitter", "use": "Surviving rate limits in production." },
+        { "id": "timeouts", "es": "Timeouts por llamada", "en": "Timeouts per call", "use": "Not hanging a request on a slow model." },
+        { "id": "token-budgets", "es": "Presupuestos de tokens por usuario", "en": "Token budgets per user", "use": "Keeping the bill under control." },
+        { "id": "model-fallback", "es": "Fallback a otro modelo", "en": "Falling back to another model", "use": "Staying up when a model is throttled or down." }
+      ]
+    },
+    {
+      "title": { "es": "Embeddings y búsqueda", "en": "Embeddings and search" },
+      "summary": { "es": "Partir documentos, compararlos por similitud y quedarte con los mejores.", "en": "Splitting documents, comparing them by similarity and keeping the best." },
+      "concepts": [
+        { "id": "chunking", "es": "Partir documentos en chunks", "en": "Splitting documents into chunks", "use": "The first step of every RAG system." },
+        { "id": "embeddings", "es": "Pedir embeddings a Bedrock", "en": "Asking Bedrock for embeddings", "use": "Turning text into vectors you can compare." },
+        { "id": "cosine-similarity", "es": "Similitud coseno", "en": "Cosine similarity", "use": "Finding the closest meaning, not the same words." },
+        { "id": "top-k-filters", "es": "Top K con filtros de metadata", "en": "Top K with metadata filters", "use": "Search that respects tenant, date and type." }
+      ]
+    },
+    {
+      "title": { "es": "RAG", "en": "RAG" },
+      "summary": { "es": "Responder con tus documentos, citando de dónde sale cada cosa.", "en": "Answering from your documents, citing where each claim comes from." },
+      "concepts": [
+        { "id": "grounded-prompts", "es": "Prompts anclados en el contexto recuperado", "en": "Prompts grounded in retrieved context", "use": "Answers based on your data instead of guesses." },
+        { "id": "citations", "es": "Citas a los documentos fuente", "en": "Citations to the source documents", "use": "Answers users and auditors can trust." },
+        { "id": "knowledge-bases", "es": "Knowledge Bases: retrieve y retrieve_and_generate", "en": "Knowledge Bases: retrieve and retrieve_and_generate", "use": "The managed RAG most Bedrock teams use." },
+        { "id": "context-packing", "es": "Empacar contexto dentro del presupuesto", "en": "Packing context within the budget", "use": "The best chunks that fit, not the first ones." }
+      ]
+    },
+    {
+      "title": { "es": "Evals y guardrails", "en": "Evals and guardrails" },
+      "summary": { "es": "Medir si tu app responde bien y protegerla de entradas malas.", "en": "Measuring whether your app answers well and protecting it from bad input." },
+      "concepts": [
+        { "id": "golden-sets", "es": "Golden sets y métricas", "en": "Golden sets and metrics", "use": "Knowing a prompt change made things better, not worse." },
+        { "id": "llm-as-judge", "es": "LLM como juez", "en": "LLM as a judge", "use": "Scoring open answers at scale." },
+        { "id": "prompt-injection", "es": "Defensas contra prompt injection", "en": "Defenses against prompt injection", "use": "Apps that do not obey a malicious document." },
+        { "id": "pii-redaction", "es": "Redactar PII", "en": "Redacting PII", "use": "Required in banking and health." }
+      ]
+    },
+    {
+      "title": { "es": "Onsite I", "en": "Onsite I" },
+      "summary": { "es": "Sistemas con LLM de varias partes, como en una entrevista de AI engineering.", "en": "Multi part LLM systems, like an AI engineering interview." },
+      "concepts": [
+        { "id": "bedrock-gateway", "es": "Gateway a Bedrock con rate limit, fallback y tope de costo", "en": "A Bedrock gateway with rate limits, fallback and cost caps", "use": "The platform piece every company with LLMs builds." },
+        { "id": "rag-service", "es": "Servicio RAG con citas y evals", "en": "A RAG service with citations and evals", "use": "Support bots and internal search done right." },
+        { "id": "batch-classification", "es": "Clasificación en lote con salida validada", "en": "Batch classification with validated output", "use": "Tagging tickets or transactions at scale and on budget." }
+      ]
+    },
+    {
+      "title": { "es": "Onsite II", "en": "Onsite II" },
+      "summary": { "es": "Agentes y servicios completos con guardrails, memoria y follow ups.", "en": "Whole agents and services with guardrails, memory and follow ups." },
+      "concepts": [
+        { "id": "guarded-agent", "es": "Agente con tools y guardrails sobre datos reales", "en": "An agent with tools and guardrails over real data", "use": "Agents that act safely on accounts and orders." },
+        { "id": "conversation-memory", "es": "Servicio de memoria de conversación", "en": "A conversation memory service", "use": "Assistants that remember across sessions within a budget." },
+        { "id": "llm-tradeoffs", "es": "Elegir modelo, costo y latencia con evidencia", "en": "Choosing model, cost and latency with evidence", "use": "Defending a design in front of a senior panel." }
+      ]
+    }
   ]
 }

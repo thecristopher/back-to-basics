@@ -1,16 +1,165 @@
 {
   "title": "Node.js",
   "language": "javascript",
-  "focus": "JavaScript and Node.js from the ground up, by hand: language fundamentals, functions and closures, async, Node core modules, HTTP without frameworks, errors and testing, then data structures, algorithms and backend design at big tech interview level.",
-  "ladder": [
-    "The very basics: variables, operators, if and else, for loops, tiny functions",
-    "Strings, arrays and objects by hand",
-    "Functions, closures, recursion, higher order functions",
-    "Async: callbacks, promises, async/await, timers, errors",
-    "Node core: fs, path, events, streams, buffers",
-    "HTTP without frameworks: routing, JSON, validation, status codes",
-    "Testing, debugging and error handling patterns",
-    "Data structures and algorithms: hash maps, two pointers, stacks, queues, trees, graphs",
-    "Interview level at Amazon, Zillow or Capital One: multi part backend problems like an LRU cache with TTL, a rate limiter, a ledger with idempotent transfers, a job scheduler, over big realistic data"
+  "focus": "JavaScript and Node.js from the ground up, by hand: language fundamentals, the array and object work of every day, functions and closures, errors, async, Node core and HTTP without frameworks, then data structures, algorithms and backend design at big tech interview level.",
+  "levels": [
+    {
+      "title": { "es": "Valores y decisiones", "en": "Values and decisions" },
+      "summary": { "es": "Funciones pequeñas que devuelven un valor, hacen cuentas y eligen un camino.", "en": "Tiny functions that return a value, do some math and pick a path." },
+      "concepts": [
+        { "id": "return-a-value", "es": "Devolver un valor con return", "en": "Returning a value with return", "use": "Every function you will ever write hands its result back with return." },
+        { "id": "arithmetic", "es": "Operadores aritméticos y el módulo %", "en": "Arithmetic operators and the modulo %", "use": "Totals, averages, splitting a bill, telling even from odd." },
+        { "id": "comparisons", "es": "Comparar con ===, !==, < y >", "en": "Comparing with ===, !==, < and >", "use": "Every rule in a product starts as a comparison: is the cart over the free shipping limit." },
+        { "id": "if-else", "es": "if, else if y else", "en": "if, else if and else", "use": "Business rules: pricing tiers, permissions, statuses." },
+        { "id": "logical-operators", "es": "Operadores lógicos &&, || y !", "en": "Logical operators &&, || and !", "use": "Combining conditions, like logged in and not banned." }
+      ]
+    },
+    {
+      "title": { "es": "Bucles y acumuladores", "en": "Loops and accumulators" },
+      "summary": { "es": "Recorrer arrays y strings uno por uno para sumar, contar y construir resultados.", "en": "Walking arrays and strings one by one to add, count and build results." },
+      "concepts": [
+        { "id": "for-over-array", "es": "Bucle for con índice sobre un array", "en": "An index for loop over an array", "use": "Going through every order, every row, every event." },
+        { "id": "loop-over-string", "es": "Recorrer un string carácter por carácter", "en": "Walking a string character by character", "use": "Validating input, counting letters, parsing simple formats." },
+        { "id": "accumulator", "es": "Acumulador inicializado antes del bucle", "en": "An accumulator set up before the loop", "use": "Sums, totals and running counts, the most common loop there is." },
+        { "id": "count-with-condition", "es": "Contar con una condición dentro del bucle", "en": "Counting with a condition inside the loop", "use": "How many orders failed, how many users are active." },
+        { "id": "build-a-string", "es": "Construir un string con +=", "en": "Building a string with +=", "use": "Formatting output, building messages and reports." }
+      ]
+    },
+    {
+      "title": { "es": "Arrays y objetos a mano", "en": "Arrays and objects by hand" },
+      "summary": { "es": "Construir arrays, usar objetos como diccionarios y recorrer datos con forma de producto.", "en": "Building arrays, using objects as dictionaries and walking product shaped data." },
+      "concepts": [
+        { "id": "build-an-array", "es": "Construir un array nuevo con push", "en": "Building a new array with push", "use": "Collecting the results you care about out of a bigger list." },
+        { "id": "for-of", "es": "for...of para leer cada valor", "en": "for...of to read each value", "use": "The clean everyday loop when the index does not matter." },
+        { "id": "object-as-dictionary", "es": "Objeto como diccionario: leer, crear y actualizar llaves", "en": "An object as a dictionary: read, create and update keys", "use": "Lookups by id, settings, grouping by a field." },
+        { "id": "count-frequencies", "es": "Contar frecuencias con un objeto", "en": "Counting frequencies with an object", "use": "Most viewed products, words in a text, errors per endpoint. It is also the seed of the hash map pattern." },
+        { "id": "array-of-objects", "es": "Recorrer arrays de objetos y leer sus propiedades", "en": "Walking arrays of objects and reading their properties", "use": "Every API returns lists of objects: users, orders, listings." }
+      ]
+    },
+    {
+      "title": { "es": "Funciones con oficio", "en": "Functions with craft" },
+      "summary": { "es": "Funciones claras que manejan casos borde, copian sin mutar y formatean bien.", "en": "Clear functions that handle edge cases, copy without mutating and format well." },
+      "concepts": [
+        { "id": "early-return", "es": "Return temprano para los casos borde", "en": "Early return for edge cases", "use": "Readable code that handles empty and invalid input first." },
+        { "id": "default-parameters", "es": "Parámetros por defecto y opcionales", "en": "Default and optional parameters", "use": "APIs that are easy to call: pagination with a default page size." },
+        { "id": "destructuring", "es": "Desestructurar objetos y arrays", "en": "Destructuring objects and arrays", "use": "Reading request bodies, options and API responses without noise." },
+        { "id": "spread-and-copies", "es": "Spread para copiar y combinar sin mutar", "en": "Spread to copy and merge without mutating", "use": "Updating state and config safely, the base of React and Redux style code." },
+        { "id": "template-literals", "es": "Template literals para formatear texto", "en": "Template literals to format text", "use": "Messages, logs, URLs and small reports." }
+      ]
+    },
+    {
+      "title": { "es": "Métodos de array del día a día", "en": "Everyday array methods" },
+      "summary": { "es": "map, filter, reduce y compañía: lo que se usa en cualquier codebase moderno.", "en": "map, filter, reduce and friends: what every modern codebase uses." },
+      "concepts": [
+        { "id": "array-map", "es": "map para transformar cada elemento", "en": "map to transform every element", "use": "Shaping API data for the screen or for another service." },
+        { "id": "array-filter", "es": "filter para quedarte con lo que cumple", "en": "filter to keep what matches", "use": "Search results, active users, failed payments." },
+        { "id": "find-some-every", "es": "find, some y every", "en": "find, some and every", "use": "Looking up one item or checking a rule over a whole list." },
+        { "id": "array-reduce", "es": "reduce para resumir una lista", "en": "reduce to sum up a list", "use": "Totals, grouping and building objects out of lists." },
+        { "id": "sort-with-comparator", "es": "sort con comparador y sin mutar el original", "en": "sort with a comparator, without mutating the original", "use": "Ranking, ordering by date or price, tie breakers." },
+        { "id": "method-chaining", "es": "Encadenar métodos sin perder legibilidad", "en": "Chaining methods without losing readability", "use": "Data pipelines that read like a sentence." }
+      ]
+    },
+    {
+      "title": { "es": "Datos reales", "en": "Real data" },
+      "summary": { "es": "Datos anidados, JSON, Map, Set, fechas y strings como llegan de una API de verdad.", "en": "Nested data, JSON, Map, Set, dates and strings the way a real API sends them." },
+      "concepts": [
+        { "id": "nested-data", "es": "Navegar datos anidados con ?. y ??", "en": "Navigating nested data with ?. and ??", "use": "API responses where fields can be missing." },
+        { "id": "json", "es": "JSON.parse y JSON.stringify", "en": "JSON.parse and JSON.stringify", "use": "Every request body, config file and message queue payload." },
+        { "id": "map-and-set", "es": "Map y Set", "en": "Map and Set", "use": "Fast lookups and dedupe with any key type, the tools behind most interview solutions." },
+        { "id": "string-methods", "es": "split, trim, includes, slice y padStart", "en": "split, trim, includes, slice and padStart", "use": "Parsing CSV lines, cleaning input, formatting ids." },
+        { "id": "dates-iso", "es": "Fechas ISO: comparar, sumar días y agrupar por día", "en": "ISO dates: compare, add days and group by day", "use": "Reports per day, expirations, scheduling." }
+      ]
+    },
+    {
+      "title": { "es": "Funciones como valores", "en": "Functions as values" },
+      "summary": { "es": "Pasar y devolver funciones, closures y recursión, la base de las librerías que usas.", "en": "Passing and returning functions, closures and recursion, the base of the libraries you use." },
+      "concepts": [
+        { "id": "functions-as-values", "es": "Pasar y devolver funciones", "en": "Passing and returning functions", "use": "Callbacks, middlewares and configurable behavior." },
+        { "id": "closures", "es": "Closures: funciones que recuerdan", "en": "Closures: functions that remember", "use": "Counters, caches, private state and factories." },
+        { "id": "recursion", "es": "Recursión con caso base", "en": "Recursion with a base case", "use": "Trees, nested menus, folders and JSON of any depth." },
+        { "id": "immutability", "es": "No mutar los datos que recibes", "en": "Not mutating the data you receive", "use": "Code without surprises: the caller's data stays as it was." },
+        { "id": "function-utilities", "es": "once, memoize y debounce a mano", "en": "once, memoize and debounce by hand", "use": "Classic interview warm ups and real performance tools." }
+      ]
+    },
+    {
+      "title": { "es": "Errores, clases y validación", "en": "Errors, classes and validation" },
+      "summary": { "es": "Código que falla con claridad, valida lo que entra y modela estado con clases.", "en": "Code that fails clearly, validates what comes in and models state with classes." },
+      "concepts": [
+        { "id": "throw-errors", "es": "Lanzar errores con un mensaje útil", "en": "Throwing errors with a useful message", "use": "Failing fast with a message the next dev understands." },
+        { "id": "try-catch", "es": "try, catch y finally", "en": "try, catch and finally", "use": "Handling a bad JSON body or a failed call without crashing." },
+        { "id": "custom-errors", "es": "Errores propios con class extends Error", "en": "Custom errors with class extends Error", "use": "Telling a validation error from a not found, and mapping them to status codes." },
+        { "id": "input-validation", "es": "Validar entradas antes de usarlas", "en": "Validating input before using it", "use": "Every endpoint and every function at a boundary." },
+        { "id": "classes", "es": "Clases con constructor, métodos y campos privados #", "en": "Classes with a constructor, methods and private # fields", "use": "Modeling a cart, a cache or a queue with its own state." }
+      ]
+    },
+    {
+      "title": { "es": "Asincronía", "en": "Async" },
+      "summary": { "es": "Promesas, async y await, varias tareas a la vez y reintentos, con el reloj falso.", "en": "Promises, async and await, many tasks at once and retries, with a fake clock." },
+      "concepts": [
+        { "id": "promises", "es": "Promesas: then, catch y crear una con new Promise", "en": "Promises: then, catch and making one with new Promise", "use": "Every network call, file read and timer." },
+        { "id": "async-await", "es": "async y await con manejo de errores", "en": "async and await with error handling", "use": "Readable async code, the way every Node service is written today." },
+        { "id": "promise-combinators", "es": "Promise.all, allSettled y race", "en": "Promise.all, allSettled and race", "use": "Calling several services at once and handling partial failures." },
+        { "id": "timers", "es": "setTimeout, esperas y timeouts", "en": "setTimeout, waits and timeouts", "use": "Giving up on slow calls, polling, delays." },
+        { "id": "retry-with-backoff", "es": "Reintentos con backoff exponencial", "en": "Retries with exponential backoff", "use": "Surviving flaky networks and rate limited APIs." },
+        { "id": "concurrency-limit", "es": "Limitar cuántas tareas corren a la vez", "en": "Limiting how many tasks run at once", "use": "Processing 10k items without flooding an API. A favorite interview question." }
+      ]
+    },
+    {
+      "title": { "es": "Node en la práctica", "en": "Node in practice" },
+      "summary": { "es": "Archivos, rutas, eventos, streams y un servidor HTTP sin frameworks.", "en": "Files, paths, events, streams and an HTTP server without frameworks." },
+      "concepts": [
+        { "id": "fs-promises", "es": "Leer y escribir archivos con fs/promises", "en": "Reading and writing files with fs/promises", "use": "Scripts, CLIs, config and data exports." },
+        { "id": "path-module", "es": "path para construir rutas seguras", "en": "path to build safe file paths", "use": "Code that works on every OS and does not escape its folder." },
+        { "id": "event-emitter", "es": "EventEmitter: emitir y escuchar eventos", "en": "EventEmitter: emitting and listening to events", "use": "Decoupled code, the model behind streams and servers." },
+        { "id": "streams", "es": "Streams: procesar datos línea por línea", "en": "Streams: processing data line by line", "use": "Handling files and responses too big for memory." },
+        { "id": "http-server", "es": "Servidor con node:http: rutas, JSON y códigos de estado", "en": "A node:http server: routes, JSON and status codes", "use": "Understanding what Express does for you, and backend interview basics." }
+      ]
+    },
+    {
+      "title": { "es": "Big O y estructuras clave", "en": "Big O and key structures" },
+      "summary": { "es": "Medir lo que cuesta tu solución y los patrones que la bajan de O(n²) a O(n).", "en": "Measuring what your solution costs and the patterns that take it from O(n²) to O(n)." },
+      "concepts": [
+        { "id": "big-o", "es": "Big O: medir tiempo y memoria de tu solución", "en": "Big O: measuring the time and memory of your solution", "use": "The language of every coding interview." },
+        { "id": "hash-map-pattern", "es": "Hash map para pasar de O(n²) a O(n)", "en": "A hash map to go from O(n²) to O(n)", "use": "Two sum and half of all interview problems." },
+        { "id": "two-pointers", "es": "Dos punteros", "en": "Two pointers", "use": "Sorted arrays, pairs and in place work with no extra memory." },
+        { "id": "sliding-window", "es": "Ventana deslizante", "en": "Sliding window", "use": "Best streak, longest substring, metrics over the last N minutes." },
+        { "id": "stack", "es": "Pila (stack)", "en": "Stack", "use": "Balanced brackets, undo, parsing expressions." },
+        { "id": "binary-search", "es": "Búsqueda binaria", "en": "Binary search", "use": "Searching sorted data and searching over the answer." }
+      ]
+    },
+    {
+      "title": { "es": "Patrones de entrevista", "en": "Interview patterns" },
+      "summary": { "es": "Intervalos, heaps, árboles, grafos, backtracking y programación dinámica.", "en": "Intervals, heaps, trees, graphs, backtracking and dynamic programming." },
+      "concepts": [
+        { "id": "intervals", "es": "Ordenar y fusionar intervalos", "en": "Sorting and merging intervals", "use": "Calendars, bookings and overlapping time ranges." },
+        { "id": "heap", "es": "Heap y cola de prioridad a mano, top K", "en": "A heap and priority queue by hand, top K", "use": "Top K, schedulers and merging sorted streams." },
+        { "id": "trees", "es": "Árboles: DFS y BFS", "en": "Trees: DFS and BFS", "use": "Hierarchies, org charts, file systems and classic interview questions." },
+        { "id": "graphs", "es": "Grafos: BFS, DFS y orden topológico", "en": "Graphs: BFS, DFS and topological sort", "use": "Dependencies, routes, networks of users." },
+        { "id": "backtracking", "es": "Backtracking", "en": "Backtracking", "use": "Combinations, permutations and search with constraints." },
+        { "id": "dynamic-programming", "es": "Programación dinámica", "en": "Dynamic programming", "use": "Optimal choices built from smaller answers, a staple of Amazon loops." }
+      ]
+    },
+    {
+      "title": { "es": "Onsite I", "en": "Onsite I" },
+      "summary": { "es": "Problemas de varias partes como en un loop de Amazon o Capital One, con datos reales y límites de complejidad.", "en": "Multi part problems like an Amazon or Capital One loop, with real data and complexity limits." },
+      "concepts": [
+        { "id": "lru-cache", "es": "Caché LRU con TTL", "en": "An LRU cache with TTL", "use": "Asked again and again at big tech: Map ordering, eviction and expiry." },
+        { "id": "rate-limiter", "es": "Rate limiter de ventana deslizante y token bucket", "en": "Sliding window and token bucket rate limiters", "use": "Protecting APIs, a classic backend onsite." },
+        { "id": "top-k-stream", "es": "Top K sobre un stream de eventos", "en": "Top K over a stream of events", "use": "Trending products, most active users, with memory limits." },
+        { "id": "idempotent-ledger", "es": "Ledger con transferencias idempotentes", "en": "A ledger with idempotent transfers", "use": "Money movement the Capital One way: no double charges, consistent balances." },
+        { "id": "log-aggregation", "es": "Parsear y agregar logs grandes", "en": "Parsing and aggregating big logs", "use": "Error rates per endpoint, p95 latency, over files too big to load naively." }
+      ]
+    },
+    {
+      "title": { "es": "Onsite II", "en": "Onsite II" },
+      "summary": { "es": "Diseño de piezas de backend completas, con follow ups y casos borde de senior.", "en": "Designing whole backend pieces, with follow ups and senior level edge cases." },
+      "concepts": [
+        { "id": "job-scheduler", "es": "Scheduler de jobs con prioridad y reintentos", "en": "A job scheduler with priorities and retries", "use": "Background work in every real system." },
+        { "id": "cursor-pagination", "es": "Paginación con cursor estable", "en": "Stable cursor pagination", "use": "Feeds and APIs that do not skip or repeat items while data changes." },
+        { "id": "event-sourcing", "es": "Reconstruir estado desde eventos", "en": "Rebuilding state from events", "use": "Audit trails, account histories and replays." },
+        { "id": "autocomplete-trie", "es": "Autocompletado con trie y ranking", "en": "Autocomplete with a trie and ranking", "use": "Search boxes at scale, a frequent onsite." },
+        { "id": "tradeoffs-under-limits", "es": "Elegir estructuras bajo límites de tiempo y memoria", "en": "Choosing structures under time and memory limits", "use": "Explaining and defending your design choices, what separates a hire from a no hire." }
+      ]
+    }
   ]
 }

@@ -16,10 +16,20 @@ function isCommand(value) {
   return isList(value) && value.every((part) => typeof part === "string");
 }
 
+// with a graph in hand, an exercise may only name concepts from it and must teach the one it was asked for
+function conceptIdProblems(concepts, { allowed, primary }) {
+  if (!allowed) return [];
+  const unknown = concepts.filter((id) => !allowed.includes(id));
+  const problems = unknown.length > 0 ? [`"concepts" must only use these ids: ${allowed.join(", ")}. Unknown: ${unknown.join(", ")}`] : [];
+  if (primary && concepts[0] !== primary) problems.push(`"concepts" must start with "${primary}", the concept this exercise teaches`);
+  return problems;
+}
+
 /**
  * Lists what is wrong with an exercise draft before running anything.
  * @param {object} draft
- * @param {{ preview?: boolean }} [needs] preview when the language shows the component in the browser
+ * @param {{ preview?: boolean, allowed?: string[], primary?: string | null }} [needs] preview when the language shows the
+ *   component in the browser, allowed the concept ids the exercise may use and primary the one it must teach
  * @returns {string[]} empty when the shape is fine
  */
 export function draftProblems(draft, needs = {}) {
@@ -27,14 +37,20 @@ export function draftProblems(draft, needs = {}) {
   const problems = missingStrings(draft, keys);
   if (!isList(draft?.hints)) problems.push('"hints" must list at least one hint');
   if (!isList(draft?.concepts)) problems.push('"concepts" must list at least one concept');
+  else problems.push(...conceptIdProblems(draft.concepts.map(String), needs));
   if (!(draft?.minutes > 0)) problems.push('"minutes" must be a positive number');
   return problems;
 }
 
+function pathConceptProblems(concept) {
+  if (typeof concept?.id !== "string" || !SLUG.test(concept.id)) return [`concept "${concept?.id ?? concept}" needs a kebab case "id"`];
+  return missingStrings(concept, ["title"]).map((problem) => `concept "${concept.id}": ${problem}`);
+}
+
 function levelProblems(level, number) {
   const problems = missingStrings(level, ["title", "summary"]);
-  if (!isList(level?.concepts)) problems.push('"concepts" must not be empty');
-  if (!Number.isInteger(level?.target) || level.target < 1) problems.push('"target" must be a positive integer');
+  if (!isList(level?.concepts) || level.concepts.length > 6) problems.push('"concepts" must list 1 to 6 concepts');
+  else problems.push(...level.concepts.flatMap(pathConceptProblems));
   return problems.map((problem) => `level ${number}: ${problem}`);
 }
 
@@ -47,7 +63,7 @@ function levelProblems(level, number) {
 export function pathProblems(draft, kept = 0) {
   if (!Array.isArray(draft?.levels)) return ['"levels" must be an array'];
   const problems = draft.levels.flatMap((level, index) => levelProblems(level, index + 1));
-  if (draft.levels.length < 3 || draft.levels.length > 12) problems.push("the path needs between 3 and 12 levels");
+  if (draft.levels.length < 3 || draft.levels.length > 14) problems.push("the path needs between 3 and 14 levels");
   if (draft.levels.length <= kept) problems.push(`the path must go past the ${kept} levels already done`);
   const start = draft.startLevel;
   if (!Number.isInteger(start) || start < 1 || start > draft.levels.length) problems.push('"startLevel" must point at one of the levels');

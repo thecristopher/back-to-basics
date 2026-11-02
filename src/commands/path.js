@@ -1,5 +1,5 @@
 import { existsSync } from "node:fs";
-import { currentLevel, levelProgress } from "../actions/levels.js";
+import { currentLevel } from "../actions/levels.js";
 import { drawPath, proveProfile, writeProfile } from "../lib/architect.js";
 import { exerciseFiles } from "../lib/catalog.js";
 import { forgeExercises } from "../lib/forge.js";
@@ -9,23 +9,25 @@ import { rewriteStatement, writeMissingLesson, writeMissingMoments } from "../li
 import { loadProfile, saveProfile } from "../lib/profiles.js";
 import { saveTrack } from "../lib/tracks.js";
 import { toSlug } from "../utils/slug.js";
-import { failure, levelNow, lockOf, profileOf, trackOf } from "./shared.js";
+import { conceptMarks, failure, levelNow, lockOf, profileOf, progressOf, trackOf } from "./shared.js";
 
-function levelLine({ t, paint }, level, isCurrent) {
+function levelLine(ctx, track, level, isCurrent) {
+  const { t, paint } = ctx;
   const mark = level.done ? paint.green("✓") : isCurrent ? paint.yellow("→") : " ";
   const count = level.placedOut ? paint.dim(t.placedOut) : t.cleanOf(level.clean, level.target);
-  return [`  ${mark} ${t.level(level.level).padEnd(8)} ${paint.bold(level.title)}  ${count}`, paint.dim(`      ${level.concepts.join(", ")}`)];
+  const concepts = isCurrent ? conceptMarks(ctx, track, level) : paint.dim(conceptMarks(ctx, track, level));
+  return [`  ${mark} ${t.level(level.level).padEnd(8)} ${paint.bold(level.title)}  ${count}`, `      ${concepts}`];
 }
 
 function renderTrackPath(ctx, track) {
   const { t, paint } = ctx;
   if (!track.path) return [paint.bold(track.title), paint.yellow(`  ${t.pathMissing(ctx.coach, track.id)}`)];
-  const progress = levelProgress(track, ctx.catalog.exercises, ctx.state.exercises);
+  const progress = progressOf(ctx, track);
   const current = currentLevel(progress);
   return [
     `${paint.bold(track.title)}  ${paint.dim(t.revision(track.path.revision, track.path.drawnAt))}`,
     paint.dim(`  ${track.path.rationale}`),
-    ...progress.flatMap((level) => levelLine(ctx, level, level.level === current)),
+    ...progress.flatMap((level) => levelLine(ctx, track, level, level.level === current)),
   ];
 }
 
@@ -38,7 +40,8 @@ export async function path(ctx, [query], flags) {
     for (const track of tracks) await drawPath(ctx, track);
   }
   const text = tracks.flatMap((track, index) => [...(index > 0 ? [""] : []), ...renderTrackPath(ctx, track)]);
-  return { data: { tracks: tracks.map((track) => ({ id: track.id, title: track.title, path: track.path })) }, text };
+  const data = tracks.map((track) => ({ id: track.id, title: track.title, path: track.path, graph: track.graph ?? {}, levels: progressOf(ctx, track) }));
+  return { data: { tracks: data }, text };
 }
 
 async function profileForLanguage(ctx, id, name, flags) {

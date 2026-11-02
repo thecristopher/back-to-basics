@@ -127,7 +127,11 @@ Coach
   startsAt: (title, level, levelTitle) => `${title}: empiezas en el nivel ${level}, ${levelTitle}`,
   seePath: (track) => `El camino completo: btb path ${track}`,
   revision: (revision, date) => `trazo ${revision}, ${date}`,
-  cleanOf: (clean, target) => `${clean}/${target} limpios`,
+  cleanOf: (clean, target) => `${clean}/${target} conceptos dominados`,
+  authoredRationale: (level) =>
+    `Empiezas en el nivel ${level}. Cada nivel se pasa dominando sus conceptos: cada uno resuelto limpio en 2 días distintos. Paso a paso, de lo básico a un onsite.`,
+  archivedOld: (dir) => `Tu progreso del modelo anterior quedó guardado en ${dir}. Empiezas de cero con el camino nuevo.`,
+  focusLine: (title) => `Hoy practicas: ${title}`,
 
   learningLanguage: (language) => `Claude está averiguando cómo correr tests de ${language} en tu máquina...`,
   learnNeedsName: "Dime qué lenguaje: btb learn rust",

@@ -77,21 +77,25 @@ test("solving a probe moves the placement along", async () => {
   assert.deepEqual(result.placement, { finished: false, remaining: 2, track: "node" });
 });
 
-test("a skipped probe ends the placement and Claude draws the path", async () => {
+test("a skipped probe ends the placement and Inde starts right after the level she proved", async () => {
   await btb(["next"]);
   const skipped = await btb(["skip"]);
   assert.equal(skipped.placement.finished, true);
   const shown = await btb(["path", "node"]);
-  assert.equal(shown.tracks[0].path.levels.length, 4);
-  assert.equal(shown.tracks[0].path.startLevel, 1);
+  assert.ok(shown.tracks[0].path.levels.length > 4);
+  assert.equal(shown.tracks[0].path.startLevel, 2);
 });
 
 let practice;
 
 test("next forges a practice exercise for the current level", async () => {
   practice = await btb(["next"]);
-  assert.equal(practice.level, 1);
+  assert.equal(practice.level, 2);
   assert.equal(practice.placement, false);
+});
+
+test("the exercise teaches the first concept of the level, by its title", async () => {
+  assert.deepEqual(practice.concepts, ["Bucle for con índice sobre un array"]);
 });
 
 test("the empty starter fails and the reference stays locked", async () => {
@@ -107,9 +111,18 @@ test("a correct solution passes, earns XP and feeds the review", async () => {
   assert.match((await btb(["review"])).review, /Calificación/);
 });
 
-test("status counts the solve toward level 1", async () => {
+test("status shows the concept Inde solved once as still being learned", async () => {
   const status = await btb(["status"]);
-  assert.equal(status.tracks[0].levels[0].solved, 1);
+  const loop = status.concepts.find((row) => row.id === "for-over-array");
+  assert.equal(loop.standing, "learning");
+  assert.equal(status.tracks[0].levels[1].clean, 0);
+});
+
+test("every run lands in the log, practice runs included", async () => {
+  const log = await readFile(join(sandbox, "data/log/runs.jsonl"), "utf8");
+  const runs = log.trim().split("\n").map((line) => JSON.parse(line));
+  assert.ok(runs.some((run) => run.id === practice.id && run.kind === "submit" && !run.ok && run.failing.length > 0));
+  assert.ok(runs.some((run) => run.id === practice.id && run.kind === "submit" && run.ok));
 });
 
 test("forge fixes an exercise whose reference Claude got wrong", async () => {

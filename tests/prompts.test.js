@@ -16,7 +16,7 @@ test("a practice prompt targets the level and the learner's weak concepts", () =
   const prompt = exercisePrompt({ ...base, purpose: "practice", avoid: ["Contador"] });
   assert.match(prompt, /^BTB_TASK: exercises/);
   assert.match(prompt, /Write 2 exercises for level 2 of their path: "Closures"/);
-  assert.match(prompt, /Weak concepts: closures/);
+  assert.match(prompt, /Weak concepts, they missed them last time: closures/);
   assert.match(prompt, /Do not repeat these, already written: Contador/);
   assert.match(prompt, /Test data and examples: Claire, Malenia e Inde/);
   assert.match(prompt, /in Spanish/);
@@ -42,6 +42,31 @@ test("an interview level asks for an Amazon, Zillow or Capital One onsite proble
   const prompt = exercisePrompt({ ...base, track: drawn, level: { ...level, level: 3 }, purpose: "practice" });
   assert.match(prompt, /real onsite problem at Amazon, Zillow or Capital One/);
   assert.match(prompt, /Set minutes between 30 and 60/);
+});
+
+test("a first exercise on a concept is the gentlest version, aimed at its practical use", () => {
+  const graphed = { ...track, graph: { closures: { title: "Closures", use: "Contadores y cachés." }, this: { title: "this", use: "" } } };
+  const prompt = exercisePrompt({ ...base, track: graphed, purpose: "practice", focus: { id: "closures", standing: "new" }, allowed: ["closures", "this"] });
+  assert.match(prompt, /This exercise teaches one concept: "Closures" \(id closures\). Where it is used: Contadores y cachés./);
+  assert.match(prompt, /the gentlest version of it/);
+  assert.match(prompt, /Set "concepts" to 1 to 3 ids from that list only, "closures" first/);
+});
+
+test("a concept Inde missed last time comes back a step smaller, aimed at what tripped her", () => {
+  const prompt = exercisePrompt({ ...base, purpose: "practice", focus: { id: "closures", standing: "weak" }, allowed: ["closures"] });
+  assert.match(prompt, /go a step smaller than before, aim straight at what tripped them/);
+});
+
+test("a concept solved clean once asks a little more in a new situation", () => {
+  const prompt = exercisePrompt({ ...base, purpose: "practice", focus: { id: "closures", standing: "learning" }, allowed: ["closures"] });
+  assert.match(prompt, /a second clean day proves it stuck/);
+});
+
+test("the tests that tripped Claire's learner reach the prompt", () => {
+  const recent = [{ title: "Cartas para Malenia", level: 2, outcome: "struggled", failures: 2, hints: 0, runs: 5, seconds: 300, tripped: ["devuelve 0 con una lista vacía"] }];
+  const prompt = exercisePrompt({ ...base, purpose: "practice", summary: { strong: [], weak: [], learning: [], recent } });
+  assert.match(prompt, /5 test runs/);
+  assert.match(prompt, /tripped on: "devuelve 0 con una lista vacía"/);
 });
 
 test("an early level stays small and focused", () => {
@@ -125,6 +150,7 @@ test("every path prompt ends the path at an Amazon, Zillow or Capital One onsite
   const prompt = pathPrompt({ track, profileName: profile.name, summary, others: [], placement: [], kept: [], language: "es" });
   assert.match(prompt, /real onsite loop at Amazon, Zillow or Capital One/);
   assert.match(prompt, /the last 2 levels are interview levels/);
+  assert.match(prompt, /"concepts":\[\{"id":"kebab-case-id"/);
 });
 
 test("a profile prompt names the language, the platform and the last problems", () => {

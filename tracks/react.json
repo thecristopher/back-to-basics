@@ -1,16 +1,119 @@
 {
   "title": "React",
   "language": "react",
-  "focus": "React from the ground up, by hand: JSX, components and props, state and events, lists and keys, forms, effects, custom hooks, context, reducers, performance and testing with Testing Library, up to frontend interview level.",
-  "ladder": [
-    "JSX, components and props",
-    "State and events",
-    "Lists, keys and conditional rendering",
-    "Controlled forms and validation",
-    "Effects, data fetching and cleanup",
-    "Custom hooks",
-    "Context and reducers",
-    "Performance: memo, useMemo, useCallback, avoiding rerenders",
-    "Interview level at Amazon, Zillow or Capital One: widgets built from scratch like autocomplete with debounce and keyboard, a listings map filter, an infinite list, a transactions table with sort and pagination, accessible and tested"
+  "focus": "React from the ground up, by hand: JSX and props, lists and state, forms, state that grows, effects and data, custom hooks, context, performance, accessibility and testing with Testing Library, up to the frontend machine coding rounds of big tech.",
+  "levels": [
+    {
+      "title": { "es": "JSX y props", "en": "JSX and props" },
+      "summary": { "es": "Componentes pequeños que reciben datos y los muestran.", "en": "Small components that receive data and show it." },
+      "concepts": [
+        { "id": "jsx-expressions", "es": "Expresiones en JSX con llaves", "en": "Expressions in JSX with braces", "use": "Showing any value of your data on screen." },
+        { "id": "components-and-props", "es": "Componentes y props", "en": "Components and props", "use": "Every screen is built from small reusable pieces." },
+        { "id": "props-children", "es": "children para envolver contenido", "en": "children to wrap content", "use": "Cards, layouts and modals that take any content." },
+        { "id": "conditional-rendering", "es": "Render condicional con && y ternario", "en": "Conditional rendering with && and the ternary", "use": "Empty states, badges and permissions in the UI." }
+      ]
+    },
+    {
+      "title": { "es": "Listas y estado", "en": "Lists and state" },
+      "summary": { "es": "Mostrar listas con keys, guardar estado y responder a clicks.", "en": "Showing lists with keys, keeping state and reacting to clicks." },
+      "concepts": [
+        { "id": "lists-and-keys", "es": "Listas con map y keys estables", "en": "Lists with map and stable keys", "use": "Every feed, table and menu." },
+        { "id": "use-state", "es": "useState", "en": "useState", "use": "Anything that changes on screen: counters, toggles, selections." },
+        { "id": "event-handlers", "es": "Manejadores de eventos", "en": "Event handlers", "use": "Clicks, toggles and keyboard input." },
+        { "id": "derived-values", "es": "Calcular valores en vez de guardarlos en estado", "en": "Deriving values instead of storing them in state", "use": "Fewer bugs: totals and filters computed on render." },
+        { "id": "lifting-state", "es": "Subir el estado al padre", "en": "Lifting state up", "use": "Two components that must agree, like a filter and a list." }
+      ]
+    },
+    {
+      "title": { "es": "Formularios", "en": "Forms" },
+      "summary": { "es": "Inputs controlados, envío y mensajes de validación.", "en": "Controlled inputs, submit and validation messages." },
+      "concepts": [
+        { "id": "controlled-inputs", "es": "Inputs controlados", "en": "Controlled inputs", "use": "Every search box and form in a product." },
+        { "id": "form-submit", "es": "Enviar con onSubmit y preventDefault", "en": "Submitting with onSubmit and preventDefault", "use": "Login, checkout and settings forms." },
+        { "id": "validation-messages", "es": "Validación y mensajes de error", "en": "Validation and error messages", "use": "Forms users can actually finish." },
+        { "id": "object-state", "es": "Estado como objeto para varios campos", "en": "State as an object for many fields", "use": "Forms with many fields without many useState." },
+        { "id": "select-checkbox-radio", "es": "select, checkbox y radio", "en": "select, checkbox and radio", "use": "Filters and preferences." }
+      ]
+    },
+    {
+      "title": { "es": "Estado que crece", "en": "State that grows" },
+      "summary": { "es": "Actualizar arrays y objetos sin mutar, useReducer y componer componentes.", "en": "Updating arrays and objects without mutating, useReducer and composing components." },
+      "concepts": [
+        { "id": "immutable-updates", "es": "Actualizar arrays y objetos sin mutar", "en": "Updating arrays and objects without mutating", "use": "Carts, todo lists and editable tables that rerender right." },
+        { "id": "use-reducer", "es": "useReducer", "en": "useReducer", "use": "State with many transitions, like a checkout or a wizard." },
+        { "id": "state-shape", "es": "Dar buena forma al estado: normalizar y evitar duplicados", "en": "Shaping state well: normalize and avoid duplicates", "use": "Apps that stay simple as they grow." },
+        { "id": "composition", "es": "Composición de componentes", "en": "Component composition", "use": "Flexible UI without endless props." }
+      ]
+    },
+    {
+      "title": { "es": "Efectos y datos", "en": "Effects and data" },
+      "summary": { "es": "Traer datos, sus estados de carga y error, y limpiar lo que se abre.", "en": "Fetching data, its loading and error states, and cleaning up what you open." },
+      "concepts": [
+        { "id": "use-effect-deps", "es": "useEffect y sus dependencias", "en": "useEffect and its dependencies", "use": "Syncing with the outside world: titles, subscriptions, timers." },
+        { "id": "fetch-states", "es": "Estados de carga, error y datos", "en": "Loading, error and data states", "use": "Every screen that talks to an API." },
+        { "id": "effect-cleanup", "es": "Limpiar efectos", "en": "Cleaning up effects", "use": "No leaks from timers and listeners." },
+        { "id": "race-conditions", "es": "Evitar condiciones de carrera con AbortController", "en": "Avoiding race conditions with AbortController", "use": "Search as you type without stale results." }
+      ]
+    },
+    {
+      "title": { "es": "Hooks propios", "en": "Custom hooks" },
+      "summary": { "es": "Extraer lógica a hooks reutilizables y usar refs.", "en": "Extracting logic into reusable hooks and using refs." },
+      "concepts": [
+        { "id": "custom-hooks", "es": "Hooks propios", "en": "Custom hooks", "use": "Sharing logic across screens, the way real codebases do." },
+        { "id": "use-ref", "es": "useRef para el DOM y valores que no rerenderizan", "en": "useRef for the DOM and values that do not rerender", "use": "Focus, scroll and previous values." },
+        { "id": "debounce-hook", "es": "Un hook de debounce", "en": "A debounce hook", "use": "Search boxes that do not hammer the API." },
+        { "id": "local-storage-hook", "es": "Un hook que persiste en localStorage", "en": "A hook that persists to localStorage", "use": "Remembering preferences and drafts." }
+      ]
+    },
+    {
+      "title": { "es": "Contexto y arquitectura", "en": "Context and architecture" },
+      "summary": { "es": "Compartir estado sin pasar props por todos lados y aislar fallos.", "en": "Sharing state without passing props everywhere and isolating failures." },
+      "concepts": [
+        { "id": "context", "es": "Context", "en": "Context", "use": "Theme, current user and language across the app." },
+        { "id": "context-with-reducer", "es": "Context con reducer", "en": "Context with a reducer", "use": "A small store without a library." },
+        { "id": "error-boundaries", "es": "Error boundaries", "en": "Error boundaries", "use": "One broken widget does not blank the whole page." },
+        { "id": "state-colocation", "es": "Dónde vive el estado", "en": "Where state lives", "use": "Knowing when to keep state local and when to share it." }
+      ]
+    },
+    {
+      "title": { "es": "Rendimiento", "en": "Performance" },
+      "summary": { "es": "Entender por qué algo se rerenderiza y cuándo memorizar.", "en": "Understanding why something rerenders and when to memoize." },
+      "concepts": [
+        { "id": "rerenders", "es": "Por qué y cuándo se rerenderiza un componente", "en": "Why and when a component rerenders", "use": "The base of every performance conversation." },
+        { "id": "memo", "es": "React.memo", "en": "React.memo", "use": "Skipping work in big lists and heavy widgets." },
+        { "id": "use-memo-callback", "es": "useMemo y useCallback", "en": "useMemo and useCallback", "use": "Stable values and handlers when they matter, and not when they do not." },
+        { "id": "virtualization", "es": "Virtualizar listas largas a mano", "en": "Virtualizing long lists by hand", "use": "Feeds with thousands of rows, a frequent interview follow up." }
+      ]
+    },
+    {
+      "title": { "es": "Accesibilidad y tests", "en": "Accessibility and tests" },
+      "summary": { "es": "UI que todos pueden usar y tests que la prueban como un usuario.", "en": "UI everyone can use and tests that check it like a user." },
+      "concepts": [
+        { "id": "semantic-html-aria", "es": "HTML semántico y ARIA", "en": "Semantic HTML and ARIA", "use": "Screen readers and every big tech UI review." },
+        { "id": "keyboard-navigation", "es": "Navegación con teclado", "en": "Keyboard navigation", "use": "Menus, lists and dialogs that work without a mouse." },
+        { "id": "focus-management", "es": "Manejo del foco", "en": "Focus management", "use": "Modals and forms that do not lose the user." },
+        { "id": "testing-library", "es": "Testing Library: queries por rol y user events", "en": "Testing Library: role queries and user events", "use": "Writing your own tests the way frontend teams do." }
+      ]
+    },
+    {
+      "title": { "es": "Machine coding I", "en": "Machine coding I" },
+      "summary": { "es": "Widgets completos como en una ronda de frontend de Amazon o Capital One.", "en": "Whole widgets like an Amazon or Capital One frontend round." },
+      "concepts": [
+        { "id": "autocomplete-widget", "es": "Autocomplete con debounce y teclado", "en": "Autocomplete with debounce and keyboard", "use": "The most asked frontend machine coding problem." },
+        { "id": "data-table", "es": "Tabla con orden, filtro y paginación", "en": "A table with sort, filter and pagination", "use": "Transactions and listings, everywhere in fintech and real estate." },
+        { "id": "infinite-list", "es": "Lista infinita", "en": "An infinite list", "use": "Feeds and search results." },
+        { "id": "accessible-modal-tabs", "es": "Modal y tabs accesibles", "en": "An accessible modal and tabs", "use": "Primitives every design system ships." }
+      ]
+    },
+    {
+      "title": { "es": "Machine coding II", "en": "Machine coding II" },
+      "summary": { "es": "Flujos completos con follow ups y casos borde de senior.", "en": "Whole flows with follow ups and senior level edge cases." },
+      "concepts": [
+        { "id": "wizard-form", "es": "Formulario de varios pasos con validación", "en": "A multi step form with validation", "use": "Onboarding and loan applications." },
+        { "id": "optimistic-updates", "es": "Actualizaciones optimistas con rollback", "en": "Optimistic updates with rollback", "use": "Likes, carts and comments that feel instant." },
+        { "id": "undo-redo", "es": "Deshacer y rehacer", "en": "Undo and redo", "use": "Editors and boards, a classic follow up." },
+        { "id": "filters-in-url", "es": "Filtros sincronizados con la URL", "en": "Filters synced with the URL", "use": "Shareable searches, like a listings map filter." }
+      ]
+    }
   ]
 }

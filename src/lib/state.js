@@ -1,8 +1,9 @@
 import { freshRecord } from "../actions/record.js";
 import { readJsonIfExists, writeJson } from "./files.js";
+import { STATE_VERSION } from "./upgrade.js";
 
 function emptyState() {
-  return { version: 2, current: null, xp: 0, exercises: {}, days: {}, placement: null, aptitude: {} };
+  return { version: STATE_VERSION, current: null, xp: 0, exercises: {}, days: {}, placement: null, mastery: {} };
 }
 
 /**

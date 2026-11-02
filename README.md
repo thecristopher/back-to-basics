@@ -2,13 +2,13 @@
 
 Daily coding drills in your terminal, forged by Claude to fit you and graded by real tests.
 
-AI made writing code fast and remembering how to write it optional. This is the gym: you solve by hand, every day. Claude is not the one solving; it is the coach that measures you, draws your path and forges each exercise for where you are today.
+AI made writing code fast and remembering how to write it optional. This is the gym: you solve by hand, every day. Claude is not the one solving; it is the coach that measures you, forges each exercise for where you are today and keeps you climbing a path built from the basics up to an onsite.
 
 ![Claire briefs a Bedrock exercise in Neovim](docs/images/btb_re_coach.png)
 
-- **Nothing fixed.** There is no static exercise list. Claude forges exercises from your aptitude: the concepts you own, the ones that cost you and how your last rounds went.
+- **Nothing fixed.** There is no static exercise list. Claude forges each exercise for the next concept you need, sized by how you did on it last time and aimed at the tests that tripped you.
 - **Trusted before you see it.** Every exercise Claude forges is run first: its reference must pass the tests and its starter must fail them. When one does not hold, Claude gets the failure and fixes it, or it is thrown away.
-- **A path drawn for you.** A placement test of rising difficulty tells Claude where you really are, and it draws your levels from there. Each level up, it redraws what comes next with the new evidence.
+- **A path with clear limits.** Every bundled track is a hand written graph of concepts, designed backwards from an Amazon or Capital One onsite: the basics first, then what a working programmer uses every day, then the interview patterns. A placement test says where you start, and a level is passed once you own each of its concepts.
 - **Every path ends at an onsite.** The last 2 levels of every track are interview levels: multi part problems like the ones in an Amazon, Zillow or Capital One loop, over realistic data, with edge cases and complexity limits the tests enforce.
 - **Node, React, Python and LLM apps at the base, any language on top.** `btb learn rust` has Claude work out how to run Rust tests on your machine. You approve the commands before anything runs.
 - **LLMs on Amazon Bedrock, by hand.** The `llm` track drills the Converse API with boto3, streaming, tool use, pydantic validated output, backoff, RAG, evals and agents. Bedrock is faked with botocore's `Stubber`, so it needs no AWS account and costs nothing. It opens once half of your Python path is done, so you get there with the language in hand.
@@ -24,7 +24,7 @@ You need Node 22+ and the [Claude Code](https://claude.com/claude-code) CLI sign
 git clone <this repo> back-to-basics
 cd back-to-basics
 npm link                  # puts `btb` on your PATH, or run `node bin/btb.js`
-btb placement node        # Claude measures you and draws your Node path
+btb placement node        # Claude measures you and places you on your Node path
 btb placement react       # same for React (installs its test packages once)
 btb placement python      # Python (installs pytest, pydantic and boto3 in a venv once)
 btb placement llm         # LLM apps on Bedrock, once half of the Python path is done
@@ -47,7 +47,7 @@ btb review        # Claude reviews your solution once solved
 btb forge         # forge ahead of time so tomorrow's next opens instantly
 ```
 
-The pass that ends the day brings its summary: how many you solved, how many clean, what you skipped, failed submits, hints and the concepts worth another look. A round is **clean** when you pass with no hints and at most one failed submit. A level is passed by solving its target number of exercises clean.
+The pass that ends the day brings its summary: how many you solved, how many clean, what you skipped, failed submits, hints and the concepts worth another look. A round is **clean** when you pass with no hints and at most one failed submit. A concept is **owned** once you solve it clean on 2 different days and your last round on it was clean, and a level is passed when every one of its concepts is owned.
 
 ## Learning any language
 
@@ -78,8 +78,8 @@ If the toolchain is missing, `setup` tells you what to install. If the commands 
 | `btb debrief` | The coach of the day closes the day naming each exercise and how it went. |
 | `btb prepare` | Gets the coach's day ready ahead: her greeting and her lines for every exercise in today's queue. |
 | `btb recall <id> [--answer="..."]` | Your coach answers what you remembered of the question that closes the lesson: what you got right, what is missing and the key idea. A blank answer gets the answer back. |
-| `btb placement [track] [--restart]` | Probes of rising difficulty, then Claude draws the path. |
-| `btb path [track] [--redraw]` | The path Claude drew, with the reason it starts where it does. |
+| `btb placement [track] [--restart]` | Probes of rising difficulty, then you are placed on the path right after the hardest level you proved. |
+| `btb path [track] [--redraw]` | The path, level by level, with where you stand on each concept (✓ owned, ~ learning, ! weak, · new). `--redraw` has Claude redraw a learned language's path. |
 | `btb forge [track] [--count=n] [--lessons] [--rewrite]` | Forges exercises for the current level ahead of time. `--lessons` writes the lessons older exercises are missing. `--rewrite` has Claude rewrite the statement and hints of exercises forged before they had to explain the problem, leaving tests and reference untouched. |
 | `btb learn <language> [--goal=...] [--again]` | A new track for any language. |
 | `btb setup [track] --yes` | Approves a learned language and proves its toolchain. |
@@ -93,6 +93,18 @@ If the toolchain is missing, `setup` tells you what to install. If the commands 
 | `btb list` | Everything forged and where you stand on it. |
 | `btb persona [name]` | The coach in use, or another one. `list` shows them all. |
 | `btb persona new <name> --from="..."` | Claude drafts a new coach from a description. |
+
+## A path from zero to an onsite
+
+Every bundled track lives in `tracks/<id>.json` as a graph of concepts: levels in order, and in each one 3 to 6 concepts with an id, a title in Spanish and English and a line on where it is used in real work. Node and Python climb 14 levels, from returning a value to an LRU cache with TTL, a rate limiter or an idempotent ledger. React climbs to machine coding rounds and LLM to a Bedrock gateway and guarded agents. The last 2 levels of every track are the onsite ones.
+
+Each new exercise teaches one concept, picked in this order: one you missed last time, then one you solved clean only once, then the next new one. How big the step is depends on where you stand on it. A first exercise is the gentlest version, a second one asks a little more in a new situation, and after a miss the next one comes back a step smaller and aimed straight at what tripped you. The exercise may lean on what you already met, never on what comes later.
+
+Every test run, practice runs included, goes to `.btb/log/runs.jsonl` with the tests that failed. When you pass, the tests that tripped you on the way and how many runs it took become part of the evidence Claude reads for your next exercises. `btb path` shows each level with a mark per concept, so you always know what is left and what comes next.
+
+Learned languages (`btb learn`) have no graph written by hand, so Claude draws one with the same shape: concept ids, titles and uses, designed backwards from the interview levels.
+
+Upgrading from a version before the graph moves your old progress, forged exercises and workspace into `.btb/archive/` the first time btb runs, and you start the new path fresh. Runtimes and summoned personas stay.
 
 ## Statements that explain, hints that stand alone
 
@@ -256,7 +268,7 @@ personas/     the bundled coaches: voice, portrait, lines per moment and the wor
 tracks/       seeds of the bundled tracks: focus, suggested stages, the example to show and what they wait for, Claude adapts them
 profiles/     how to run tests per language: files, command, report format, runtime (python/ holds the pytest plugin)
 examples/     hand written exercises with their lessons, the quality bar Claude is shown and the engine's fixtures
-src/actions/  pure logic: scheduling, levels, placement, aptitude, prompts, validation
+src/actions/  pure logic: scheduling, the concept graph, mastery, levels, placement, run log entries, prompts, validation
 src/lib/      disk, processes and Claude: runner, forge, architect
 src/commands/ one file per group of commands
 lua/          the Neovim plugin, pure logic in lua/back-to-basics/actions

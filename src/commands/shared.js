@@ -1,4 +1,6 @@
 import { currentLevel, levelProgress } from "../actions/levels.js";
+import { conceptTitle } from "../actions/graph.js";
+import { focusConcept, standingOf } from "../actions/mastery.js";
 import { allocateNew, dueReviews, freshExercises, slotFor, slotTrack } from "../actions/queue.js";
 import { isOnsite } from "../actions/arena.js";
 import { applyRecap, isRecap } from "../actions/recap.js";
@@ -79,13 +81,37 @@ export async function profileOf(ctx, track) {
 }
 
 /**
- * The track's level now, from its path and what was solved.
+ * Each level of a track's path with how many of its concepts the learner owns.
+ * @param {object} ctx
+ * @param {object} track
+ * @returns {ReturnType<typeof levelProgress>}
+ */
+export function progressOf(ctx, track) {
+  return levelProgress(track, ctx.state.mastery[track.id]?.concepts);
+}
+
+const CONCEPT_GLYPHS = { owned: "✓", learning: "~", weak: "!", new: "·" };
+
+/**
+ * A level's concepts as one line, each with the mark of where the learner stands on it.
+ * @param {object} ctx
+ * @param {object} track
+ * @param {{ concepts: string[] }} level
+ * @returns {string}
+ */
+export function conceptMarks(ctx, track, level) {
+  const concepts = ctx.state.mastery[track.id]?.concepts ?? {};
+  return level.concepts.map((id) => `${CONCEPT_GLYPHS[standingOf(concepts[id])]} ${conceptTitle(track, id)}`).join("   ");
+}
+
+/**
+ * The track's level now, from its path and the concepts owned.
  * @param {object} ctx
  * @param {object} track
  * @returns {object | null} the level entry, null when the path is done or not drawn
  */
 export function levelNow(ctx, track) {
-  const progress = levelProgress(track, ctx.catalog.exercises, ctx.state.exercises);
+  const progress = progressOf(ctx, track);
   const level = currentLevel(progress);
   return progress.find((entry) => entry.level === level) ?? null;
 }
@@ -98,7 +124,7 @@ export function levelNow(ctx, track) {
  */
 export function lockOf(ctx, track) {
   const required = track.after ? trackOf(ctx, track.after.track) : undefined;
-  const progress = required ? levelProgress(required, ctx.catalog.exercises, ctx.state.exercises) : [];
+  const progress = required ? progressOf(ctx, required) : [];
   return waitingFor(track, required, progress);
 }
 
@@ -191,8 +217,11 @@ async function exerciseForSlot(ctx, track, queued) {
   await ensurePath(ctx, track);
   const level = levelNow(ctx, track);
   if (!level) return null;
-  const [ready] = freshExercises(ctx.catalog.exercises, ctx.state.exercises, track.id, level.level, queued, franchiseOf(ctx.persona));
-  if (ready) return ctx.catalog.byId[ready];
+  const ready = freshExercises(ctx.catalog.exercises, ctx.state.exercises, track.id, level.level, queued, franchiseOf(ctx.persona));
+  // one forged ahead for the concept that is due now goes first, so the path keeps its order
+  const focus = focusConcept(level, ctx.state.mastery[track.id]?.concepts);
+  const aimed = ready.find((id) => ctx.catalog.byId[id].conceptIds?.[0] === focus) ?? ready[0];
+  if (aimed) return ctx.catalog.byId[aimed];
   const forged = await forgeExercises(ctx, { track, purpose: "practice", level, count: ctx.config.forgeBatch });
   return forged[0] ?? null;
 }

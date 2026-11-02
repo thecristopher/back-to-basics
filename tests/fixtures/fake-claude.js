@@ -24,6 +24,14 @@ function example(slug) {
   };
 }
 
+// a prompt aimed at a graph names the concept to teach and the ids allowed, the fake tags with them like Claude must
+function aimedConcepts(fallback) {
+  const primary = prompt.match(/^Set "concepts" to .*, "([a-z0-9-]+)" first\.$/m)?.[1];
+  if (primary) return [primary];
+  const allowed = prompt.match(/^It may lean on concepts .*?: ([a-z0-9-]+) \(/m)?.[1];
+  return allowed ? [allowed] : fallback;
+}
+
 // rotates through the examples across calls so each forge brings new ones
 function nextSlugs(count) {
   const slugs = readdirSync(EXAMPLES).sort();
@@ -36,6 +44,7 @@ function nextSlugs(count) {
 function exercises() {
   const count = Number(prompt.match(/^Write (\d+)/m)?.[1] ?? 2);
   const drafts = nextSlugs(count).map(example);
+  for (const draft of drafts) draft.concepts = aimedConcepts(draft.concepts);
   if (process.env.FAKE_CLAUDE_BROKEN) drafts[0].reference = drafts[0].starter;
   // a coach with a voice is asked for her lines about each exercise
   if (prompt.includes('"moments"')) for (const draft of drafts) draft.moments = moments(draft.title);
@@ -57,11 +66,15 @@ function moments(title = prompt.match(/^Exercise: (.+)$/m)?.[1]) {
 function fix() {
   const lines = prompt.split("\n");
   const draft = JSON.parse(lines[lines.indexOf("The exercise:") + 1]);
-  return example(draft.slug);
+  return { ...example(draft.slug), concepts: draft.concepts };
 }
 
 function path() {
-  const levels = [1, 2, 3, 4].map((level) => ({ level, title: `Nivel ${level} de Malenia`, summary: "Paso a paso.", concepts: ["bucles", "closures"], target: 2 }));
+  const concepts = (level) => [
+    { id: `bucles-${level}`, title: `Bucles ${level}`, use: "Recorrer las cartas de Inde." },
+    { id: `closures-${level}`, title: `Closures ${level}`, use: "Recordar la playlist de Claire." },
+  ];
+  const levels = [1, 2, 3, 4].map((level) => ({ level, title: `Nivel ${level} de Malenia`, summary: "Paso a paso.", concepts: concepts(level) }));
   return { rationale: "Claire empieza por lo básico, sin prisa.", startLevel: 1, levels };
 }
 

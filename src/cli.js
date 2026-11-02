@@ -18,6 +18,7 @@ import { coachName } from "./actions/persona.js";
 import { loadPersona, speak, summonPersona } from "./lib/personas.js";
 import { loadState, saveState } from "./lib/state.js";
 import { loadTracks } from "./lib/tracks.js";
+import { archiveOldModel } from "./lib/upgrade.js";
 import { toDay } from "./utils/dates.js";
 import { createPaint } from "./utils/text.js";
 
@@ -46,6 +47,8 @@ async function createContext(config, t, flags) {
   // progress goes to stderr, so --json output on stdout stays parseable
   const log = (text) => process.stderr.write(`${text}\n`);
   const persona = await personaFor(config, t, flags);
+  const archived = await archiveOldModel(config);
+  if (archived) log(t.archivedOld(archived));
   return {
     config,
     t: createT(config.language, persona),

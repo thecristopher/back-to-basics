@@ -1,14 +1,16 @@
 import { mkdir, writeFile } from "node:fs/promises";
 import { extname, join } from "node:path";
-import { summarizeAptitude } from "../actions/aptitude.js";
 import { castFor, franchiseOf } from "../actions/cast.js";
+import { conceptsUpTo } from "../actions/graph.js";
+import { focusConcept, standingOf, summarizeMastery } from "../actions/mastery.js";
+import { probeLevel } from "../actions/placement.js";
 import { withMoments } from "../actions/moments.js";
 import { withoutEmDashes } from "../actions/json.js";
 import { exercisePrompt, fixPrompt } from "../actions/prompts/exercise.js";
 import { describeRun } from "../actions/report.js";
 import { draftProblems } from "../actions/validate.js";
 import { toSlug, uniqueSlug } from "../utils/slug.js";
-import { exercisesDir, loadExample } from "./catalog.js";
+import { exercisesDir, loadExample, withConceptTitles } from "./catalog.js";
 import { askJson } from "./claude.js";
 import { filesFor, loadProfile } from "./profiles.js";
 import { runTests } from "./runner.js";
@@ -24,8 +26,8 @@ async function runProblems(ctx, profile, files, draft) {
   return [];
 }
 
-async function problemsOf(ctx, profile, files, draft) {
-  const shape = draftProblems(draft, { preview: Boolean(files.previewFile) });
+async function problemsOf(ctx, profile, files, draft, concepts) {
+  const shape = draftProblems(draft, { preview: Boolean(files.previewFile), ...concepts });
   return shape.length > 0 ? shape : runProblems(ctx, profile, files, draft);
 }
 
@@ -37,10 +39,10 @@ function unwrap(answer) {
  * Validates a draft by running its tests, and sends it back to Claude with the problems until it holds or retries run out.
  * @returns {Promise<object | null>} the draft that passed, null when it never did
  */
-async function settle(ctx, profile, files, draft) {
+async function settle(ctx, profile, files, draft, concepts) {
   let current = draft;
   for (let attempt = 0; attempt <= ctx.config.forgeRetries; attempt += 1) {
-    const problems = await problemsOf(ctx, profile, files, current);
+    const problems = await problemsOf(ctx, profile, files, current, concepts);
     if (problems.length === 0) return current;
     if (attempt === ctx.config.forgeRetries) break;
     ctx.log(ctx.paint.dim(ctx.t.forgeFixing(ctx.coach, current.title ?? "?")));
@@ -80,10 +82,35 @@ async function saveExercise(ctx, track, draft, meta) {
   await writeFile(join(folder, `reference${ext}`), draft.reference);
   await writeFile(join(folder, meta.files.test), draft.test);
   if (meta.files.preview) await writeFile(join(folder, meta.files.preview), draft.preview);
-  const exercise = { hints: [], concepts: [], ...stored, id: `${track.id}/${slug}`, slug, track: track.id, folder };
+  const exercise = withConceptTitles({ hints: [], ...stored, id: `${track.id}/${slug}`, slug, track: track.id, folder }, track);
   ctx.catalog.exercises.push(exercise);
   ctx.catalog.byId[exercise.id] = exercise;
   return exercise;
+}
+
+// the level a request measures: the practice level, or for a placement probe the level its difficulty points at
+function measuredLevel(track, { level, difficulty, size }) {
+  if (level) return level.level;
+  if (!track.path && !track.levels) return null;
+  const count = (track.path ?? track).levels.length;
+  return probeLevel(difficulty ?? size ?? count, size ?? count, count);
+}
+
+/**
+ * What an exercise is aimed at: the concept it teaches with the learner's standing on it, and the ids it may use.
+ * A track with no graph yet (a learned language before its path) leaves both open.
+ * @param {object} ctx
+ * @param {object} track
+ * @param {{ purpose: string, level?: object, difficulty?: number, size?: number }} request
+ * @returns {{ focus: { id: string, standing: string } | null, allowed: string[] | undefined }}
+ */
+export function aimOf(ctx, track, request) {
+  const levels = track.path ?? (track.levels ? { levels: track.levels } : null);
+  const upTo = levels ? measuredLevel(track, request) : null;
+  if (!upTo) return { focus: null, allowed: undefined };
+  const concepts = ctx.state.mastery[track.id]?.concepts ?? {};
+  const focusId = request.purpose === "practice" ? focusConcept(request.level, concepts) : null;
+  return { focus: focusId ? { id: focusId, standing: standingOf(concepts[focusId]) } : null, allowed: conceptsUpTo(levels, upTo) };
 }
 
 /**
@@ -98,7 +125,10 @@ export async function forgeExercises(ctx, { track, purpose, level, count, diffic
   const files = filesFor(profile, ctx.config.flavor);
   const franchise = franchiseOf(ctx.persona);
   const avoid = ctx.catalog.exercises.filter((exercise) => exercise.track === track.id).map((exercise) => exercise.title);
+  const { focus, allowed } = aimOf(ctx, track, { purpose, level, difficulty, size });
   const prompt = exercisePrompt({
+    focus,
+    allowed,
     purpose,
     track,
     profile,
@@ -107,7 +137,7 @@ export async function forgeExercises(ctx, { track, purpose, level, count, diffic
     count,
     difficulty,
     size,
-    summary: summarizeAptitude(ctx.state.aptitude[track.id]),
+    summary: summarizeMastery(ctx.state.mastery[track.id]),
     avoid,
     language: ctx.config.language,
     theme: ctx.config.theme,
@@ -128,7 +158,7 @@ export async function forgeExercises(ctx, { track, purpose, level, count, diffic
   };
   const saved = [];
   for (const [index, draft] of drafts.entries()) {
-    const settled = await settle(ctx, profile, files, draft);
+    const settled = await settle(ctx, profile, files, draft, { allowed, primary: focus?.id ?? null });
     if (settled && meta.placement) settled.difficulty = (difficulty ?? 1) + index;
     if (settled) saved.push(await saveExercise(ctx, track, settled, meta));
   }

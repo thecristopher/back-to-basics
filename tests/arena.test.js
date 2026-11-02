@@ -69,20 +69,21 @@ test("every reporter carries the line only when it knows it", () => {
 });
 
 test("Claire's concepts stand owned, weak or still being learned, the costly ones first", () => {
-  const aptitudes = {
+  const mastery = {
     node: {
       concepts: {
-        closures: { clean: 3, struggled: 0, skipped: 0 },
-        recursion: { clean: 0, struggled: 1, skipped: 1 },
-        reduce: { clean: 1, struggled: 0, skipped: 0 },
+        closures: { clean: 3, struggled: 0, skipped: 0, cleanDays: ["2026-10-27", "2026-10-28"], last: "clean" },
+        recursion: { clean: 0, struggled: 1, skipped: 1, cleanDays: [], last: "skipped" },
+        "array-reduce": { clean: 1, struggled: 0, skipped: 0, cleanDays: ["2026-10-28"], last: "clean" },
       },
     },
   };
+  const tracks = [{ id: "node", graph: { "array-reduce": { title: "reduce para resumir" } } }];
   assert.deepEqual(
-    conceptStanding(aptitudes).map(({ concept, standing }) => [concept, standing]),
+    conceptStanding(mastery, tracks).map(({ concept, standing }) => [concept, standing]),
     [
       ["recursion", "weak"],
-      ["reduce", "learning"],
+      ["reduce para resumir", "learning"],
       ["closures", "owned"],
     ],
   );

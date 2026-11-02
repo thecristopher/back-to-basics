@@ -26,13 +26,22 @@ test("a React draft without its preview is refused, a Node one does not need it"
   assert.deepEqual(draftProblems(draft, { preview: false }), []);
 });
 
-const level = { title: "t", summary: "s", concepts: ["c"], target: 3 };
+const level = { title: "t", summary: "s", concepts: [{ id: "love-notes", title: "Cartas de Claire" }] };
 
 test("a path needs at least three valid levels and a start among them", () => {
   assert.deepEqual(pathProblems({ startLevel: 1, levels: [level, level, level] }), []);
-  assert.deepEqual(pathProblems({ startLevel: 4, levels: [level, level, { ...level, target: 0 }] }), [
-    'level 3: "target" must be a positive integer',
+  assert.deepEqual(pathProblems({ startLevel: 4, levels: [level, level, { ...level, concepts: ["Cartas de Claire"] }] }), [
+    'level 3: concept "Cartas de Claire" needs a kebab case "id"',
     '"startLevel" must point at one of the levels',
+  ]);
+});
+
+test("an exercise aimed at a graph only names its ids, the one it teaches first", () => {
+  const aimed = { allowed: ["closures", "recursion"], primary: "closures" };
+  assert.deepEqual(draftProblems({ ...draft, concepts: ["closures", "recursion"] }, aimed), []);
+  assert.deepEqual(draftProblems({ ...draft, concepts: ["recursion", "rennala-spells"] }, aimed), [
+    '"concepts" must only use these ids: closures, recursion. Unknown: rennala-spells',
+    '"concepts" must start with "closures", the concept this exercise teaches',
   ]);
 });
 

@@ -1,15 +1,17 @@
 import { existsSync } from "node:fs";
 import { readFile } from "node:fs/promises";
-import { noteResult } from "../actions/aptitude.js";
 import { ghostVerdict, isOnsite } from "../actions/arena.js";
 import { isUnfinished, nextPending, slotFor, undrawnSlotTrack } from "../actions/queue.js";
 import { daySummary } from "../actions/recap.js";
+import { noteResult } from "../actions/mastery.js";
 import { applyPass, applySkip, awardXp } from "../actions/record.js";
+import { runEntry, runsThisRound, trippedThisRound } from "../actions/runs.js";
 import { roundOutcome } from "../actions/schedule.js";
 import { hintLines } from "../actions/hints.js";
 import { HINT_COST, xpFor } from "../actions/xp.js";
 import { exerciseFiles, findExercise } from "../lib/catalog.js";
 import { runTests } from "../lib/runner.js";
+import { appendRun, readRuns } from "../lib/runlog.js";
 import { dayOf, recordOf } from "../lib/state.js";
 import { saveTrack } from "../lib/tracks.js";
 import { redoPath, solutionPath } from "../lib/workspace.js";
@@ -218,11 +220,12 @@ async function passed(ctx, exercise, record, result) {
   const round = { ...record.round };
   const outcome = roundOutcome(round, ctx.config.cleanMaxFailures);
   const seconds = elapsedSeconds(record.startedAt);
+  const evidence = await roundEvidence(ctx, exercise, record.startedAt);
   const xp = xpFor({ level: Math.max(exercise.level, exercise.difficulty ?? 1), outcome, hints: round.hints });
   applyPass(record, { outcome, seconds, today: ctx.today });
   awardXp(ctx.state, day, exercise.id, xp);
   logRound(day, exercise.id, { outcome, failures: round.failures, hints: round.hints });
-  noteResult(ctx.state.aptitude, exercise, { outcome, failures: round.failures, hints: round.hints, seconds });
+  noteResult(ctx.state.mastery, exercise, { outcome, failures: round.failures, hints: round.hints, seconds, ...evidence }, ctx.today);
   const placement = await notePlacementResult(ctx, exercise.id, outcome);
   const levelUp = placement ? null : await markLevelUp(ctx, track, levelBefore);
   const data = {
@@ -244,8 +247,14 @@ async function passed(ctx, exercise, record, result) {
   return { data, text: renderPass(ctx, exercise, data, placement) };
 }
 
-async function testsOf(ctx, exercise, solution) {
-  return runTests({
+// what the run log tells about the round: which tests tripped the learner and how many runs it took
+async function roundEvidence(ctx, exercise, startedAt) {
+  const runs = await readRuns(ctx.config);
+  return { tripped: trippedThisRound(runs, exercise.id, startedAt), runs: runsThisRound(runs, exercise.id, startedAt) };
+}
+
+async function testsOf(ctx, exercise, solution, kind) {
+  const result = await runTests({
     config: ctx.config,
     profile: await profileOf(ctx, trackOf(ctx, exercise.track)),
     files: { solutionFile: exercise.files.solution, testFile: exercise.files.test },
@@ -253,6 +262,9 @@ async function testsOf(ctx, exercise, solution) {
     testCode: await readFile(exerciseFiles(exercise).test, "utf8"),
     onInstall: ctx.onInstall,
   });
+  // a toolchain that refused to run says nothing about the learner
+  if (!result.unsupported && !result.unapproved) await appendRun(ctx.config, runEntry(exercise, kind, result));
+  return result;
 }
 
 /**
@@ -265,9 +277,9 @@ export async function submit(ctx, [query], flags = {}) {
   const { exercise } = target;
   const solution = flags.redo ? redoPath(ctx.config, exercise) : solutionPath(ctx.config, exercise);
   if (!existsSync(solution)) return failure(flags.redo ? ctx.t.redoNotStarted(exercise.id) : ctx.t.notStarted(exercise.slug));
-  if (flags.redo) return redoFinished(ctx, exercise, await testsOf(ctx, exercise, solution));
+  if (flags.redo) return redoFinished(ctx, exercise, await testsOf(ctx, exercise, solution, "redo"));
   ctx.state.current = exercise.id;
-  const result = await testsOf(ctx, exercise, solution);
+  const result = await testsOf(ctx, exercise, solution, "submit");
   const record = recordOf(ctx.state, exercise.id);
   record.attempts += 1;
   return result.ok ? passed(ctx, exercise, record, result) : failed(ctx, exercise, record, result);
@@ -295,7 +307,7 @@ export async function test(ctx, [query], flags = {}) {
   const { exercise } = target;
   const solution = flags.redo ? redoPath(ctx.config, exercise) : solutionPath(ctx.config, exercise);
   if (!existsSync(solution)) return failure(flags.redo ? ctx.t.redoNotStarted(exercise.id) : ctx.t.notStarted(exercise.slug));
-  const result = await testsOf(ctx, exercise, solution);
+  const result = await testsOf(ctx, exercise, solution, flags.redo ? "redo" : "test");
   const data = { ...failureData(ctx, exercise, result), ok: result.ok, practice: true, redo: Boolean(flags.redo) };
   return { code: result.ok ? 0 : 1, data, text: renderTrial(ctx, data) };
 }
@@ -328,11 +340,12 @@ export async function skip(ctx, [query]) {
   const { exercise } = target;
   const record = recordOf(ctx.state, exercise.id);
   const round = { ...record.round };
+  const evidence = await roundEvidence(ctx, exercise, record.startedAt);
   applySkip(record, ctx.today);
   const day = dayOf(ctx.state, ctx.today);
   if (!day.done.includes(exercise.id)) day.done.push(exercise.id);
   logRound(day, exercise.id, { outcome: "skipped", failures: round.failures, hints: round.hints });
-  noteResult(ctx.state.aptitude, exercise, { outcome: "skipped", failures: round.failures, hints: round.hints, seconds: null });
+  noteResult(ctx.state.mastery, exercise, { outcome: "skipped", failures: round.failures, hints: round.hints, seconds: null, ...evidence }, ctx.today);
   const placement = await notePlacementResult(ctx, exercise.id, "skipped");
   return {
     data: { id: exercise.id, skipped: true, dueAt: record.dueAt, placement },

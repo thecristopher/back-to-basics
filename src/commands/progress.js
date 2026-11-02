@@ -1,6 +1,6 @@
 import { existsSync, readFileSync } from "node:fs";
 import { conceptStanding, lessonQuestion } from "../actions/arena.js";
-import { currentLevel, levelProgress } from "../actions/levels.js";
+import { currentLevel } from "../actions/levels.js";
 import { goalStatus, projectLevels } from "../actions/plan.js";
 import { freshExercises, slotTrack } from "../actions/queue.js";
 import { exerciseState } from "../actions/record.js";
@@ -9,14 +9,14 @@ import { franchiseOf } from "../actions/cast.js";
 import { exerciseFiles } from "../lib/catalog.js";
 import { dayOf } from "../lib/state.js";
 import { bar } from "../utils/text.js";
-import { ensureQueue, isPlacementRunning, levelNow, lockOf, openTracks, recappedToday, trackOf } from "./shared.js";
+import { ensureQueue, isPlacementRunning, levelNow, lockOf, openTracks, progressOf, recappedToday, trackOf } from "./shared.js";
 
 /** The mark of each exercise state, shared by list and lessons. */
 export const GLYPHS = { mastered: "★", due: "↻", solved: "✓", started: "~", new: "·" };
 
 function trackLevels(ctx) {
   return ctx.catalog.tracks.map((track) => {
-    const levels = levelProgress(track, ctx.catalog.exercises, ctx.state.exercises);
+    const levels = progressOf(ctx, track);
     return { id: track.id, title: track.title, drawn: Boolean(track.path), current: currentLevel(levels), levels, locked: lockOf(ctx, track) };
   });
 }
@@ -121,8 +121,7 @@ export async function today(ctx) {
 function levelLine({ t, paint }, level, isCurrent) {
   const mark = level.done ? paint.green("✓") : isCurrent ? paint.yellow("→") : " ";
   const count = level.placedOut ? paint.dim(t.placedOut) : t.cleanOf(level.clean, level.target);
-  const stars = level.mastered > 0 ? paint.yellow(` ★${level.mastered}`) : "";
-  return `  ${mark} ${t.level(level.level).padEnd(8)} ${level.title.padEnd(32)} ${bar(Math.min(level.clean, level.target), level.target)}  ${count}${stars}`;
+  return `  ${mark} ${t.level(level.level).padEnd(8)} ${level.title.padEnd(32)} ${bar(level.clean, level.target)}  ${count}`;
 }
 
 function renderStatus(ctx, data) {
@@ -148,7 +147,7 @@ export async function status(ctx) {
     solved: records.filter((record) => record.firstSolvedAt).length,
     mastered: records.filter((record) => record.mastered).length,
     tracks: trackLevels(ctx),
-    concepts: conceptStanding(ctx.state.aptitude),
+    concepts: conceptStanding(ctx.state.mastery, ctx.catalog.tracks),
   };
   return { data, text: renderStatus(ctx, data) };
 }
@@ -159,7 +158,7 @@ function projectTrack(ctx, track, perSession) {
     trackTitle: track.title,
     level: level.level,
     title: level.title,
-    remaining: Math.max(0, level.target - level.clean),
+    remaining: level.remaining,
     done: level.done,
   }));
   return projectLevels(levels, { perSession, daysPerWeek: ctx.config.daysPerWeek, today: ctx.today });
