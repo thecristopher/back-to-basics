@@ -1,33 +1,12 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { applyRecap, daySummary, isRecap } from "../src/actions/recap.js";
+import { daySummary } from "../src/actions/recap.js";
 
 const byId = {
   "node/love-notes": { concepts: ["closures"] },
   "node/anniversary-dates": { concepts: ["dates", "sorting"] },
   "node/shared-playlist": { concepts: ["sorting", "reduce"] },
 };
-
-test("a review Claire already solved only needs a recap", () => {
-  assert.equal(isRecap({ firstSolvedAt: "2026-10-27", dueAt: "2026-10-28" }), true);
-});
-
-test("a review Malenia skipped and never solved still has to be fought", () => {
-  assert.equal(isRecap({ skips: 1, dueAt: "2026-10-28" }), false);
-});
-
-test("recapping Inde's love notes climbs a rung and marks the day", () => {
-  const record = { firstSolvedAt: "2026-10-27", step: 0, dueAt: "2026-10-28", mastered: false };
-  applyRecap(record, "2026-10-28");
-  assert.deepEqual(record, { firstSolvedAt: "2026-10-27", step: 1, dueAt: "2026-10-31", mastered: false, recappedAt: "2026-10-28" });
-});
-
-test("a recap on the last rung masters the exercise", () => {
-  const record = { firstSolvedAt: "2026-09-01", step: 3, dueAt: "2026-10-28" };
-  applyRecap(record, "2026-10-28");
-  assert.equal(record.mastered, true);
-  assert.equal(record.dueAt, null);
-});
 
 test("the day summary counts what Claire solved, skipped and failed", () => {
   const day = {

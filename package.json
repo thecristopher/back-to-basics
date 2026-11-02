@@ -8,7 +8,8 @@
   },
   "scripts": {
     "test": "node --test \"tests/**/*.test.js\"",
-    "btb": "node bin/btb.js"
+    "btb": "node bin/btb.js",
+    "eval": "node scripts/eval-prompts.mjs"
   },
   "engines": {
     "node": ">=22"

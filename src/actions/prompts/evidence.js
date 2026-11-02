@@ -1,3 +1,5 @@
+import { conceptTitle } from "../graph.js";
+
 const LANGUAGES = { es: "Spanish", en: "English" };
 
 /**
@@ -9,30 +11,52 @@ export function languageName(code) {
   return LANGUAGES[code] ?? "English";
 }
 
+function titles(track, ids) {
+  return ids.map((id) => conceptTitle(track, id)).join(", ");
+}
+
+function trippedPart(result) {
+  if (!result.tripped?.length) return "";
+  return `; tripped on: ${result.tripped.slice(0, 4).map((name) => `"${name}"`).join(", ")}`;
+}
+
+function mistakesPart(result) {
+  if (!result.mistakes?.length) return "";
+  return `; likely mistakes: ${result.mistakes.join(", ")}`;
+}
+
 function recentLine(result) {
-  const extras = [result.failures ? `${result.failures} failed submits` : "", result.hints ? `${result.hints} hints` : ""].filter(Boolean);
-  const time = result.seconds ? `, ${result.seconds}s` : "";
-  return `- "${result.title}" (level ${result.level}): ${result.outcome}${extras.length ? `, ${extras.join(", ")}` : ""}${time}`;
+  const extras = [
+    result.failures ? `${result.failures} failed submits` : "",
+    result.hints ? `${result.hints} hints` : "",
+    result.runs ? `${result.runs} test runs` : "",
+  ].filter(Boolean);
+  const active = result.activeSeconds ? ` (${result.activeSeconds}s of real work, ${result.edits ?? 0} edits)` : "";
+  const time = result.seconds ? `, ${result.seconds}s${active}` : active ? `,${active}` : "";
+  const format = result.format ? ` [${result.format}]` : "";
+  return `- "${result.title}"${format} (level ${result.level}): ${result.outcome}${extras.length ? `, ${extras.join(", ")}` : ""}${time}${trippedPart(result)}${mistakesPart(result)}`;
 }
 
 /**
- * What the learner has shown on a track, as prompt lines.
- * @param {{ strong: string[], weak: string[], recent: object[] }} summary
+ * What the learner has shown on a track, as prompt lines with the concepts by title.
+ * @param {{ strong: string[], weak: string[], learning?: string[], recent: object[] }} summary concept ids, see summarizeMastery
+ * @param {object} [track] its graph turns the ids into titles
  * @returns {string[]}
  */
-export function aptitudeLines(summary) {
+export function masteryLines(summary, track) {
   if (summary.recent.length === 0) return ["Nothing yet, this is their first contact with this track."];
   return [
-    `Strong concepts: ${summary.strong.join(", ") || "none confirmed yet"}`,
-    `Weak concepts: ${summary.weak.join(", ") || "none detected"}`,
-    "Recent results, newest first:",
+    `Owned concepts: ${titles(track, summary.strong) || "none confirmed yet"}`,
+    `Weak concepts, they missed them last time: ${titles(track, summary.weak) || "none detected"}`,
+    `Concepts still being learned: ${titles(track, summary.learning ?? []) || "none"}`,
+    "Recent results, newest first (the tripped tests are the ones they failed before passing, the likely mistakes are known wrong solutions their runs matched):",
     ...summary.recent.map(recentLine),
   ];
 }
 
 /**
  * One line per other track, so a path can lean on what the learner already shows elsewhere.
- * @param {{ title: string, summary: { strong: string[], weak: string[] } }[]} others
+ * @param {{ track: object, summary: { strong: string[], weak: string[] } }[]} others
  * @returns {string[]}
  */
 export function otherTrackLines(others) {
@@ -40,6 +64,6 @@ export function otherTrackLines(others) {
   if (known.length === 0) return [];
   return [
     "On their other tracks:",
-    ...known.map(({ title, summary }) => `- ${title}: strong in ${summary.strong.join(", ") || "nothing yet"}; weak in ${summary.weak.join(", ") || "nothing yet"}`),
+    ...known.map(({ track, summary }) => `- ${track.title}: owns ${titles(track, summary.strong) || "nothing yet"}; weak in ${titles(track, summary.weak) || "nothing yet"}`),
   ];
 }

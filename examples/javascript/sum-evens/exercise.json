@@ -3,11 +3,22 @@
   "level": 1,
   "warmUp": true,
   "minutes": 10,
-  "concepts": ["bucles", "condicionales", "operador %"],
+  "concepts": [
+    "bucles",
+    "condicionales",
+    "operador %"
+  ],
   "hints": [
     "Empieza con una variable que guarde la suma y arranque en 0. Así, si no hay ningún par, ya tienes la respuesta correcta.",
     "Recorre numbers con un for...of y pregunta por cada uno si es par con el residuo: `if (n % 2 === 0)`. Con otros datos se ve así: `for (const carta of cartas) { ... }`.",
     "La forma queda `let total = 0; for (const number of numbers) { if (...) total += number; } return total;`. Cuidado con regresar dentro del for: el return va después de recorrerlos todos."
   ],
-  "files": { "solution": "solution.js", "test": "solution.test.js" }
+  "files": {
+    "solution": "solution.js",
+    "test": "solution.test.js"
+  },
+  "example": {
+    "call": "sumEvens([1, 2, 3, 4])",
+    "result": "6"
+  }
 }

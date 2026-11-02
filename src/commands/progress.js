@@ -1,22 +1,30 @@
 import { existsSync, readFileSync } from "node:fs";
 import { conceptStanding, lessonQuestion } from "../actions/arena.js";
-import { currentLevel, levelProgress } from "../actions/levels.js";
+import { conceptTitle } from "../actions/graph.js";
+import { currentLevel } from "../actions/levels.js";
+import { standingOf } from "../actions/mastery.js";
 import { goalStatus, projectLevels } from "../actions/plan.js";
-import { freshExercises, slotTrack } from "../actions/queue.js";
+import { freshExercises, reviewSlotOf, slotTrack } from "../actions/queue.js";
 import { exerciseState } from "../actions/record.js";
 import { streakDays } from "../actions/streak.js";
 import { franchiseOf } from "../actions/cast.js";
 import { exerciseFiles } from "../lib/catalog.js";
 import { dayOf } from "../lib/state.js";
 import { bar } from "../utils/text.js";
-import { ensureQueue, isPlacementRunning, levelNow, lockOf, openTracks, recappedToday, trackOf } from "./shared.js";
+import { conceptReviewsOf, ensureQueue, isPlacementRunning, levelNow, lockOf, openTracks, progressOf, trackOf } from "./shared.js";
 
 /** The mark of each exercise state, shared by list and lessons. */
 export const GLYPHS = { mastered: "★", due: "↻", solved: "✓", started: "~", new: "·" };
 
+// each concept of a level with its title and standing, so an editor can draw what is left without the graph
+function withItems(ctx, track, level) {
+  const concepts = ctx.state.mastery[track.id]?.concepts ?? {};
+  return { ...level, items: level.concepts.map((id) => ({ id, title: conceptTitle(track, id), standing: standingOf(concepts[id]) })) };
+}
+
 function trackLevels(ctx) {
   return ctx.catalog.tracks.map((track) => {
-    const levels = levelProgress(track, ctx.catalog.exercises, ctx.state.exercises);
+    const levels = progressOf(ctx, track).map((level) => withItems(ctx, track, level));
     return { id: track.id, title: track.title, drawn: Boolean(track.path), current: currentLevel(levels), levels, locked: lockOf(ctx, track) };
   });
 }
@@ -33,6 +41,11 @@ function spareByTrack(ctx, queue) {
 }
 
 function queueItem(ctx, day, entry, spare) {
+  const review = reviewSlotOf(entry);
+  if (review) {
+    const title = conceptTitle(trackOf(ctx, review.track), review.concept);
+    return { id: null, track: review.track, title, concept: review.concept, done: false, review: true, slot: true, ready: false };
+  }
   const track = slotTrack(entry);
   if (track) {
     const ready = spare[track] > 0;
@@ -40,11 +53,13 @@ function queueItem(ctx, day, entry, spare) {
     return { id: null, track, title: null, done: false, review: false, slot: true, ready };
   }
   const exercise = ctx.catalog.byId[entry];
-  return { id: entry, track: exercise.track, title: exercise.title, done: day.done.includes(entry), review: day.reviews.includes(entry), slot: false };
+  const isReview = day.reviews.includes(entry) || Boolean(day.reviewOf?.[entry]);
+  return { id: entry, track: exercise.track, title: exercise.title, done: day.done.includes(entry), review: isReview, slot: false };
 }
 
 function queueLine({ t, paint, coach }, item, isNext) {
   const mark = item.done ? paint.green("✓") : isNext ? paint.yellow("→") : " ";
+  if (item.slot && item.review) return `  ${mark} [${item.track}] ${paint.dim(t.reviewSlotTitle(item.title))}`;
   if (item.slot) return `  ${mark} [${item.track}] ${paint.dim(t.slotTitle(coach))}`;
   const tag = paint.dim(`(${item.review ? t.tagReview : t.tagNew})`);
   return `  ${mark} [${item.track}] ${item.title}  ${tag}`;
@@ -56,25 +71,39 @@ function questionOf(exercise) {
   return existsSync(file) ? lessonQuestion(readFileSync(file, "utf8")) : null;
 }
 
-function recapItem(ctx, id) {
-  const exercise = ctx.catalog.byId[id];
-  const record = ctx.state.exercises[id];
+// the last exercise the learner solved on a concept, whose lesson question warms the review up
+function lastSolvedOn(ctx, track, concept) {
+  const solved = ctx.catalog.exercises.filter(
+    (exercise) => exercise.track === track && exercise.conceptIds?.[0] === concept && ctx.state.exercises[exercise.id]?.firstSolvedAt,
+  );
+  return solved.sort((a, b) => ctx.state.exercises[b.id].lastSolvedAt.localeCompare(ctx.state.exercises[a.id].lastSolvedAt))[0] ?? null;
+}
+
+// a concept the day reviews: where it stands, and the question of the last exercise solved on it, so an
+// editor can ask it from memory before the fresh exercise opens
+function recapItem(ctx, { track, concept, id }) {
+  const last = lastSolvedOn(ctx, track, concept);
+  const entry = ctx.state.mastery[track]?.concepts?.[concept];
   return {
-    id,
-    track: exercise.track,
-    title: exercise.title,
-    concepts: exercise.concepts ?? [],
-    outcome: record.lastOutcome ?? null,
-    dueAt: record.dueAt,
-    mastered: Boolean(record.mastered),
-    question: questionOf(exercise),
+    id: last?.id ?? id,
+    track,
+    concept,
+    title: conceptTitle(trackOf(ctx, track), concept),
+    last: last?.title ?? null,
+    review: id,
+    concepts: [conceptTitle(trackOf(ctx, track), concept)],
+    outcome: entry?.last ?? null,
+    standing: standingOf(entry),
+    dueAt: entry?.dueAt ?? null,
+    mastered: false,
+    question: last ? questionOf(last) : null,
   };
 }
 
 function recapLine({ t, paint }, item) {
-  const outcome = item.outcome === "clean" ? paint.green(t.clean) : paint.yellow(t.struggled);
-  const comesBack = item.mastered ? t.mastered : t.recapBack(item.dueAt);
-  return [`  ↻ [${item.track}] ${item.title}  ${outcome}`, paint.dim(`      ${item.concepts.join(", ")}  ·  ${comesBack}`)];
+  const outcome = item.standing === "weak" ? paint.yellow(t.struggled) : paint.green(t.clean);
+  const head = `  ↻ [${item.track}] ${item.title}  ${outcome}`;
+  return item.last ? [head, paint.dim(`      ${t.recapLast(item.last)}`)] : [head];
 }
 
 function renderRecap(ctx, recap) {
@@ -109,7 +138,7 @@ export async function today(ctx) {
     xp: day.xp,
     goal: ctx.config.dailyGoalXp,
     queue: queue.map((entry) => queueItem(ctx, day, entry, spare)),
-    recap: running ? [] : recappedToday(ctx, day).filter((id) => ctx.catalog.byId[id]).map((id) => recapItem(ctx, id)),
+    recap: running ? [] : conceptReviewsOf(ctx, day).map((review) => recapItem(ctx, review)),
     current: ctx.state.current,
     placement: ctx.state.placement?.status ?? null,
     undrawn: ctx.catalog.tracks.filter((track) => !track.path && !lockOf(ctx, track)).map((track) => track.id),
@@ -121,8 +150,7 @@ export async function today(ctx) {
 function levelLine({ t, paint }, level, isCurrent) {
   const mark = level.done ? paint.green("✓") : isCurrent ? paint.yellow("→") : " ";
   const count = level.placedOut ? paint.dim(t.placedOut) : t.cleanOf(level.clean, level.target);
-  const stars = level.mastered > 0 ? paint.yellow(` ★${level.mastered}`) : "";
-  return `  ${mark} ${t.level(level.level).padEnd(8)} ${level.title.padEnd(32)} ${bar(Math.min(level.clean, level.target), level.target)}  ${count}${stars}`;
+  return `  ${mark} ${t.level(level.level).padEnd(8)} ${level.title.padEnd(32)} ${bar(level.clean, level.target)}  ${count}`;
 }
 
 function renderStatus(ctx, data) {
@@ -146,9 +174,10 @@ export async function status(ctx) {
     xp: ctx.state.xp,
     streak: streakDays(ctx.state.days, ctx.today),
     solved: records.filter((record) => record.firstSolvedAt).length,
-    mastered: records.filter((record) => record.mastered).length,
+    // concepts owned across every track, what a level and an interview are made of
+    mastered: Object.values(ctx.state.mastery).reduce((sum, track) => sum + Object.values(track.concepts).filter((entry) => standingOf(entry) === "owned").length, 0),
     tracks: trackLevels(ctx),
-    concepts: conceptStanding(ctx.state.aptitude),
+    concepts: conceptStanding(ctx.state.mastery, ctx.catalog.tracks),
   };
   return { data, text: renderStatus(ctx, data) };
 }
@@ -159,7 +188,7 @@ function projectTrack(ctx, track, perSession) {
     trackTitle: track.title,
     level: level.level,
     title: level.title,
-    remaining: Math.max(0, level.target - level.clean),
+    remaining: level.remaining,
     done: level.done,
   }));
   return projectLevels(levels, { perSession, daysPerWeek: ctx.config.daysPerWeek, today: ctx.today });

@@ -2,17 +2,164 @@
   "title": "Python",
   "language": "python",
   "example": "word-frequency",
-  "focus": "Python from the ground up, by hand and idiomatic: the data model, comprehensions, functions and closures, decorators, classes and dataclasses, iterators and generators, typing, errors and context managers, the standard library, asyncio and pytest, then data structures, algorithms and backend design at big tech interview level.",
-  "ladder": [
-    "The very basics: variables, numbers and strings, if and else, for and while loops, tiny functions",
-    "Lists, dicts, sets and tuples by hand: indexing, slicing, counting, looking things up",
-    "Comprehensions, unpacking and the standard library: collections, itertools, functools",
-    "Functions, closures, *args and **kwargs, decorators",
-    "Classes, dataclasses, dunder methods and protocols",
-    "Iterators, generators and context managers",
-    "Type hints, errors and custom exceptions, testing with pytest",
-    "asyncio: coroutines, gather, timeouts, semaphores, queues",
-    "Data structures and algorithms: hash maps, two pointers, heaps, stacks, trees, graphs",
-    "Interview level at Amazon, Zillow or Capital One: multi part problems like an LRU cache with TTL, a rate limiter, transaction fraud windows, a home price index over listings, under real complexity limits"
+  "focus": "Python from the ground up, by hand and idiomatic: the basics, the lists and dicts of every day, comprehensions and the standard library, functions and decorators, classes and dataclasses, errors, typing and pydantic, generators and asyncio, then data structures, algorithms and backend design at big tech interview level.",
+  "levels": [
+    {
+      "title": { "es": "Valores y decisiones", "en": "Values and decisions" },
+      "summary": { "es": "Funciones pequeñas que devuelven un valor, hacen cuentas y eligen un camino.", "en": "Tiny functions that return a value, do some math and pick a path." },
+      "concepts": [
+        { "id": "return-a-value", "es": "Devolver un valor con return", "en": "Returning a value with return", "use": "Every function you will ever write hands its result back with return." },
+        { "id": "arithmetic", "es": "Operadores aritméticos, // y %", "en": "Arithmetic operators, // and %", "use": "Totals, averages, splitting a bill, telling even from odd." },
+        { "id": "comparisons", "es": "Comparar con ==, !=, < y >", "en": "Comparing with ==, !=, < and >", "use": "Every rule in a product starts as a comparison." },
+        { "id": "if-elif-else", "es": "if, elif y else", "en": "if, elif and else", "use": "Business rules: pricing tiers, permissions, statuses." },
+        { "id": "boolean-operators", "es": "and, or y not", "en": "and, or and not", "use": "Combining conditions, like logged in and not banned." }
+      ]
+    },
+    {
+      "title": { "es": "Bucles y acumuladores", "en": "Loops and accumulators" },
+      "summary": { "es": "Recorrer listas y strings uno por uno para sumar, contar y construir resultados.", "en": "Walking lists and strings one by one to add, count and build results." },
+      "concepts": [
+        { "id": "for-over-list", "es": "Bucle for sobre una lista", "en": "A for loop over a list", "use": "Going through every order, every row, every event." },
+        { "id": "loop-over-string", "es": "Recorrer un string carácter por carácter", "en": "Walking a string character by character", "use": "Validating input, counting letters, parsing simple formats." },
+        { "id": "accumulator", "es": "Acumulador inicializado antes del bucle", "en": "An accumulator set up before the loop", "use": "Sums, totals and running counts." },
+        { "id": "count-with-condition", "es": "Contar con una condición dentro del bucle", "en": "Counting with a condition inside the loop", "use": "How many orders failed, how many users are active." },
+        { "id": "range-and-while", "es": "range y while", "en": "range and while", "use": "Repeating a fixed number of times or until something happens." }
+      ]
+    },
+    {
+      "title": { "es": "Listas, dicts, sets y tuplas", "en": "Lists, dicts, sets and tuples" },
+      "summary": { "es": "Las cuatro estructuras que usa todo programa en Python, a mano.", "en": "The four structures every Python program uses, by hand." },
+      "concepts": [
+        { "id": "build-a-list", "es": "Construir una lista con append", "en": "Building a list with append", "use": "Collecting the results you care about out of a bigger list." },
+        { "id": "indexing-slicing", "es": "Índices y slicing", "en": "Indexing and slicing", "use": "First and last items, pages of results, reversing." },
+        { "id": "dict-lookup", "es": "Dict como diccionario: leer, crear y actualizar llaves", "en": "A dict as a lookup: read, create and update keys", "use": "Lookups by id, settings, grouping by a field." },
+        { "id": "count-frequencies", "es": "Contar frecuencias con dict y get", "en": "Counting frequencies with a dict and get", "use": "Most viewed products, words in a text. The seed of the hash map pattern." },
+        { "id": "sets", "es": "Sets para pertenencia y duplicados", "en": "Sets for membership and duplicates", "use": "Dedupe, seen before checks and fast membership." },
+        { "id": "list-of-dicts", "es": "Recorrer listas de dicts", "en": "Walking lists of dicts", "use": "Every API and CSV becomes a list of dicts." }
+      ]
+    },
+    {
+      "title": { "es": "Funciones con oficio", "en": "Functions with craft" },
+      "summary": { "es": "Funciones claras que manejan casos borde y trabajan bien con texto.", "en": "Clear functions that handle edge cases and work well with text." },
+      "concepts": [
+        { "id": "early-return", "es": "Return temprano para los casos borde", "en": "Early return for edge cases", "use": "Readable code that handles empty and invalid input first." },
+        { "id": "default-and-keyword-args", "es": "Argumentos por defecto y por nombre", "en": "Default and keyword arguments", "use": "Functions that are easy to call and hard to misuse." },
+        { "id": "unpacking", "es": "Desempaquetar tuplas y listas", "en": "Unpacking tuples and lists", "use": "Returning several values and reading pairs cleanly." },
+        { "id": "f-strings", "es": "f-strings para formatear", "en": "f-strings for formatting", "use": "Messages, logs and reports." },
+        { "id": "string-methods", "es": "split, strip, join, lower y replace", "en": "split, strip, join, lower and replace", "use": "Parsing lines, cleaning input, building output." }
+      ]
+    },
+    {
+      "title": { "es": "Python idiomático", "en": "Idiomatic Python" },
+      "summary": { "es": "Comprehensions, enumerate, zip y sorted: cómo se escribe Python de verdad.", "en": "Comprehensions, enumerate, zip and sorted: how real Python is written." },
+      "concepts": [
+        { "id": "list-comprehensions", "es": "List comprehensions con condición", "en": "List comprehensions with a condition", "use": "Transforming and filtering in one readable line." },
+        { "id": "dict-set-comprehensions", "es": "Comprehensions de dict y set", "en": "Dict and set comprehensions", "use": "Building indexes and lookups from lists." },
+        { "id": "enumerate-zip", "es": "enumerate y zip", "en": "enumerate and zip", "use": "Index and value together, walking two lists side by side." },
+        { "id": "sorted-with-key", "es": "sorted con key y reverse", "en": "sorted with key and reverse", "use": "Ranking, ordering by date or price, tie breakers." },
+        { "id": "builtins-any-all-min-max", "es": "any, all, min, max y sum con key", "en": "any, all, min, max and sum with key", "use": "Checking rules and picking the best item without a manual loop." }
+      ]
+    },
+    {
+      "title": { "es": "La librería estándar que se usa", "en": "The standard library you actually use" },
+      "summary": { "es": "collections, datetime, json, itertools y pathlib, sobre datos reales.", "en": "collections, datetime, json, itertools and pathlib, over real data." },
+      "concepts": [
+        { "id": "collections", "es": "Counter, defaultdict y deque", "en": "Counter, defaultdict and deque", "use": "Counting, grouping and queues in one line, used in every interview." },
+        { "id": "datetime", "es": "datetime: fechas ISO, diferencias y agrupar por día", "en": "datetime: ISO dates, differences and grouping by day", "use": "Reports per day, expirations, scheduling." },
+        { "id": "json", "es": "json.loads y json.dumps", "en": "json.loads and json.dumps", "use": "Request bodies, config files and queue payloads." },
+        { "id": "itertools", "es": "itertools: groupby, chain y islice", "en": "itertools: groupby, chain and islice", "use": "Processing streams of data lazily and cleanly." },
+        { "id": "pathlib-files", "es": "Leer y escribir archivos con pathlib", "en": "Reading and writing files with pathlib", "use": "Scripts, data exports and config." }
+      ]
+    },
+    {
+      "title": { "es": "Funciones como valores", "en": "Functions as values" },
+      "summary": { "es": "Pasar funciones, closures, decoradores y recursión.", "en": "Passing functions, closures, decorators and recursion." },
+      "concepts": [
+        { "id": "functions-as-values", "es": "Pasar y devolver funciones", "en": "Passing and returning functions", "use": "Callbacks, strategies and configurable behavior." },
+        { "id": "closures", "es": "Closures y nonlocal", "en": "Closures and nonlocal", "use": "Counters, caches and factories." },
+        { "id": "args-kwargs", "es": "*args y **kwargs", "en": "*args and **kwargs", "use": "Wrappers and flexible APIs." },
+        { "id": "decorators", "es": "Decoradores con functools.wraps", "en": "Decorators with functools.wraps", "use": "Timing, retries, caching and auth checks, everywhere in Flask and FastAPI." },
+        { "id": "recursion", "es": "Recursión con caso base", "en": "Recursion with a base case", "use": "Trees, nested JSON and folders." }
+      ]
+    },
+    {
+      "title": { "es": "Clases y modelado", "en": "Classes and modeling" },
+      "summary": { "es": "Modelar datos y comportamiento con clases, dataclasses y métodos especiales.", "en": "Modeling data and behavior with classes, dataclasses and special methods." },
+      "concepts": [
+        { "id": "classes", "es": "Clases con __init__, métodos y estado", "en": "Classes with __init__, methods and state", "use": "A cart, a cache or a queue with its own state." },
+        { "id": "dataclasses", "es": "dataclasses", "en": "dataclasses", "use": "Clean records for orders, users and events." },
+        { "id": "dunder-methods", "es": "__repr__, __eq__, __lt__ y __len__", "en": "__repr__, __eq__, __lt__ and __len__", "use": "Objects that print, compare and sort naturally." },
+        { "id": "properties", "es": "@property y validación en el setter", "en": "@property and validation in the setter", "use": "Keeping objects valid without getters everywhere." },
+        { "id": "duck-typing", "es": "Duck typing y Protocol", "en": "Duck typing and Protocol", "use": "Swappable pieces, like a fake client in tests." }
+      ]
+    },
+    {
+      "title": { "es": "Errores, tipos y validación", "en": "Errors, types and validation" },
+      "summary": { "es": "Fallar con claridad, tipar lo importante y validar lo que entra con pydantic.", "en": "Failing clearly, typing what matters and validating input with pydantic." },
+      "concepts": [
+        { "id": "exceptions", "es": "try, except, else y finally", "en": "try, except, else and finally", "use": "Handling bad input and failed calls without crashing." },
+        { "id": "custom-exceptions", "es": "Excepciones propias", "en": "Custom exceptions", "use": "Telling a validation error from a not found." },
+        { "id": "type-hints", "es": "Type hints: Optional, list, dict y TypedDict", "en": "Type hints: Optional, list, dict and TypedDict", "use": "Code your editor and your team understand." },
+        { "id": "context-managers", "es": "Context managers con with", "en": "Context managers with with", "use": "Files, locks and connections that always close." },
+        { "id": "pydantic-validation", "es": "Validar datos con pydantic", "en": "Validating data with pydantic", "use": "The standard for APIs and LLM output today, used again in the llm track." }
+      ]
+    },
+    {
+      "title": { "es": "Generadores y asyncio", "en": "Generators and asyncio" },
+      "summary": { "es": "Procesar datos sin cargarlos todos y hacer muchas cosas a la vez.", "en": "Processing data without loading it all and doing many things at once." },
+      "concepts": [
+        { "id": "generators", "es": "Generadores con yield", "en": "Generators with yield", "use": "Huge files and endless streams with little memory." },
+        { "id": "generator-pipelines", "es": "Pipelines de generadores", "en": "Generator pipelines", "use": "Read, filter and aggregate in steps, lazily." },
+        { "id": "asyncio-basics", "es": "async def, await y asyncio.gather", "en": "async def, await and asyncio.gather", "use": "Calling many services at once." },
+        { "id": "asyncio-timeouts", "es": "Timeouts y semáforos en asyncio", "en": "Timeouts and semaphores in asyncio", "use": "Giving up on slow calls and limiting concurrency." },
+        { "id": "asyncio-queues", "es": "asyncio.Queue: productores y consumidores", "en": "asyncio.Queue: producers and consumers", "use": "Workers that process jobs in parallel." }
+      ]
+    },
+    {
+      "title": { "es": "Big O y estructuras clave", "en": "Big O and key structures" },
+      "summary": { "es": "Medir lo que cuesta tu solución y los patrones que la bajan de O(n²) a O(n).", "en": "Measuring what your solution costs and the patterns that take it from O(n²) to O(n)." },
+      "concepts": [
+        { "id": "big-o", "es": "Big O: medir tiempo y memoria de tu solución", "en": "Big O: measuring the time and memory of your solution", "use": "The language of every coding interview." },
+        { "id": "hash-map-pattern", "es": "Hash map para pasar de O(n²) a O(n)", "en": "A hash map to go from O(n²) to O(n)", "use": "Two sum and half of all interview problems." },
+        { "id": "two-pointers", "es": "Dos punteros", "en": "Two pointers", "use": "Sorted lists, pairs and in place work." },
+        { "id": "sliding-window", "es": "Ventana deslizante", "en": "Sliding window", "use": "Best streak, longest substring, metrics over the last N minutes." },
+        { "id": "stack", "es": "Pila (stack)", "en": "Stack", "use": "Balanced brackets, undo, parsing." },
+        { "id": "binary-search", "es": "Búsqueda binaria y bisect", "en": "Binary search and bisect", "use": "Searching sorted data and searching over the answer." }
+      ]
+    },
+    {
+      "title": { "es": "Patrones de entrevista", "en": "Interview patterns" },
+      "summary": { "es": "Intervalos, heaps, árboles, grafos, backtracking y programación dinámica.", "en": "Intervals, heaps, trees, graphs, backtracking and dynamic programming." },
+      "concepts": [
+        { "id": "intervals", "es": "Ordenar y fusionar intervalos", "en": "Sorting and merging intervals", "use": "Calendars, bookings and overlapping time ranges." },
+        { "id": "heapq", "es": "heapq y top K", "en": "heapq and top K", "use": "Top K, schedulers and merging sorted streams." },
+        { "id": "trees", "es": "Árboles: DFS y BFS", "en": "Trees: DFS and BFS", "use": "Hierarchies and classic interview questions." },
+        { "id": "graphs", "es": "Grafos: BFS, DFS y orden topológico", "en": "Graphs: BFS, DFS and topological sort", "use": "Dependencies, routes and networks." },
+        { "id": "backtracking", "es": "Backtracking", "en": "Backtracking", "use": "Combinations and search with constraints." },
+        { "id": "dynamic-programming", "es": "Programación dinámica y lru_cache", "en": "Dynamic programming and lru_cache", "use": "Optimal choices built from smaller answers." }
+      ]
+    },
+    {
+      "title": { "es": "Onsite I", "en": "Onsite I" },
+      "summary": { "es": "Problemas de varias partes como en un loop de Amazon o Capital One, con datos reales y límites de complejidad.", "en": "Multi part problems like an Amazon or Capital One loop, with real data and complexity limits." },
+      "concepts": [
+        { "id": "lru-cache", "es": "Caché LRU con TTL", "en": "An LRU cache with TTL", "use": "Asked again and again at big tech: OrderedDict, eviction and expiry." },
+        { "id": "rate-limiter", "es": "Rate limiter de ventana deslizante y token bucket", "en": "Sliding window and token bucket rate limiters", "use": "Protecting APIs, a classic backend onsite." },
+        { "id": "fraud-windows", "es": "Ventanas de fraude sobre transacciones", "en": "Fraud windows over transactions", "use": "Flagging card activity the Capital One way, over big data." },
+        { "id": "price-index", "es": "Índice de precios sobre listings", "en": "A price index over listings", "use": "Aggregations by area and time with real edge cases." },
+        { "id": "log-aggregation", "es": "Parsear y agregar logs grandes", "en": "Parsing and aggregating big logs", "use": "Error rates and p95 latency over files too big to load naively." }
+      ]
+    },
+    {
+      "title": { "es": "Onsite II", "en": "Onsite II" },
+      "summary": { "es": "Diseño de piezas de backend completas, con follow ups y casos borde de senior.", "en": "Designing whole backend pieces, with follow ups and senior level edge cases." },
+      "concepts": [
+        { "id": "job-scheduler", "es": "Scheduler de jobs con prioridad y reintentos", "en": "A job scheduler with priorities and retries", "use": "Background work in every real system." },
+        { "id": "cursor-pagination", "es": "Paginación con cursor estable", "en": "Stable cursor pagination", "use": "Feeds and APIs that do not skip or repeat items." },
+        { "id": "event-sourcing", "es": "Reconstruir estado desde eventos", "en": "Rebuilding state from events", "use": "Audit trails and account histories." },
+        { "id": "autocomplete-trie", "es": "Autocompletado con trie y ranking", "en": "Autocomplete with a trie and ranking", "use": "Search boxes at scale, a frequent onsite." },
+        { "id": "tradeoffs-under-limits", "es": "Elegir estructuras bajo límites de tiempo y memoria", "en": "Choosing structures under time and memory limits", "use": "Explaining and defending your design choices." }
+      ]
+    }
   ]
 }

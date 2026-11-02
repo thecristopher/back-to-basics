@@ -5,46 +5,43 @@ import { currentLevel, doneLevels, levelProgress } from "../src/actions/levels.j
 const path = {
   startLevel: 1,
   levels: [
-    { level: 1, title: "Primeros pasos", summary: "", concepts: ["bucles"], target: 2 },
-    { level: 2, title: "Closures", summary: "", concepts: ["closures"], target: 1 },
+    { level: 1, title: "Cartas para Inde", summary: "", concepts: ["loops", "accumulator"] },
+    { level: 2, title: "La playlist de Claire", summary: "", concepts: ["closures"] },
   ],
 };
-const exercises = [
-  { id: "node/a", track: "node", level: 1 },
-  { id: "node/b", track: "node", level: 1 },
-  { id: "node/c", track: "node", level: 2 },
-  { id: "node/probe", track: "node", level: 1, placement: true },
-];
 
-test("a level is done once enough exercises were solved clean", () => {
-  const records = { "node/a": { firstSolvedAt: "x", everClean: true }, "node/b": { firstSolvedAt: "x", everClean: true, mastered: true } };
-  const [first, second] = levelProgress({ id: "node", path }, exercises, records);
+const owned = { cleanDays: ["2026-10-27", "2026-10-28"], last: "clean" };
+const once = { cleanDays: ["2026-10-28"], last: "clean" };
+
+test("a level is done once every one of its concepts is owned", () => {
+  const [first, second] = levelProgress({ path }, { loops: owned, accumulator: owned });
   assert.equal(first.clean, 2);
-  assert.equal(first.mastered, 1);
+  assert.equal(first.target, 2);
   assert.equal(first.done, true);
   assert.equal(second.done, false);
 });
 
-test("a struggled solve does not count toward the target", () => {
-  const records = { "node/a": { firstSolvedAt: "x" }, "node/b": { firstSolvedAt: "x", everClean: true } };
-  const [first] = levelProgress({ id: "node", path }, exercises, records);
-  assert.equal(first.solved, 2);
+test("a concept solved clean on a single day does not pass the level yet", () => {
+  const [first] = levelProgress({ path }, { loops: owned, accumulator: once });
+  assert.equal(first.clean, 1);
   assert.equal(first.done, false);
+  assert.equal(first.remaining, 1);
 });
 
-test("placement probes never count toward a level", () => {
-  const records = { "node/probe": { firstSolvedAt: "x", everClean: true } };
-  assert.equal(levelProgress({ id: "node", path }, exercises, records)[0].clean, 0);
+test("an untouched level still needs two clean days per concept", () => {
+  const [, second] = levelProgress({ path }, {});
+  assert.equal(second.remaining, 2);
 });
 
 test("levels below Malenia's start count as done", () => {
-  const progress = levelProgress({ id: "node", path: { ...path, startLevel: 2 } }, exercises, {});
+  const progress = levelProgress({ path: { ...path, startLevel: 2 } }, {});
   assert.equal(progress[0].placedOut, true);
+  assert.equal(progress[0].remaining, 0);
   assert.equal(currentLevel(progress), 2);
   assert.equal(doneLevels(progress), 1);
 });
 
 test("a track with no path has no levels and no current level", () => {
-  assert.deepEqual(levelProgress({ id: "node", path: null }, exercises, {}), []);
+  assert.deepEqual(levelProgress({ path: null }, {}), []);
   assert.equal(currentLevel([]), null);
 });

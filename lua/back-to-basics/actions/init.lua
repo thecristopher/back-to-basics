@@ -47,6 +47,7 @@ M.MESSAGES = {
     failure_timed_out = "Los tests se quedaron sin tiempo, ¿un ciclo que nunca termina?",
     failure_crashed = "La solución truena antes de que corran los tests.",
     hint_title = "Pista %d de %d · -%d XP",
+    nudge_title = "Pista para tu error · -%d XP",
     hints_earlier = "Las que ya viste",
     hints_all = "Todas tus pistas",
     preview_at = "Preview en %s, se recarga cada vez que guardas.",
@@ -102,6 +103,7 @@ M.MESSAGES = {
     failure_timed_out = "The tests ran out of time, a loop that never ends?",
     failure_crashed = "The solution breaks before the tests can run.",
     hint_title = "Hint %d of %d · -%d XP",
+    nudge_title = "A hint for your mistake · -%d XP",
     hints_earlier = "The ones you already saw",
     hints_all = "All your hints",
     preview_at = "Preview at %s, it reloads every time you save.",
@@ -331,7 +333,8 @@ function M.event_data(data)
 end
 
 ---The track to forge for ahead of time: the first slot of the day with nothing forged yet.
----A track with no path waits for its placement, forging would draw one blind.
+---A track with no path waits for its placement, forging would draw one blind, and a concept
+---review is forged when it opens, aimed at that one concept.
 ---@param today table btb today --json
 ---@return string|nil
 function M.forge_target(today)
@@ -340,7 +343,8 @@ function M.forge_target(today)
   end
   local undrawn = today.undrawn or {}
   for _, item in ipairs(today.queue or {}) do
-    if item.slot and not item.ready and not vim.tbl_contains(undrawn, item.track) then
+    local waiting = item.slot and not item.ready and not item.review
+    if waiting and not vim.tbl_contains(undrawn, item.track) then
       return item.track
     end
   end

@@ -35,3 +35,36 @@ export function placementEvidence(queue, results, byId) {
       outcome: results[id] ?? "not reached",
     }));
 }
+
+/**
+ * The level of an authored path a placement probe measures. Probes spread from level 1 to the last level
+ * before the interview ones, so the placement never skips the onsite levels.
+ * @param {number} difficulty 1 to size
+ * @param {number} size probes in the test
+ * @param {number} levelCount levels in the path
+ * @returns {number}
+ */
+export function probeLevel(difficulty, size, levelCount) {
+  const top = Math.max(1, levelCount - 2);
+  if (size <= 1) return 1;
+  return 1 + Math.round(((difficulty - 1) * (top - 1)) / (size - 1));
+}
+
+/**
+ * Where an authored path starts after the placement: right after the hardest level a clean probe proved,
+ * so a stumble never drops the learner into the level that tripped them, and never past the last level
+ * before the interview ones. A stumble on the first probe, or no probes at all, starts at level 1.
+ * @param {{ difficulty: number, outcome: string }[]} evidence probes, easiest first
+ * @param {number} size
+ * @param {number} levelCount
+ * @param {{ fromBasics?: boolean }} [options] fromBasics always starts at level 1
+ * @returns {number}
+ */
+export function startFromPlacement(evidence, size, levelCount, { fromBasics = false } = {}) {
+  if (fromBasics) return 1;
+  const stumble = evidence.findIndex((probe) => probe.outcome !== "clean");
+  const proven = stumble === -1 ? evidence : evidence.slice(0, stumble);
+  if (proven.length === 0) return 1;
+  const hardest = Math.max(...proven.map((probe) => probe.difficulty));
+  return Math.min(Math.max(1, levelCount - 2), probeLevel(hardest, size, levelCount) + 1);
+}

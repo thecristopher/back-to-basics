@@ -86,14 +86,44 @@ test("next after the last exercise sums up the day", async () => {
   assert.equal(done.solved, 2);
 });
 
-test("a review already solved shows up as a recap, not as something to send again", async () => {
-  const today = toDay();
-  await editState((state) => {
-    state.exercises[first.id].dueAt = today;
+const LEVEL_ONE = ["return-a-value", "arithmetic", "comparisons", "if-else", "logical-operators"];
+
+// Inde already owns level 1, so its concepts come back as fresh exercises when they are due
+function ownLevelOne(today) {
+  return (state) => {
+    const owned = { clean: 2, struggled: 0, skipped: 0, cleanDays: ["2026-10-01", "2026-10-02"], last: "clean", lastAt: "2026-10-02", ownedAt: "2026-10-02", step: 0 };
+    for (const id of LEVEL_ONE) state.mastery.node.concepts[id] = { ...owned, dueAt: id === "return-a-value" ? today : "2099-01-01" };
     delete state.days[Object.keys(state.days).at(-1)];
-  });
+  };
+}
+
+let review;
+
+test("a concept of a passed level that is due comes back as a fresh exercise, never the one already solved", async () => {
+  const today = toDay();
+  await editState(ownLevelOne(today));
   const plan = await btb(["today"]);
-  assert.deepEqual(plan.recap.map((item) => item.id), [first.id]);
+  const slot = plan.queue.find((item) => item.review);
+  assert.deepEqual([slot.slot, slot.title, slot.concept], [true, "Devolver un valor con return", "return-a-value"]);
   assert.equal(plan.queue.some((item) => item.id === first.id), false);
-  assert.ok(plan.recap[0].dueAt > today);
+  assert.deepEqual([plan.recap[0].title, plan.recap[0].standing], ["Devolver un valor con return", "owned"]);
+  assert.ok(plan.recap[0].last, "the recap names the last exercise solved on it, its question warms the review up");
+  review = await btb(["next"]);
+  assert.notEqual(review.id, first.id);
+  assert.equal(review.reviewOf, "Devolver un valor con return");
+  assert.equal(review.review, true);
+  const stored = JSON.parse(await readFile(join(sandbox, "data/exercises", review.id, "exercise.json"), "utf8"));
+  assert.deepEqual([stored.review, stored.level, stored.concepts], [true, 1, ["return-a-value"]]);
+});
+
+test("a clean review climbs the concept a rung and the day counts it as reviewed", async () => {
+  await solve(review);
+  const passed = await btb(["submit"]);
+  assert.equal(passed.concept, "Devolver un valor con return");
+  assert.equal(passed.mastered, false);
+  const state = JSON.parse(await readFile(join(sandbox, "data/state.json"), "utf8"));
+  assert.equal(state.mastery.node.concepts["return-a-value"].step, 1);
+  assert.equal(passed.dueAt, state.mastery.node.concepts["return-a-value"].dueAt);
+  const plan = await btb(["today"]);
+  assert.equal(plan.recap[0].review, review.id);
 });

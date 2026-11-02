@@ -10,5 +10,11 @@ Escribe `debounce(fn, ms)`: regresa una función que espera `ms` milisegundos de
 const save = debounce((text) => saveDraft(text), 300);
 save("te");
 save("te quiero");
+
+// con draft guardando cada llamada que le llega:
+const save = debounce(draft.fn, 300);
+save("te");
+save("te quiero", "Inde");
+// 300 ms después, draft.calls es [["te quiero", "Inde"]]
 // 300 ms después: saveDraft("te quiero"), una sola vez
 ```

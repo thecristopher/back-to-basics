@@ -16,5 +16,9 @@
   "files": {
     "solution": "solution.py",
     "test": "test_solution.py"
+  },
+  "example": {
+    "call": "converse_with_backoff(client, REQUEST, 3, waits.append)",
+    "result": "waits == []"
   }
 }

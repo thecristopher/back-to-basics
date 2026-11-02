@@ -31,6 +31,11 @@ def converse_with_backoff(client, request: dict, attempts: int, sleep, base_dela
 
 ```python
 response = converse_with_backoff(client, {"modelId": "anthropic.claude-haiku", "messages": messages}, 4, time.sleep)
+
+# si Bedrock contesta a la primera, no espera nada:
+waits = []
+converse_with_backoff(client, REQUEST, 3, waits.append)  # REPLY
+# y waits == []
 ```
 
 Supón que Bedrock falla con throttling dos veces y a la tercera responde. Primera llamada: throttling, esperas `0.5`. Segunda llamada: throttling, esperas `1.0`. Tercera llamada: funciona y regresas su respuesta. Usaste 3 de los 4 intentos y esperaste 2 veces.

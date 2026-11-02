@@ -1,0 +1,24 @@
+{
+  "id": "node/create-counter",
+  "title": "Contador con closure",
+  "ok": true,
+  "passed": 5,
+  "total": 5,
+  "outcome": "struggled",
+  "xp": 7,
+  "seconds": 0,
+  "activeSeconds": 100,
+  "minutes": 15,
+  "concept": "Devolver un valor con return",
+  "dueAt": "2026-11-02",
+  "mastered": false,
+  "levelUp": null,
+  "placement": null,
+  "day": null,
+  "text": [
+    "✓ 5/5 tests pasan. Contador con closure, resuelto.",
+    "Con batalla   +7 XP   0s (dentro de 15 min) · 1m 40s de trabajo real",
+    "Devolver un valor con return vuelve el 2026-11-02 con un ejercicio nuevo.",
+    "Sigue: btb next   Compara: btb reveal   Revisión: btb review"
+  ]
+}

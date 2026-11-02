@@ -8,4 +8,7 @@ Escribe `retry(fn, attempts)`: llama a `fn` hasta que funcione, con un máximo d
 
 ```js
 const page = await retry(() => fetch("https://terrasave.org"), 3);
+
+// letter.fn falla 2 veces y a la tercera regresa "carta para Claire"
+await retry(letter.fn, 3); // "carta para Claire"
 ```

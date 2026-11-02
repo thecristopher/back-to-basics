@@ -1,19 +1,22 @@
+import { daysToOwn, standingOf, wasOwned } from "./mastery.js";
+
 /**
- * Summarizes each level of a track's path. A level is done once enough of its exercises
- * were solved clean at least once, or when the placement put the learner past it.
- * @param {{ id: string, path: { startLevel: number, levels: { level: number, title: string, target: number }[] } | null }} track
- * @param {{ id: string, track: string, level: number, placement?: boolean }[]} exercises
- * @param {Record<string, { firstSolvedAt?: string, everClean?: boolean, mastered?: boolean }>} records
- * @returns {Array<object & { clean: number, solved: number, mastered: number, placedOut: boolean, done: boolean }>}
+ * Summarizes each level of a track's path. A level is done once every one of its concepts was owned,
+ * or when the placement put the learner past it. A later miss sends a concept to review but keeps the
+ * level passed. clean counts the concepts owned now and target all of them.
+ * @param {{ path: { startLevel: number, levels: { level: number, title: string, concepts: string[] }[] } | null }} track
+ * @param {Record<string, object> | undefined} concepts the track's mastery by concept id
+ * @returns {Array<object & { clean: number, target: number, remaining: number, placedOut: boolean, done: boolean }>}
+ *   remaining is how many clean solves the level still needs at least
  */
-export function levelProgress(track, exercises, records) {
+export function levelProgress(track, concepts = {}) {
   if (!track.path) return [];
   return track.path.levels.map((info) => {
-    const inLevel = exercises.filter((exercise) => exercise.track === track.id && exercise.level === info.level && !exercise.placement);
-    const count = (key) => inLevel.filter((exercise) => records[exercise.id]?.[key]).length;
-    const clean = count("everClean");
     const placedOut = info.level < track.path.startLevel;
-    return { ...info, clean, solved: count("firstSolvedAt"), mastered: count("mastered"), placedOut, done: placedOut || clean >= info.target };
+    const owned = info.concepts.filter((id) => standingOf(concepts[id]) === "owned").length;
+    const done = placedOut || info.concepts.every((id) => wasOwned(concepts[id]));
+    const remaining = done ? 0 : info.concepts.reduce((sum, id) => sum + daysToOwn(concepts[id]), 0);
+    return { ...info, clean: owned, target: info.concepts.length, remaining, placedOut, done };
   });
 }
 

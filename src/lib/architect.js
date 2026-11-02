@@ -1,6 +1,7 @@
-import { summarizeAptitude } from "../actions/aptitude.js";
 import { doneLevels, levelProgress } from "../actions/levels.js";
+import { summarizeMastery } from "../actions/mastery.js";
 import { normalizePath } from "../actions/path.js";
+import { startFromPlacement } from "../actions/placement.js";
 import { pathPrompt } from "../actions/prompts/path.js";
 import { profilePrompt } from "../actions/prompts/profile.js";
 import { describeRun } from "../actions/report.js";
@@ -11,9 +12,7 @@ import { runTests } from "./runner.js";
 import { saveTrack } from "./tracks.js";
 
 function otherTracks(ctx, track) {
-  return ctx.catalog.tracks
-    .filter((other) => other.id !== track.id)
-    .map((other) => ({ title: other.title, summary: summarizeAptitude(ctx.state.aptitude[other.id]) }));
+  return ctx.catalog.tracks.filter((other) => other.id !== track.id).map((other) => ({ track: other, summary: summarizeMastery(ctx.state.mastery[other.id]) }));
 }
 
 async function askPath(ctx, prompt, kept) {
@@ -26,21 +25,24 @@ async function askPath(ctx, prompt, kept) {
   return retry;
 }
 
-/**
- * Has Claude draw the track's path from the evidence, or redraw what comes after the levels already done.
- * @param {object} ctx
- * @param {object} track mutated in place and saved
- * @param {{ placement?: object[] }} [evidence]
- * @returns {Promise<object>} the new path
- */
-export async function drawPath(ctx, track, { placement = [] } = {}) {
+// a bundled track has its levels written by hand, the placement only says where the learner starts
+async function placeOnAuthoredPath(ctx, track, placement) {
+  const placed = placement.length > 0 || !track.path;
+  const startLevel = placed ? startFromPlacement(placement, ctx.config.placementSize, track.levels.length, { fromBasics: ctx.config.fromBasics }) : track.path.startLevel;
+  const revision = (track.path?.revision ?? 0) + 1;
+  track.path = { rationale: ctx.t.authoredRationale(startLevel), startLevel, levels: track.levels, revision, drawnAt: ctx.today };
+  await saveTrack(ctx.config, track);
+  return track.path;
+}
+
+async function drawLearnedPath(ctx, track, placement) {
   const profile = await loadProfile(ctx.config, track.language);
-  const progress = levelProgress(track, ctx.catalog.exercises, ctx.state.exercises);
+  const progress = levelProgress(track, ctx.state.mastery[track.id]?.concepts);
   const kept = doneLevels(progress);
   const prompt = pathPrompt({
     track,
     profileName: profile.name,
-    summary: summarizeAptitude(ctx.state.aptitude[track.id]),
+    summary: summarizeMastery(ctx.state.mastery[track.id]),
     others: otherTracks(ctx, track),
     placement,
     kept: progress.slice(0, kept),
@@ -50,9 +52,24 @@ export async function drawPath(ctx, track, { placement = [] } = {}) {
   ctx.log(ctx.paint.dim(ctx.t.drawing(ctx.coach, track.title)));
   const draft = await askPath(ctx, prompt, kept);
   const revision = (track.path?.revision ?? 0) + 1;
-  track.path = { ...normalizePath(draft, track.path, kept, { fromBasics: ctx.config.fromBasics }), revision, drawnAt: ctx.today };
+  const drawn = normalizePath(draft, track.path, kept, { fromBasics: ctx.config.fromBasics, graph: track.graph });
+  track.path = { ...drawn.path, revision, drawnAt: ctx.today };
+  track.graph = drawn.graph;
   await saveTrack(ctx.config, track);
   return track.path;
+}
+
+/**
+ * Sets the track's path. A bundled track places the learner on its authored levels; a learned language
+ * has Claude draw the path from the evidence, or redraw what comes after the levels already done.
+ * @param {object} ctx
+ * @param {object} track mutated in place and saved
+ * @param {{ placement?: object[] }} [evidence]
+ * @returns {Promise<object>} the new path
+ */
+export async function drawPath(ctx, track, { placement = [] } = {}) {
+  if (track.authored) return placeOnAuthoredPath(ctx, track, placement);
+  return drawLearnedPath(ctx, track, placement);
 }
 
 /**

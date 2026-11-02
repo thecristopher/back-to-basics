@@ -1,0 +1,104 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://back-to-basics/contracts/submit-passed.schema.json",
+  "type": "object",
+  "required": [
+    "id",
+    "ok",
+    "passed",
+    "total",
+    "outcome",
+    "xp",
+    "mastered"
+  ],
+  "properties": {
+    "id": {
+      "type": "string"
+    },
+    "title": {
+      "type": "string"
+    },
+    "ok": {
+      "const": true
+    },
+    "passed": {
+      "type": "integer"
+    },
+    "total": {
+      "type": "integer"
+    },
+    "outcome": {
+      "enum": [
+        "clean",
+        "struggled"
+      ]
+    },
+    "xp": {
+      "type": "integer"
+    },
+    "seconds": {
+      "type": [
+        "integer",
+        "null"
+      ]
+    },
+    "activeSeconds": {
+      "type": [
+        "integer",
+        "null"
+      ],
+      "description": "real work the editor measured over the round"
+    },
+    "minutes": {
+      "type": "number"
+    },
+    "concept": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "description": "the exercise's main concept, by title"
+    },
+    "dueAt": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "description": "YYYY-MM-DD, when that concept comes back for review"
+    },
+    "mastered": {
+      "type": "boolean",
+      "description": "this pass made the main concept owned"
+    },
+    "levelUp": {
+      "type": [
+        "integer",
+        "null"
+      ]
+    },
+    "placement": {
+      "type": [
+        "object",
+        "null"
+      ]
+    },
+    "day": {
+      "type": [
+        "object",
+        "null"
+      ]
+    },
+    "repeat": {
+      "type": "boolean"
+    },
+    "text": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "the same lines the terminal shows"
+    }
+  },
+  "title": "btb submit --json, a pass",
+  "description": "How the round went and what comes back when."
+}

@@ -1,0 +1,687 @@
+{
+  "xp": 7,
+  "streak": 1,
+  "solved": 1,
+  "mastered": 0,
+  "tracks": [
+    {
+      "id": "node",
+      "title": "Node.js",
+      "drawn": true,
+      "current": 1,
+      "levels": [
+        {
+          "level": 1,
+          "title": "Valores y decisiones",
+          "summary": "Funciones pequeñas que devuelven un valor, hacen cuentas y eligen un camino.",
+          "concepts": [
+            "return-a-value",
+            "arithmetic",
+            "comparisons",
+            "if-else",
+            "logical-operators"
+          ],
+          "clean": 0,
+          "target": 5,
+          "remaining": 10,
+          "placedOut": false,
+          "done": false,
+          "items": [
+            {
+              "id": "return-a-value",
+              "title": "Devolver un valor con return",
+              "standing": "weak"
+            },
+            {
+              "id": "arithmetic",
+              "title": "Operadores aritméticos y el módulo %",
+              "standing": "new"
+            },
+            {
+              "id": "comparisons",
+              "title": "Comparar con ===, !==, < y >",
+              "standing": "new"
+            },
+            {
+              "id": "if-else",
+              "title": "if, else if y else",
+              "standing": "new"
+            },
+            {
+              "id": "logical-operators",
+              "title": "Operadores lógicos &&, || y !",
+              "standing": "new"
+            }
+          ]
+        },
+        {
+          "level": 2,
+          "title": "Bucles y acumuladores",
+          "summary": "Recorrer arrays y strings uno por uno para sumar, contar y construir resultados.",
+          "concepts": [
+            "for-over-array",
+            "loop-over-string",
+            "accumulator",
+            "count-with-condition",
+            "build-a-string"
+          ],
+          "clean": 0,
+          "target": 5,
+          "remaining": 10,
+          "placedOut": false,
+          "done": false,
+          "items": [
+            {
+              "id": "for-over-array",
+              "title": "Bucle for con índice sobre un array",
+              "standing": "new"
+            },
+            {
+              "id": "loop-over-string",
+              "title": "Recorrer un string carácter por carácter",
+              "standing": "new"
+            },
+            {
+              "id": "accumulator",
+              "title": "Acumulador inicializado antes del bucle",
+              "standing": "new"
+            },
+            {
+              "id": "count-with-condition",
+              "title": "Contar con una condición dentro del bucle",
+              "standing": "new"
+            },
+            {
+              "id": "build-a-string",
+              "title": "Construir un string con +=",
+              "standing": "new"
+            }
+          ]
+        },
+        {
+          "level": 3,
+          "title": "Arrays y objetos a mano",
+          "summary": "Construir arrays, usar objetos como diccionarios y recorrer datos con forma de producto.",
+          "concepts": [
+            "build-an-array",
+            "for-of",
+            "object-as-dictionary",
+            "count-frequencies",
+            "array-of-objects"
+          ],
+          "clean": 0,
+          "target": 5,
+          "remaining": 10,
+          "placedOut": false,
+          "done": false,
+          "items": [
+            {
+              "id": "build-an-array",
+              "title": "Construir un array nuevo con push",
+              "standing": "new"
+            },
+            {
+              "id": "for-of",
+              "title": "for...of para leer cada valor",
+              "standing": "new"
+            },
+            {
+              "id": "object-as-dictionary",
+              "title": "Objeto como diccionario: leer, crear y actualizar llaves",
+              "standing": "new"
+            },
+            {
+              "id": "count-frequencies",
+              "title": "Contar frecuencias con un objeto",
+              "standing": "new"
+            },
+            {
+              "id": "array-of-objects",
+              "title": "Recorrer arrays de objetos y leer sus propiedades",
+              "standing": "new"
+            }
+          ]
+        },
+        {
+          "level": 4,
+          "title": "Funciones con oficio",
+          "summary": "Funciones claras que manejan casos borde, copian sin mutar y formatean bien.",
+          "concepts": [
+            "early-return",
+            "default-parameters",
+            "destructuring",
+            "spread-and-copies",
+            "template-literals"
+          ],
+          "clean": 0,
+          "target": 5,
+          "remaining": 10,
+          "placedOut": false,
+          "done": false,
+          "items": [
+            {
+              "id": "early-return",
+              "title": "Return temprano para los casos borde",
+              "standing": "new"
+            },
+            {
+              "id": "default-parameters",
+              "title": "Parámetros por defecto y opcionales",
+              "standing": "new"
+            },
+            {
+              "id": "destructuring",
+              "title": "Desestructurar objetos y arrays",
+              "standing": "new"
+            },
+            {
+              "id": "spread-and-copies",
+              "title": "Spread para copiar y combinar sin mutar",
+              "standing": "new"
+            },
+            {
+              "id": "template-literals",
+              "title": "Template literals para formatear texto",
+              "standing": "new"
+            }
+          ]
+        },
+        {
+          "level": 5,
+          "title": "Métodos de array del día a día",
+          "summary": "map, filter, reduce y compañía: lo que se usa en cualquier codebase moderno.",
+          "concepts": [
+            "array-map",
+            "array-filter",
+            "find-some-every",
+            "array-reduce",
+            "sort-with-comparator",
+            "method-chaining"
+          ],
+          "clean": 0,
+          "target": 6,
+          "remaining": 12,
+          "placedOut": false,
+          "done": false,
+          "items": [
+            {
+              "id": "array-map",
+              "title": "map para transformar cada elemento",
+              "standing": "new"
+            },
+            {
+              "id": "array-filter",
+              "title": "filter para quedarte con lo que cumple",
+              "standing": "new"
+            },
+            {
+              "id": "find-some-every",
+              "title": "find, some y every",
+              "standing": "new"
+            },
+            {
+              "id": "array-reduce",
+              "title": "reduce para resumir una lista",
+              "standing": "new"
+            },
+            {
+              "id": "sort-with-comparator",
+              "title": "sort con comparador y sin mutar el original",
+              "standing": "new"
+            },
+            {
+              "id": "method-chaining",
+              "title": "Encadenar métodos sin perder legibilidad",
+              "standing": "new"
+            }
+          ]
+        },
+        {
+          "level": 6,
+          "title": "Datos reales",
+          "summary": "Datos anidados, JSON, Map, Set, fechas y strings como llegan de una API de verdad.",
+          "concepts": [
+            "nested-data",
+            "json",
+            "map-and-set",
+            "string-methods",
+            "dates-iso"
+          ],
+          "clean": 0,
+          "target": 5,
+          "remaining": 10,
+          "placedOut": false,
+          "done": false,
+          "items": [
+            {
+              "id": "nested-data",
+              "title": "Navegar datos anidados con ?. y ??",
+              "standing": "new"
+            },
+            {
+              "id": "json",
+              "title": "JSON.parse y JSON.stringify",
+              "standing": "new"
+            },
+            {
+              "id": "map-and-set",
+              "title": "Map y Set",
+              "standing": "new"
+            },
+            {
+              "id": "string-methods",
+              "title": "split, trim, includes, slice y padStart",
+              "standing": "new"
+            },
+            {
+              "id": "dates-iso",
+              "title": "Fechas ISO: comparar, sumar días y agrupar por día",
+              "standing": "new"
+            }
+          ]
+        },
+        {
+          "level": 7,
+          "title": "Funciones como valores",
+          "summary": "Pasar y devolver funciones, closures y recursión, la base de las librerías que usas.",
+          "concepts": [
+            "functions-as-values",
+            "closures",
+            "recursion",
+            "immutability",
+            "function-utilities"
+          ],
+          "clean": 0,
+          "target": 5,
+          "remaining": 10,
+          "placedOut": false,
+          "done": false,
+          "items": [
+            {
+              "id": "functions-as-values",
+              "title": "Pasar y devolver funciones",
+              "standing": "new"
+            },
+            {
+              "id": "closures",
+              "title": "Closures: funciones que recuerdan",
+              "standing": "new"
+            },
+            {
+              "id": "recursion",
+              "title": "Recursión con caso base",
+              "standing": "new"
+            },
+            {
+              "id": "immutability",
+              "title": "No mutar los datos que recibes",
+              "standing": "new"
+            },
+            {
+              "id": "function-utilities",
+              "title": "once, memoize y debounce a mano",
+              "standing": "new"
+            }
+          ]
+        },
+        {
+          "level": 8,
+          "title": "Errores, clases y validación",
+          "summary": "Código que falla con claridad, valida lo que entra y modela estado con clases.",
+          "concepts": [
+            "throw-errors",
+            "try-catch",
+            "custom-errors",
+            "input-validation",
+            "classes"
+          ],
+          "clean": 0,
+          "target": 5,
+          "remaining": 10,
+          "placedOut": false,
+          "done": false,
+          "items": [
+            {
+              "id": "throw-errors",
+              "title": "Lanzar errores con un mensaje útil",
+              "standing": "new"
+            },
+            {
+              "id": "try-catch",
+              "title": "try, catch y finally",
+              "standing": "new"
+            },
+            {
+              "id": "custom-errors",
+              "title": "Errores propios con class extends Error",
+              "standing": "new"
+            },
+            {
+              "id": "input-validation",
+              "title": "Validar entradas antes de usarlas",
+              "standing": "new"
+            },
+            {
+              "id": "classes",
+              "title": "Clases con constructor, métodos y campos privados #",
+              "standing": "new"
+            }
+          ]
+        },
+        {
+          "level": 9,
+          "title": "Asincronía",
+          "summary": "Promesas, async y await, varias tareas a la vez y reintentos, con el reloj falso.",
+          "concepts": [
+            "promises",
+            "async-await",
+            "promise-combinators",
+            "timers",
+            "retry-with-backoff",
+            "concurrency-limit"
+          ],
+          "clean": 0,
+          "target": 6,
+          "remaining": 12,
+          "placedOut": false,
+          "done": false,
+          "items": [
+            {
+              "id": "promises",
+              "title": "Promesas: then, catch y crear una con new Promise",
+              "standing": "new"
+            },
+            {
+              "id": "async-await",
+              "title": "async y await con manejo de errores",
+              "standing": "new"
+            },
+            {
+              "id": "promise-combinators",
+              "title": "Promise.all, allSettled y race",
+              "standing": "new"
+            },
+            {
+              "id": "timers",
+              "title": "setTimeout, esperas y timeouts",
+              "standing": "new"
+            },
+            {
+              "id": "retry-with-backoff",
+              "title": "Reintentos con backoff exponencial",
+              "standing": "new"
+            },
+            {
+              "id": "concurrency-limit",
+              "title": "Limitar cuántas tareas corren a la vez",
+              "standing": "new"
+            }
+          ]
+        },
+        {
+          "level": 10,
+          "title": "Node en la práctica",
+          "summary": "Archivos, rutas, eventos, streams y un servidor HTTP sin frameworks.",
+          "concepts": [
+            "fs-promises",
+            "path-module",
+            "event-emitter",
+            "streams",
+            "http-server"
+          ],
+          "clean": 0,
+          "target": 5,
+          "remaining": 10,
+          "placedOut": false,
+          "done": false,
+          "items": [
+            {
+              "id": "fs-promises",
+              "title": "Leer y escribir archivos con fs/promises",
+              "standing": "new"
+            },
+            {
+              "id": "path-module",
+              "title": "path para construir rutas seguras",
+              "standing": "new"
+            },
+            {
+              "id": "event-emitter",
+              "title": "EventEmitter: emitir y escuchar eventos",
+              "standing": "new"
+            },
+            {
+              "id": "streams",
+              "title": "Streams: procesar datos línea por línea",
+              "standing": "new"
+            },
+            {
+              "id": "http-server",
+              "title": "Servidor con node:http: rutas, JSON y códigos de estado",
+              "standing": "new"
+            }
+          ]
+        },
+        {
+          "level": 11,
+          "title": "Big O y estructuras clave",
+          "summary": "Medir lo que cuesta tu solución y los patrones que la bajan de O(n²) a O(n).",
+          "concepts": [
+            "big-o",
+            "hash-map-pattern",
+            "two-pointers",
+            "sliding-window",
+            "stack",
+            "binary-search"
+          ],
+          "clean": 0,
+          "target": 6,
+          "remaining": 12,
+          "placedOut": false,
+          "done": false,
+          "items": [
+            {
+              "id": "big-o",
+              "title": "Big O: medir tiempo y memoria de tu solución",
+              "standing": "new"
+            },
+            {
+              "id": "hash-map-pattern",
+              "title": "Hash map para pasar de O(n²) a O(n)",
+              "standing": "new"
+            },
+            {
+              "id": "two-pointers",
+              "title": "Dos punteros",
+              "standing": "new"
+            },
+            {
+              "id": "sliding-window",
+              "title": "Ventana deslizante",
+              "standing": "new"
+            },
+            {
+              "id": "stack",
+              "title": "Pila (stack)",
+              "standing": "new"
+            },
+            {
+              "id": "binary-search",
+              "title": "Búsqueda binaria",
+              "standing": "new"
+            }
+          ]
+        },
+        {
+          "level": 12,
+          "title": "Patrones de entrevista",
+          "summary": "Intervalos, heaps, árboles, grafos, backtracking y programación dinámica.",
+          "concepts": [
+            "intervals",
+            "heap",
+            "trees",
+            "graphs",
+            "backtracking",
+            "dynamic-programming"
+          ],
+          "clean": 0,
+          "target": 6,
+          "remaining": 12,
+          "placedOut": false,
+          "done": false,
+          "items": [
+            {
+              "id": "intervals",
+              "title": "Ordenar y fusionar intervalos",
+              "standing": "new"
+            },
+            {
+              "id": "heap",
+              "title": "Heap y cola de prioridad a mano, top K",
+              "standing": "new"
+            },
+            {
+              "id": "trees",
+              "title": "Árboles: DFS y BFS",
+              "standing": "new"
+            },
+            {
+              "id": "graphs",
+              "title": "Grafos: BFS, DFS y orden topológico",
+              "standing": "new"
+            },
+            {
+              "id": "backtracking",
+              "title": "Backtracking",
+              "standing": "new"
+            },
+            {
+              "id": "dynamic-programming",
+              "title": "Programación dinámica",
+              "standing": "new"
+            }
+          ]
+        },
+        {
+          "level": 13,
+          "title": "Onsite I",
+          "summary": "Problemas de varias partes como en un loop de Amazon o Capital One, con datos reales y límites de complejidad.",
+          "concepts": [
+            "lru-cache",
+            "rate-limiter",
+            "top-k-stream",
+            "idempotent-ledger",
+            "log-aggregation"
+          ],
+          "clean": 0,
+          "target": 5,
+          "remaining": 10,
+          "placedOut": false,
+          "done": false,
+          "items": [
+            {
+              "id": "lru-cache",
+              "title": "Caché LRU con TTL",
+              "standing": "new"
+            },
+            {
+              "id": "rate-limiter",
+              "title": "Rate limiter de ventana deslizante y token bucket",
+              "standing": "new"
+            },
+            {
+              "id": "top-k-stream",
+              "title": "Top K sobre un stream de eventos",
+              "standing": "new"
+            },
+            {
+              "id": "idempotent-ledger",
+              "title": "Ledger con transferencias idempotentes",
+              "standing": "new"
+            },
+            {
+              "id": "log-aggregation",
+              "title": "Parsear y agregar logs grandes",
+              "standing": "new"
+            }
+          ]
+        },
+        {
+          "level": 14,
+          "title": "Onsite II",
+          "summary": "Diseño de piezas de backend completas, con follow ups y casos borde de senior.",
+          "concepts": [
+            "job-scheduler",
+            "cursor-pagination",
+            "event-sourcing",
+            "autocomplete-trie",
+            "tradeoffs-under-limits"
+          ],
+          "clean": 0,
+          "target": 5,
+          "remaining": 10,
+          "placedOut": false,
+          "done": false,
+          "items": [
+            {
+              "id": "job-scheduler",
+              "title": "Scheduler de jobs con prioridad y reintentos",
+              "standing": "new"
+            },
+            {
+              "id": "cursor-pagination",
+              "title": "Paginación con cursor estable",
+              "standing": "new"
+            },
+            {
+              "id": "event-sourcing",
+              "title": "Reconstruir estado desde eventos",
+              "standing": "new"
+            },
+            {
+              "id": "autocomplete-trie",
+              "title": "Autocompletado con trie y ranking",
+              "standing": "new"
+            },
+            {
+              "id": "tradeoffs-under-limits",
+              "title": "Elegir estructuras bajo límites de tiempo y memoria",
+              "standing": "new"
+            }
+          ]
+        }
+      ],
+      "locked": null
+    }
+  ],
+  "concepts": [
+    {
+      "track": "node",
+      "id": "return-a-value",
+      "concept": "Devolver un valor con return",
+      "clean": 0,
+      "struggled": 1,
+      "skipped": 1,
+      "standing": "weak"
+    }
+  ],
+  "text": [
+    "XP total 7   racha 1   resueltos 1   dominados 0",
+    "",
+    "Node.js",
+    "  → Nivel 1  Valores y decisiones             ░░░░░░░░░░  0/5 conceptos dominados",
+    "    Nivel 2  Bucles y acumuladores            ░░░░░░░░░░  0/5 conceptos dominados",
+    "    Nivel 3  Arrays y objetos a mano          ░░░░░░░░░░  0/5 conceptos dominados",
+    "    Nivel 4  Funciones con oficio             ░░░░░░░░░░  0/5 conceptos dominados",
+    "    Nivel 5  Métodos de array del día a día   ░░░░░░░░░░  0/6 conceptos dominados",
+    "    Nivel 6  Datos reales                     ░░░░░░░░░░  0/5 conceptos dominados",
+    "    Nivel 7  Funciones como valores           ░░░░░░░░░░  0/5 conceptos dominados",
+    "    Nivel 8  Errores, clases y validación     ░░░░░░░░░░  0/5 conceptos dominados",
+    "    Nivel 9  Asincronía                       ░░░░░░░░░░  0/6 conceptos dominados",
+    "    Nivel 10 Node en la práctica              ░░░░░░░░░░  0/5 conceptos dominados",
+    "    Nivel 11 Big O y estructuras clave        ░░░░░░░░░░  0/6 conceptos dominados",
+    "    Nivel 12 Patrones de entrevista           ░░░░░░░░░░  0/6 conceptos dominados",
+    "    Nivel 13 Onsite I                         ░░░░░░░░░░  0/5 conceptos dominados",
+    "    Nivel 14 Onsite II                        ░░░░░░░░░░  0/5 conceptos dominados"
+  ]
+}

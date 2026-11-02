@@ -1,5 +1,6 @@
 import { readFile } from "node:fs/promises";
 import { extname, join } from "node:path";
+import { conceptTitle } from "../actions/graph.js";
 import { listDirs, readJsonIfExists } from "./files.js";
 
 /**
@@ -19,21 +20,34 @@ async function loadExercise(dir, trackId, slug) {
   return { hints: [], concepts: [], placement: false, ...meta, id: `${trackId}/${slug}`, slug, track: trackId, folder };
 }
 
-async function loadTrackExercises(config, trackId) {
-  const dir = exercisesDir(config, trackId);
+/**
+ * Gives an exercise its concepts both ways: conceptIds as stored, for mastery, and concepts as titles
+ * in the learner's language, for everything that shows them.
+ * @param {{ concepts: string[] }} exercise mutated in place
+ * @param {{ graph?: Record<string, { title: string }> }} track
+ * @returns {object} the same exercise
+ */
+export function withConceptTitles(exercise, track) {
+  exercise.conceptIds = exercise.concepts;
+  exercise.concepts = exercise.concepts.map((id) => conceptTitle(track, id));
+  return exercise;
+}
+
+async function loadTrackExercises(config, track) {
+  const dir = exercisesDir(config, track.id);
   const slugs = await listDirs(dir);
-  const exercises = await Promise.all(slugs.map((slug) => loadExercise(dir, trackId, slug)));
-  return exercises.filter(Boolean);
+  const exercises = await Promise.all(slugs.map((slug) => loadExercise(dir, track.id, slug)));
+  return exercises.filter(Boolean).map((exercise) => withConceptTitles(exercise, track));
 }
 
 /**
  * Loads every exercise forged for the active tracks, in path order: track, then level, then forge order.
  * @param {object} config
- * @param {{ id: string }[]} tracks
+ * @param {{ id: string, graph?: object }[]} tracks
  * @returns {Promise<{ tracks: object[], exercises: object[], byId: Record<string, object> }>}
  */
 export async function loadCatalog(config, tracks) {
-  const perTrack = await Promise.all(tracks.map((track) => loadTrackExercises(config, track.id)));
+  const perTrack = await Promise.all(tracks.map((track) => loadTrackExercises(config, track)));
   const exercises = perTrack.flatMap((list) => list.sort((a, b) => a.level - b.level || a.seq - b.seq));
   const byId = Object.fromEntries(exercises.map((exercise) => [exercise.id, exercise]));
   return { tracks, exercises, byId };
@@ -52,7 +66,7 @@ export function findExercise(catalog, query) {
 /**
  * Paths of an exercise's stored files. Starter and reference keep the solution's extension.
  * @param {{ folder: string, files: { solution: string, test: string, preview?: string } }} exercise
- * @returns {{ readme: string, lesson: string, starter: string, reference: string, test: string, preview: string | null }}
+ * @returns {{ readme: string, lesson: string, starter: string, reference: string, test: string, mutants: string, preview: string | null }}
  *   preview is null for exercises that have nothing to show in the browser
  */
 export function exerciseFiles(exercise) {
@@ -63,6 +77,7 @@ export function exerciseFiles(exercise) {
     starter: join(exercise.folder, `starter${ext}`),
     reference: join(exercise.folder, `reference${ext}`),
     test: join(exercise.folder, exercise.files.test),
+    mutants: join(exercise.folder, "mutants.json"),
     preview: exercise.files.preview ? join(exercise.folder, exercise.files.preview) : null,
   };
 }
@@ -97,6 +112,7 @@ export async function loadExample(config, profileId, preferred) {
     minutes: exercise.minutes,
     concepts: exercise.concepts,
     hints: exercise.hints,
+    ...(exercise.example ? { example: exercise.example } : {}),
     readme: await read(files.readme),
     lesson: await read(files.lesson),
     starter: await read(files.starter),

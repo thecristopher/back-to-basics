@@ -1,15 +1,20 @@
 import { existsSync } from "node:fs";
 import { readFile } from "node:fs/promises";
-import { noteResult } from "../actions/aptitude.js";
 import { ghostVerdict, isOnsite } from "../actions/arena.js";
 import { isUnfinished, nextPending, slotFor, undrawnSlotTrack } from "../actions/queue.js";
 import { daySummary } from "../actions/recap.js";
-import { applyPass, applySkip, awardXp } from "../actions/record.js";
+import { conceptTitle } from "../actions/graph.js";
+import { noteResult, standingOf } from "../actions/mastery.js";
+import { applyPass, applySkip, awardXp, noteActivity } from "../actions/record.js";
+import { likelyMistakes, nudgeFor } from "../actions/mutants.js";
+import { lastRun, partialFailures, runEntry, runsThisRound, trippedThisRound } from "../actions/runs.js";
 import { roundOutcome } from "../actions/schedule.js";
-import { hintLines } from "../actions/hints.js";
+import { generalHintsSeen, hintLines, nudgeLines } from "../actions/hints.js";
 import { HINT_COST, xpFor } from "../actions/xp.js";
 import { exerciseFiles, findExercise } from "../lib/catalog.js";
+import { readJsonIfExists } from "../lib/files.js";
 import { runTests } from "../lib/runner.js";
+import { appendRun, readRuns } from "../lib/runlog.js";
 import { dayOf, recordOf } from "../lib/state.js";
 import { saveTrack } from "../lib/tracks.js";
 import { redoPath, solutionPath } from "../lib/workspace.js";
@@ -24,8 +29,8 @@ import {
   openExercise,
   openTracks,
   profileOf,
-  recappedToday,
   resolveEntry,
+  reviewedToday,
   targetExercise,
   trackOf,
 } from "./shared.js";
@@ -65,7 +70,7 @@ export async function next(ctx, _args, flags) {
 }
 
 function summaryOf(ctx, day) {
-  const summary = daySummary(day, ctx.catalog.byId, recappedToday(ctx, day).length);
+  const summary = daySummary(day, ctx.catalog.byId, reviewedToday(ctx, day));
   return { ...summary, goal: ctx.config.dailyGoalXp };
 }
 
@@ -104,6 +109,7 @@ function elapsedSeconds(startedAt) {
 function afterFailLine(t, data) {
   if (data.redo) return t.afterFailRedo(data.id);
   if (data.placement) return t.afterFailPlacement;
+  if (data.nudgeReady) return t.afterFailNudge;
   return data.hintsLeft > 0 ? t.afterFail : t.afterFailNoHints;
 }
 
@@ -145,9 +151,23 @@ function failureData(ctx, exercise, result, hintsUsed = 0) {
   };
 }
 
-function failed(ctx, exercise, record, result) {
+async function mutantsOf(exercise) {
+  return (await readJsonIfExists(exerciseFiles(exercise).mutants)) ?? [];
+}
+
+// a run that fails exactly like a known mistake has a hint waiting that aims straight at it
+async function nudgeReady(ctx, exercise, result, round) {
+  if (isPlacementQuestion(ctx.state, exercise.id)) return false;
+  return Boolean(nudgeFor(await mutantsOf(exercise), runEntry(exercise, "test", result), round?.nudges));
+}
+
+async function failed(ctx, exercise, record, result) {
   record.round.failures += 1;
-  const data = { ...failureData(ctx, exercise, result, record.round.hints), attempt: record.round.failures };
+  const data = {
+    ...failureData(ctx, exercise, result, generalHintsSeen(record.round)),
+    attempt: record.round.failures,
+    nudgeReady: await nudgeReady(ctx, exercise, result, record.round),
+  };
   return { code: 1, data, text: renderFailure(ctx, data) };
 }
 
@@ -176,7 +196,13 @@ function redoFinished(ctx, exercise, result) {
 
 function timeLine(t, data) {
   if (data.seconds === null) return "";
-  return t.timeTaken(duration(data.seconds), data.minutes, data.seconds <= data.minutes * 60);
+  const active = data.activeSeconds ? t.activeTime(duration(data.activeSeconds)) : "";
+  return `${t.timeTaken(duration(data.seconds), data.minutes, data.seconds <= data.minutes * 60)}${active}`;
+}
+
+// what an editor measured of the round, only when it measured something
+function activityOf(round) {
+  return round.active || round.edits ? { activeSeconds: round.active ?? 0, edits: round.edits ?? 0 } : {};
 }
 
 function renderPass(ctx, exercise, data, placement) {
@@ -186,11 +212,33 @@ function renderPass(ctx, exercise, data, placement) {
   return [
     paint.green(t.passed(data.passed, data.total, exercise.title)),
     `${outcome}   +${data.xp} XP   ${timeLine(t, data)}`,
-    data.mastered ? paint.green(t.mastered) : t.nextReviewOn(data.dueAt),
+    ...conceptNote(ctx, data),
     ...(data.levelUp ? [paint.green(t.levelUp(ctx.coach, data.levelUp))] : []),
     ...renderPlacementNote(ctx, placement),
     ...after,
   ];
+}
+
+function primaryEntry(ctx, exercise) {
+  const id = exercise.conceptIds?.[0];
+  return id ? ctx.state.mastery[exercise.track]?.concepts?.[id] : undefined;
+}
+
+function primaryStanding(ctx, exercise) {
+  return standingOf(primaryEntry(ctx, exercise));
+}
+
+// where the main concept stands after the pass: owned just now, or when it comes back
+function conceptAfter(ctx, exercise, track, ownedBefore) {
+  const entry = primaryEntry(ctx, exercise);
+  if (!entry?.dueAt) return null;
+  const owned = !ownedBefore && standingOf(entry) === "owned";
+  return { title: conceptTitle(track, exercise.conceptIds[0]), dueAt: entry.dueAt, owned };
+}
+
+function conceptNote({ t, paint }, data) {
+  if (!data.concept) return [];
+  return [data.mastered ? paint.green(t.conceptOwned(data.concept, data.dueAt)) : t.conceptBack(data.concept, data.dueAt)];
 }
 
 // the summary comes with the pass that ends the day, so nobody has to ask for it
@@ -218,11 +266,14 @@ async function passed(ctx, exercise, record, result) {
   const round = { ...record.round };
   const outcome = roundOutcome(round, ctx.config.cleanMaxFailures);
   const seconds = elapsedSeconds(record.startedAt);
+  const evidence = await roundEvidence(ctx, exercise, record.startedAt);
   const xp = xpFor({ level: Math.max(exercise.level, exercise.difficulty ?? 1), outcome, hints: round.hints });
   applyPass(record, { outcome, seconds, today: ctx.today });
   awardXp(ctx.state, day, exercise.id, xp);
   logRound(day, exercise.id, { outcome, failures: round.failures, hints: round.hints });
-  noteResult(ctx.state.aptitude, exercise, { outcome, failures: round.failures, hints: round.hints, seconds });
+  const ownedBefore = primaryStanding(ctx, exercise) === "owned";
+  noteResult(ctx.state.mastery, exercise, { outcome, failures: round.failures, hints: round.hints, seconds, ...activityOf(round), ...evidence }, ctx.today);
+  const concept = conceptAfter(ctx, exercise, track, ownedBefore);
   const placement = await notePlacementResult(ctx, exercise.id, outcome);
   const levelUp = placement ? null : await markLevelUp(ctx, track, levelBefore);
   const data = {
@@ -234,9 +285,12 @@ async function passed(ctx, exercise, record, result) {
     outcome,
     xp,
     seconds,
+    activeSeconds: round.active ?? null,
     minutes: exercise.minutes,
-    dueAt: record.dueAt,
-    mastered: record.mastered,
+    // the exercise's main concept: when it comes back for review, and whether this pass made it owned
+    concept: concept?.title ?? null,
+    dueAt: concept?.dueAt ?? null,
+    mastered: Boolean(concept?.owned),
     levelUp,
     placement,
     day: finishedDay(ctx, day, placement),
@@ -244,8 +298,20 @@ async function passed(ctx, exercise, record, result) {
   return { data, text: renderPass(ctx, exercise, data, placement) };
 }
 
-async function testsOf(ctx, exercise, solution) {
-  return runTests({
+// what the run log tells about the round: which tests tripped the learner, how many runs it took,
+// and which of the exercise's known mistakes those runs look like
+async function roundEvidence(ctx, exercise, startedAt) {
+  const runs = await readRuns(ctx.config);
+  const mutants = (await readJsonIfExists(exerciseFiles(exercise).mutants)) ?? [];
+  return {
+    tripped: trippedThisRound(runs, exercise.id, startedAt),
+    runs: runsThisRound(runs, exercise.id, startedAt),
+    mistakes: likelyMistakes(mutants, partialFailures(runs, exercise.id, startedAt)),
+  };
+}
+
+async function testsOf(ctx, exercise, solution, kind) {
+  const result = await runTests({
     config: ctx.config,
     profile: await profileOf(ctx, trackOf(ctx, exercise.track)),
     files: { solutionFile: exercise.files.solution, testFile: exercise.files.test },
@@ -253,6 +319,9 @@ async function testsOf(ctx, exercise, solution) {
     testCode: await readFile(exerciseFiles(exercise).test, "utf8"),
     onInstall: ctx.onInstall,
   });
+  // a toolchain that refused to run says nothing about the learner
+  if (!result.unsupported && !result.unapproved) await appendRun(ctx.config, runEntry(exercise, kind, result));
+  return result;
 }
 
 /**
@@ -265,10 +334,11 @@ export async function submit(ctx, [query], flags = {}) {
   const { exercise } = target;
   const solution = flags.redo ? redoPath(ctx.config, exercise) : solutionPath(ctx.config, exercise);
   if (!existsSync(solution)) return failure(flags.redo ? ctx.t.redoNotStarted(exercise.id) : ctx.t.notStarted(exercise.slug));
-  if (flags.redo) return redoFinished(ctx, exercise, await testsOf(ctx, exercise, solution));
+  if (flags.redo) return redoFinished(ctx, exercise, await testsOf(ctx, exercise, solution, "redo"));
   ctx.state.current = exercise.id;
-  const result = await testsOf(ctx, exercise, solution);
+  const result = await testsOf(ctx, exercise, solution, "submit");
   const record = recordOf(ctx.state, exercise.id);
+  noteActivity(record, flags);
   record.attempts += 1;
   return result.ok ? passed(ctx, exercise, record, result) : failed(ctx, exercise, record, result);
 }
@@ -282,6 +352,7 @@ function renderTrial({ t, paint }, data) {
     lines.push(`  ${paint.red("✗")} ${test.name}`, ...excerpt(test.message, 8).map(paint.dim));
   }
   if (data.logs.length > 0) lines.push(t.yourConsole, ...excerpt(data.logs.join("\n"), 10));
+  if (data.nudgeReady) lines.push(paint.dim(t.afterFailNudge));
   return lines;
 }
 
@@ -295,13 +366,34 @@ export async function test(ctx, [query], flags = {}) {
   const { exercise } = target;
   const solution = flags.redo ? redoPath(ctx.config, exercise) : solutionPath(ctx.config, exercise);
   if (!existsSync(solution)) return failure(flags.redo ? ctx.t.redoNotStarted(exercise.id) : ctx.t.notStarted(exercise.slug));
-  const result = await testsOf(ctx, exercise, solution);
-  const data = { ...failureData(ctx, exercise, result), ok: result.ok, practice: true, redo: Boolean(flags.redo) };
+  const result = await testsOf(ctx, exercise, solution, flags.redo ? "redo" : "test");
+  if (!flags.redo && flags.active) noteActivity(recordOf(ctx.state, exercise.id), flags);
+  const round = ctx.state.exercises[exercise.id]?.round;
+  const data = { ...failureData(ctx, exercise, result, round ? generalHintsSeen(round) : 0), ok: result.ok, practice: true, redo: Boolean(flags.redo) };
+  if (!result.ok && !flags.redo) data.nudgeReady = await nudgeReady(ctx, exercise, result, round);
   return { code: result.ok ? 0 : 1, data, text: renderTrial(ctx, data) };
+}
+
+// the latest run of the round failed exactly like a known mistake: the hint aims at that mistake first
+async function nudgeOf(ctx, exercise, record) {
+  const run = lastRun(await readRuns(ctx.config), exercise.id, record.startedAt);
+  return nudgeFor(await mutantsOf(exercise), run, record.round.nudges);
+}
+
+function nudged(ctx, exercise, record, found) {
+  record.round.hints += 1;
+  record.round.nudges = [...(record.round.nudges ?? []), found.mistake];
+  const shown = exercise.hints.slice(0, generalHintsSeen(record.round));
+  return {
+    data: { id: exercise.id, hints: shown, total: exercise.hints.length, cost: HINT_COST, nudge: found.nudge },
+    text: nudgeLines({ nudge: found.nudge, header: ctx.t.nudgeHeader(HINT_COST), after: ctx.t.nudgeAfter, paint: ctx.paint }),
+  };
 }
 
 /**
  * `btb hint [id]`: reveals the next hint of the round. Each one costs XP, none during placement.
+ * When the latest run failed exactly like one of the exercise's known mistakes, the hint points at
+ * that mistake first, and the general hints wait for the next one.
  */
 export async function hint(ctx, [query]) {
   const target = targetExercise(ctx, query);
@@ -309,9 +401,12 @@ export async function hint(ctx, [query]) {
   const { exercise } = target;
   if (isPlacementQuestion(ctx.state, exercise.id)) return failure(ctx.t.noHintsInPlacement);
   const record = recordOf(ctx.state, exercise.id);
-  const fresh = record.round.hints < exercise.hints.length;
+  const found = await nudgeOf(ctx, exercise, record);
+  if (found) return nudged(ctx, exercise, record, found);
+  const seen = generalHintsSeen(record.round);
+  const fresh = seen < exercise.hints.length;
   if (fresh) record.round.hints += 1;
-  const shown = exercise.hints.slice(0, record.round.hints);
+  const shown = exercise.hints.slice(0, generalHintsSeen(record.round));
   const header = fresh ? ctx.t.hintHeader(shown.length, exercise.hints.length, HINT_COST) : ctx.t.noMoreHints;
   return {
     data: { id: exercise.id, hints: shown, total: exercise.hints.length, cost: fresh ? HINT_COST : 0 },
@@ -322,17 +417,20 @@ export async function hint(ctx, [query]) {
 /**
  * `btb skip [id]`: leaves the exercise for tomorrow and unlocks its reference solution.
  */
-export async function skip(ctx, [query]) {
+export async function skip(ctx, [query], flags = {}) {
   const target = targetExercise(ctx, query);
   if (target.error) return failure(target.error);
   const { exercise } = target;
   const record = recordOf(ctx.state, exercise.id);
+  noteActivity(record, flags);
   const round = { ...record.round };
+  const evidence = await roundEvidence(ctx, exercise, record.startedAt);
   applySkip(record, ctx.today);
   const day = dayOf(ctx.state, ctx.today);
   if (!day.done.includes(exercise.id)) day.done.push(exercise.id);
   logRound(day, exercise.id, { outcome: "skipped", failures: round.failures, hints: round.hints });
-  noteResult(ctx.state.aptitude, exercise, { outcome: "skipped", failures: round.failures, hints: round.hints, seconds: null });
+  const work = activityOf(round);
+  noteResult(ctx.state.mastery, exercise, { outcome: "skipped", failures: round.failures, hints: round.hints, seconds: null, ...work, ...evidence }, ctx.today);
   const placement = await notePlacementResult(ctx, exercise.id, "skipped");
   return {
     data: { id: exercise.id, skipped: true, dueAt: record.dueAt, placement },

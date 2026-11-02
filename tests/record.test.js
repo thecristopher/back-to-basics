@@ -1,22 +1,22 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { applyPass, applySkip, awardXp, exerciseState, freshRecord } from "../src/actions/record.js";
+import { applyPass, applySkip, awardXp, exerciseState, freshRecord, noteActivity } from "../src/actions/record.js";
 
-test("a first pass schedules a review and closes the round", () => {
-  const record = { ...freshRecord(), round: { failures: 1, hints: 0 }, startedAt: 1 };
+test("a first pass closes the round and leaves the review to the concepts", () => {
+  const record = { ...freshRecord(), round: { failures: 1, hints: 0, nudges: [] }, startedAt: 1 };
   applyPass(record, { outcome: "clean", seconds: 90, today: "2026-10-27" });
   assert.equal(record.firstSolvedAt, "2026-10-27");
-  assert.equal(record.dueAt, "2026-10-30");
+  assert.equal(record.dueAt, null);
   assert.equal(record.bestSeconds, 90);
-  assert.deepEqual(record.round, { failures: 0, hints: 0 });
+  assert.deepEqual(record.round, { failures: 0, hints: 0, nudges: [] });
   assert.equal(record.startedAt, null);
 });
 
 test("a review pass keeps the fastest time", () => {
-  const record = { ...freshRecord(), passes: 1, firstSolvedAt: "2026-10-01", step: 1, bestSeconds: 60 };
+  const record = { ...freshRecord(), passes: 1, firstSolvedAt: "2026-10-01", bestSeconds: 60 };
   applyPass(record, { outcome: "clean", seconds: 120, today: "2026-10-27" });
   assert.equal(record.bestSeconds, 60);
-  assert.equal(record.step, 2);
+  assert.equal(record.passes, 2);
 });
 
 test("a skip unlocks tomorrow and counts", () => {
@@ -41,4 +41,20 @@ test("Claire's XP lands in the total and in the day only once per exercise", () 
   awardXp(state, day, "f/love-note", 5);
   assert.equal(state.xp, 30);
   assert.deepEqual(day.solved, ["f/love-note"]);
+});
+
+test("the work an editor measured adds up over the round", () => {
+  const record = freshRecord();
+  noteActivity(record, { active: "40", edits: "6" });
+  noteActivity(record, { active: "80", edits: "3" });
+  assert.deepEqual([record.round.active, record.round.edits], [120, 9]);
+});
+
+test("a report of nothing, garbage or a clock left running all night is not work", () => {
+  const record = freshRecord();
+  noteActivity(record, {});
+  noteActivity(record, { active: "Wesker", edits: "-2" });
+  assert.equal(record.round.active, undefined);
+  noteActivity(record, { active: String(24 * 60 * 60) });
+  assert.equal(record.round.active, 4 * 60 * 60);
 });

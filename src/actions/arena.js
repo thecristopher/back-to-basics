@@ -1,3 +1,5 @@
+import { conceptTitle } from "./graph.js";
+import { standingOf } from "./mastery.js";
 import { isInterviewLevel } from "./prompts/exercise.js";
 
 /**
@@ -51,28 +53,28 @@ export function lessonQuestion(markdown) {
   return last.includes("?") ? last : null;
 }
 
-function misses(tally) {
-  return tally.struggled + tally.skipped;
-}
-
-// the same lines summarizeAptitude draws between owned and costly concepts
-function standingOf(tally) {
-  if (tally.clean >= 2 && tally.clean > misses(tally)) return "owned";
-  if (misses(tally) > 0 && misses(tally) >= tally.clean) return "weak";
-  return "learning";
-}
-
 const STANDING_ORDER = { weak: 0, learning: 1, owned: 2 };
+
+function trackRows(trackId, entries, track) {
+  return Object.entries(entries ?? {}).map(([id, entry]) => ({
+    track: trackId,
+    id,
+    concept: conceptTitle(track, id),
+    clean: entry.clean,
+    struggled: entry.struggled,
+    skipped: entry.skipped,
+    standing: standingOf(entry),
+  }));
+}
 
 /**
  * Every concept fought so far with where it stands, per track, the costly ones first.
- * @param {Record<string, { concepts: Record<string, { clean: number, struggled: number, skipped: number }> }> | undefined} aptitudes
- * @returns {{ track: string, concept: string, clean: number, struggled: number, skipped: number, standing: "owned" | "weak" | "learning" }[]}
+ * @param {Record<string, { concepts: Record<string, object> }> | undefined} mastery
+ * @param {{ id: string, graph?: object }[]} [tracks] their graphs give each concept its title
+ * @returns {{ track: string, id: string, concept: string, clean: number, struggled: number, skipped: number, standing: "owned" | "weak" | "learning" }[]}
  */
-export function conceptStanding(aptitudes) {
-  const rows = Object.entries(aptitudes ?? {}).flatMap(([track, aptitude]) =>
-    Object.entries(aptitude.concepts ?? {}).map(([concept, tally]) => ({ track, concept, ...tally, standing: standingOf(tally) })),
-  );
+export function conceptStanding(mastery, tracks = []) {
+  const rows = Object.entries(mastery ?? {}).flatMap(([trackId, entry]) => trackRows(trackId, entry.concepts, tracks.find((track) => track.id === trackId)));
   return rows.sort(
     (a, b) => a.track.localeCompare(b.track) || STANDING_ORDER[a.standing] - STANDING_ORDER[b.standing] || a.concept.localeCompare(b.concept),
   );

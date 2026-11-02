@@ -5,7 +5,7 @@ import { debriefPrompt, greetPrompt } from "../actions/prompts/day.js";
 import { daySummary } from "../actions/recap.js";
 import { ask } from "../lib/claude.js";
 import { dayVoicePath, readTextIfExists, writeMissingMoments, writeText } from "../lib/library.js";
-import { levelNow, openTracks, recappedToday, trackOf } from "./shared.js";
+import { levelNow, openTracks, reviewedToday, trackOf } from "./shared.js";
 
 function speaker(persona) {
   return { id: persona.id, name: persona.name, portrait: persona.portrait ?? null };
@@ -53,7 +53,7 @@ export async function greet(ctx, args, flags) {
 }
 
 function debriefInput(ctx, day) {
-  const summary = daySummary(day, ctx.catalog.byId, recappedToday(ctx, day).length);
+  const summary = daySummary(day, ctx.catalog.byId, reviewedToday(ctx, day));
   return { persona: ctx.persona, language: ctx.config.language, rounds: roundsOf(day, ctx.catalog.byId), xp: day.xp, goal: ctx.config.dailyGoalXp, toImprove: summary.toImprove };
 }
 

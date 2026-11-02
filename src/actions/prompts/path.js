@@ -1,7 +1,7 @@
-import { aptitudeLines, languageName, otherTrackLines } from "./evidence.js";
+import { languageName, masteryLines, otherTrackLines } from "./evidence.js";
 
 const SCHEMA =
-  '{"rationale":"2 or 3 sentences","startLevel":1,"levels":[{"level":1,"title":"...","summary":"1 or 2 sentences","concepts":["..."],"target":4}]}';
+  '{"rationale":"2 or 3 sentences","startLevel":1,"levels":[{"level":1,"title":"...","summary":"1 or 2 sentences","concepts":[{"id":"kebab-case-id","title":"...","use":"one line on where this is used in real work"}]}]}';
 
 function placementLines(placement) {
   if (placement.length === 0) return ["No placement test was taken."];
@@ -16,7 +16,7 @@ function keptLines(kept) {
   return [
     "",
     `This is a redraw. Levels 1 to ${kept.length} are done: return them unchanged as the first levels and redraw only what comes after.`,
-    ...kept.map((level) => `- ${level.level}. ${level.title}: ${level.concepts.join(", ")}`),
+    ...kept.map((level) => `- ${level.level}. ${level.title}: ${level.concepts.join(", ")} (keep these ids)`),
   ];
 }
 
@@ -28,7 +28,7 @@ function startLines(fromBasics) {
   return [
     "The learner is rebuilding from the very basics on purpose, after years of letting tools write the code for them.",
     "Levels 1 and 2 are a warm up of the smallest pieces of this track. In a language: level 1 is returning values, arithmetic, comparing and if and else; level 2 is for loops over arrays and strings.",
-    "The warm up levels pass with 3 or 4 clean solves. Climb in small steps from there.",
+    "Climb in small steps from there: each level adds a handful of ideas, never a leap.",
     "Set startLevel to 1 whatever the placement says, and use the placement only to decide what to stress.",
   ];
 }
@@ -51,13 +51,15 @@ export function pathPrompt({ track, profileName, summary, others, placement, kep
     "",
     "Evidence about the learner:",
     ...placementLines(placement),
-    ...aptitudeLines(summary),
+    ...masteryLines(summary, track),
     ...otherTrackLines(others),
     ...keptLines(kept),
     "",
-    "Design 6 to 10 levels that go from where this learner truly is, through their goal when they have one, up to the bar of a real onsite loop at Amazon, Zillow or Capital One.",
+    "Design 8 to 14 levels backwards from the goal: start from the bar of a real onsite loop at Amazon, Zillow or Capital One and ask what each concept before it must prepare.",
+    "The order goes from the basics, through what a working programmer uses every day in this language, to the patterns and problems of an interview. Every concept earns its place by leading somewhere.",
     "Every path ends there: the last 2 levels are interview levels, with problems that combine several concepts over realistic product data, tricky edge cases and a complexity that matters.",
-    "Each level: a title, a summary, 3 to 6 concrete concepts, and a target from 3 to 8 clean solves to pass it.",
+    "Each level: a title, a summary and 3 to 6 concrete concepts. A concept has a kebab case id unique in the path, a title, and a use line saying where it shows up in real work.",
+    "A level is passed when every one of its concepts is solved clean on 2 different days, so keep each concept small enough to own.",
     ...startLines(fromBasics),
     "",
     "Respond with JSON only, no prose and no code fences, in this shape:",

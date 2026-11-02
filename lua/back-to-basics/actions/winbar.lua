@@ -75,6 +75,11 @@ function M.fields(data)
   end
   if data.total and data.passed then
     fields.tests = { passed = data.passed, total = data.total, ok = data.ok == true }
+    -- the run failed like a known mistake, a hint aimed at it is waiting
+    fields.nudgeReady = data.nudgeReady == true
+  end
+  if data.hints then
+    fields.nudgeReady = false
   end
   if data.hintsLeft then
     fields.hintsLeft = data.hintsLeft
