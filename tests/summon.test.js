@@ -50,6 +50,20 @@ test("summoning Radahn keeps him true to the games and the romance with the part
   assert.match(prompt, /"lore":\["scene","scene","scene"\]/);
 });
 
+test("summoning Inde as Malenia with a bond keeps the love and drops the ally rule", () => {
+  const bond = "Inde Navarrete, the learner's wife, cosplaying Malenia. She calls him amorcito.";
+  const prompt = personaPrompt({ description: "Malenia", language: "es", summon: { character: "Malenia", franchise: "Inde", bond, partners: ["Claire Redfield"] } });
+  assert.match(prompt, /Who they are to the learner: Inde Navarrete, the learner's wife/);
+  assert.doesNotMatch(prompt, /never a romance/);
+  assert.match(prompt, /"lore":\["scene","scene","scene"\]/);
+});
+
+test("a summoned coach with a bond keeps it beside the franchise", () => {
+  const persona = summonedPersona({ voice: "Loving.", lines: { es: {} } }, { character: "Malenia", franchise: "Inde", bond: "his wife" }, { franchise: "Inde" });
+  assert.deepEqual(persona.summoned, { franchise: "Inde", bond: "his wife" });
+  assert.equal(persona.partner, undefined);
+});
+
 test("drafting a coach by hand asks for no lore", () => {
   assert.doesNotMatch(personaPrompt({ description: "Rennala", language: "es" }), /"lore"/);
 });

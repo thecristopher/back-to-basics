@@ -27,7 +27,12 @@ const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
 const COMMANDS = { today, next, start, submit, test, hint, skip, reveal, review, placement, path, forge, learn, setup, status, plan, list, persona, lesson, lessons, brief, redo, recall, greet, debrief, prepare, preview };
 
 // --persona=none silences the one in btb.config.json for a single run, and --character with
-// --franchise summons a character who has no persona yet as the coach of the day
+// --franchise summons a character who has no persona yet as the coach of the day, --bond saying
+// who they are to the learner
+function bondOf(flags) {
+  return typeof flags.bond === "string" && flags.bond.trim() !== "" ? flags.bond : undefined;
+}
+
 async function personaFor(config, t, flags) {
   const name = typeof flags.persona === "string" ? flags.persona : config.persona;
   if (!name || name === "none") return null;
@@ -35,7 +40,7 @@ async function personaFor(config, t, flags) {
   if (found) return found;
   if (typeof flags.character === "string" && typeof flags.franchise === "string") {
     const log = (character) => process.stderr.write(`${t.summoning(character)}\n`);
-    const summoned = await summonPersona(config, { id: name, character: flags.character, franchise: flags.franchise }, log);
+    const summoned = await summonPersona(config, { id: name, character: flags.character, franchise: flags.franchise, bond: bondOf(flags) }, log);
     if (summoned) return summoned;
   }
   throw new Error(t.unknownPersona(name));

@@ -1,7 +1,7 @@
 -- Pure pieces of the coach: which persona speaks, how the text wraps and pages, and where the panels sit.
 local M = {}
 
----@alias BtbCoach { id: string, character?: string, franchise?: string }
+---@alias BtbCoach { id: string, character?: string, franchise?: string, bond?: string }
 
 ---The coach to ask btb for, from a name, a character to summon, or what a function returns at the
 ---time of asking. A character comes as { id, character, franchise } so btb can summon them.
@@ -29,7 +29,8 @@ function M.persona_name(persona)
   return choice and choice.id or nil
 end
 
----Adds the coach to btb's arguments: --persona, plus the character and franchise to summon them by.
+---Adds the coach to btb's arguments: --persona, plus the character, franchise and bond to summon
+---them by.
 ---@param args string[]
 ---@param choice BtbCoach|string|nil
 ---@return string[]
@@ -43,6 +44,9 @@ function M.with_persona(args, choice)
   if choice.character and choice.franchise then
     table.insert(copy, "--character=" .. choice.character)
     table.insert(copy, "--franchise=" .. choice.franchise)
+    if choice.bond then
+      table.insert(copy, "--bond=" .. choice.bond)
+    end
   end
   return copy
 end

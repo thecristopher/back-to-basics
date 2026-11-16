@@ -55,14 +55,14 @@ async function bundledPersonas(config) {
   return Promise.all(names.map((name) => loadPersona(config, name)));
 }
 
-async function draftSummon(config, { id, character, franchise }, log) {
+async function draftSummon(config, { id, character, franchise, bond }, log) {
   const bundled = await bundledPersonas(config);
   const partners = bundled.filter((persona) => persona?.partner);
   const home = partners.find((persona) => persona.world?.franchise === franchise) ?? null;
   log(character);
-  const summon = { character, franchise, partners: partners.map((persona) => persona.name) };
+  const summon = { character, franchise, bond, partners: partners.map((persona) => persona.name) };
   const draft = await askJson(config.claude, personaPrompt({ description: `${character} from ${franchise}`, language: config.language, summon }));
-  const persona = summonedPersona(draft, { character, franchise }, borrowedWorld(home, character, franchise, draft.lore));
+  const persona = summonedPersona(draft, { character, franchise, bond }, borrowedWorld(home, character, franchise, draft.lore));
   const problems = personaProblems(persona);
   if (problems.length > 0) throw new Error(`${character} could not be summoned: ${problems.join("; ")}`);
   await savePersona(config, id, persona);
@@ -71,9 +71,10 @@ async function draftSummon(config, { id, character, franchise }, log) {
 
 /**
  * The coach of the day when she is a character with no persona yet: Claude drafts her once, true to
- * her franchise and without romance, and she is kept beside the created personas.
+ * her franchise and without romance unless a bond says who she is to the learner, and she is kept
+ * beside the created personas.
  * @param {object} config
- * @param {{ id: string, character: string, franchise: string }} who
+ * @param {{ id: string, character: string, franchise: string, bond?: string }} who
  * @param {(character: string) => void} log told when Claude starts drafting
  * @returns {Promise<object | null>}
  */

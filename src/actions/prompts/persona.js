@@ -27,21 +27,34 @@ function textGuide() {
 }
 
 // a character summoned from a franchise stays true to the games and leaves the romance to the partners
-function summonLines(summon) {
-  if (!summon) return [];
+function allyLines(summon) {
   const partners = summon.partners.length > 0 ? `: that bond belongs to ${summon.partners.join(", ")} only` : "";
   return [
     `- The coach is ${summon.character} from ${summon.franchise}, true to who they are in the games: their temperament, the way they talk, their history and the people around them.`,
     `- ${summon.character} is an ally who trains the learner, never a romance${partners}.`,
     `- voice also says how ${summon.character} treats the learner, and that there is no romance.`,
-    `- lore lists 3 or 4 scenes from ${summon.character}'s own story in ${summon.franchise}, each one a moment or mechanic of the games an exercise could be set in.`,
   ];
+}
+
+// a bond says who the coach really is to the learner, and that bond is the heart of every line
+function bondLines(summon) {
+  return [
+    `- The coach is ${summon.character}. Who they are to the learner: ${summon.bond}`,
+    `- Every line keeps that bond, the way they call the learner included, with the look and temperament of ${summon.character}.`,
+    `- voice also says how the coach treats the learner and the bond they share.`,
+  ];
+}
+
+function summonLines(summon) {
+  if (!summon) return [];
+  const who = summon.bond ? bondLines(summon) : allyLines(summon);
+  return [...who, `- lore lists 3 or 4 scenes from ${summon.character}'s own story in ${summon.franchise}, each one a moment or mechanic of the games an exercise could be set in.`];
 }
 
 /**
  * The prompt that asks Claude to draft a coach persona from a description, or to summon a
  * character of a franchise as the coach of the day.
- * @param {{ description: string, language: string, summon?: { character: string, franchise: string, partners: string[] } }} input
+ * @param {{ description: string, language: string, summon?: { character: string, franchise: string, bond?: string, partners: string[] } }} input
  * @returns {string}
  */
 export function personaPrompt({ description, language, summon }) {

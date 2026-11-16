@@ -19,10 +19,11 @@ export function borrowedWorld(partner, character, franchise, drafted) {
 /**
  * The persona file of a summoned coach, named exactly like the character so the editor finds it again.
  * @param {{ voice: string, lines: object, texts?: object }} draft what Claude wrote
- * @param {{ character: string, franchise: string }} who
+ * @param {{ character: string, franchise: string, bond?: string }} who
  * @param {object} world from borrowedWorld
  * @returns {object}
  */
-export function summonedPersona(draft, { character, franchise }, world) {
-  return { name: character, voice: draft.voice, summoned: { franchise }, world, lines: draft.lines, texts: draft.texts };
+export function summonedPersona(draft, { character, franchise, bond }, world) {
+  const summoned = bond ? { franchise, bond } : { franchise };
+  return { name: character, voice: draft.voice, summoned, world, lines: draft.lines, texts: draft.texts };
 }

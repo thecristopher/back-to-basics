@@ -41,7 +41,8 @@ M.defaults = {
   -- false turns completion off in solution buffers, AI suggestions included
   completion = false,
   -- the coach's name, or a function that picks one each time; nil uses "persona" in btb.config.json.
-  -- A character with no persona yet comes as { id, character, franchise } and btb summons them once
+  -- A character with no persona yet comes as { id, character, franchise, bond? } and btb summons them once,
+  -- bond saying who the coach is to the learner when they are more than an ally
   persona = nil,
   coach = { enabled = true, speed = 12, toast_ms = 4500 },
   -- fun(buf, win, persona) that draws the coach's portrait on the stage
