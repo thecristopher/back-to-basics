@@ -47,6 +47,18 @@ describe("coach actions", function()
     )
   end)
 
+  it("hands btb the bond Inde shares with the learner", function()
+    local inde =
+      { id = "inde-malenia", character = "Malenia", franchise = "Inde", bond = "his wife" }
+    assert.are.same({
+      "today",
+      "--persona=inde-malenia",
+      "--character=Malenia",
+      "--franchise=Inde",
+      "--bond=his wife",
+    }, coach.with_persona({ "today" }, inde))
+  end)
+
   it("ignores a coach with no id", function()
     assert.is_nil(coach.persona_choice({ character = "Hunk" }))
     assert.is_nil(coach.persona_choice(""))
