@@ -240,6 +240,17 @@ test("on Leon's day Claude summons him once, borrowing Claire's world, with no r
   assert.doesNotMatch(forgeLog, /invocando/);
 });
 
+test("Inde playing Malenia is summoned again when her bond changes", async () => {
+  const day = (bond) => ["greet", "--persona=inde-malenia", "--character=Malenia", "--franchise=Inde", `--bond=${bond}`];
+  const file = join(sandbox, "data/personas/inde-malenia.json");
+  await btb(day("his wife"));
+  await btb(day("his wife"));
+  assert.doesNotMatch(forgeLog, /invocando/, "the same bond keeps her as she was");
+  await btb(day("his wife, playing it cool"));
+  assert.match(forgeLog, /Claude está invocando a Malenia/);
+  assert.equal(JSON.parse(await readFile(file, "utf8")).summoned.bond, "his wife, playing it cool");
+});
+
 test("a coach with no persona and no character to summon is refused", async () => {
   assert.match((await btb(["greet", "--persona=hunk"])).error, /hunk/);
 });

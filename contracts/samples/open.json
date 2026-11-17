@@ -16,6 +16,8 @@
   "placement": false,
   "onsite": false,
   "startedAt": 1793589891491,
+  "pausedMs": 0,
+  "pausedAt": null,
   "hintsLeft": 3,
   "hintCost": 3,
   "text": [

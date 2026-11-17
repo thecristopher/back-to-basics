@@ -72,6 +72,7 @@ If the toolchain is missing, `setup` tells you what to install. If the commands 
 | `btb hint [id]` | Reveals the next hint. When your latest run failed exactly like one of the exercise's known mistakes, the hint points at that mistake first and the general hints wait for the next one. None during placement. |
 | `btb preview [id] [--again] [--port=n] [--no-open]` | React only: serves the component you are building in the browser with the data of the statement's example, and reloads it every time you save. `--again` has Claude write the preview again. Runs until Ctrl+C. |
 | `btb skip [id]` | Leaves it for tomorrow and unlocks its reference. |
+| `btb pause [id]` / `btb resume` | Pauses the lesson: the clock stops and submit, test, hint and skip wait until you resume. The paused time never counts. |
 | `btb reveal [id]` | Prints the reference solution, once solved or skipped. |
 | `btb review [id] [--again]` | Claude reviews your solution, once solved. The review is kept, `--again` asks for a new one. |
 | `btb greet [--again]` | The coach of the day greets you with how the last session went and what comes today, kept for the day. |
@@ -188,6 +189,7 @@ The screenshots come from [Eldentree](https://github.com/thecristopher/nvim-conf
 | `<leader>ks` | Submit, the round is recorded |
 | `<leader>kT` | Try the tests without counting an attempt (also on every save) |
 | `<leader>kh` / `kx` | Hint / skip for today |
+| `<leader>kz` | Pause the lesson, the solution goes read only and the winbar clock stands still. Again to resume |
 | `<leader>kv` / `kr` | Reveal the reference / Claude reviews your solution |
 | `<leader>kd` | Your solution beside the reference as a diff, with the remarks of Claude's review on the lines they name |
 | `<leader>ko` | React: your component in the browser, reloading on every save. One preview at a time, it stops with Neovim |

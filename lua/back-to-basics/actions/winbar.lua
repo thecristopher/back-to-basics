@@ -22,6 +22,23 @@ local function tests_chunk(tests)
   return ("%%#%s#%s %d/%d%%*"):format(group, mark, tests.passed, tests.total)
 end
 
+---Time on the exercise's clock: the time it stood paused is left out, and a paused clock stands still.
+---@param info { startedAt: integer, pausedMs?: integer, pausedAt?: integer|false }
+---@param now_ms integer
+---@return integer
+function M.clock_ms(info, now_ms)
+  local until_ms = info.pausedAt or now_ms
+  return until_ms - info.startedAt - (info.pausedMs or 0)
+end
+
+local function clock_chunk(info, now_ms, messages)
+  local time = M.elapsed(M.clock_ms(info, now_ms))
+  if not info.pausedAt then
+    return "󱎫 " .. time
+  end
+  return ("%%#DiagnosticWarn#⏸ %s · %s%%*"):format(time, escape(messages.winbar_paused))
+end
+
 -- a redo races the best time of the first solve: green while you are still ahead of it
 local function ghost_chunk(info, now_ms, messages)
   local ahead = (now_ms - info.startedAt) / 1000 <= info.ghostSeconds
@@ -31,7 +48,7 @@ local function ghost_chunk(info, now_ms, messages)
 end
 
 ---The winbar of a solution: title, level, clock, hints left, the last test run and the keys.
----@param info { id: string, title?: string, level?: integer, startedAt?: integer, ghostSeconds?: integer, hintsLeft?: integer, tests?: { passed: integer, total: integer, ok: boolean } }
+---@param info { id: string, title?: string, level?: integer, startedAt?: integer, pausedMs?: integer, pausedAt?: integer|false, ghostSeconds?: integer, hintsLeft?: integer, tests?: { passed: integer, total: integer, ok: boolean } }
 ---@param now_ms integer
 ---@param messages table<string, string>
 ---@param keys string|false the keymap prefix, false when there are no keymaps
@@ -42,7 +59,7 @@ function M.text(info, now_ms, messages, keys)
     table.insert(parts, messages.winbar_level:format(info.level))
   end
   if info.startedAt then
-    table.insert(parts, "󱎫 " .. M.elapsed(now_ms - info.startedAt))
+    table.insert(parts, clock_chunk(info, now_ms, messages))
   end
   if info.startedAt and info.ghostSeconds then
     table.insert(parts, ghost_chunk(info, now_ms, messages))
@@ -61,6 +78,13 @@ function M.text(info, now_ms, messages, keys)
   return text .. "%=%#Comment#" .. escape(prefix .. "  " .. messages.winbar_keys) .. " %*"
 end
 
+---Since when a btb answer says the lesson is paused, false when it is running.
+---@param data { pausedAt?: integer|userdata } json null comes as vim.NIL
+---@return integer|false
+function M.paused_at(data)
+  return type(data.pausedAt) == "number" and data.pausedAt or false
+end
+
 ---What a btb answer changes in the winbar: the opened exercise, a test run or a hint.
 ---@param data table a btb --json answer
 ---@return table|nil fields to merge, nil when it changes nothing
@@ -72,6 +96,11 @@ function M.fields(data)
   if data.path then
     fields.title, fields.level, fields.startedAt = data.title, data.level, data.startedAt
     fields.ghostSeconds, fields.hintCost = data.ghostSeconds, data.hintCost
+    fields.pausedMs, fields.pausedAt = data.pausedMs or 0, M.paused_at(data)
+  end
+  if data.paused ~= nil then
+    fields.pausedAt = M.paused_at(data)
+    fields.pausedMs = data.pausedMs or fields.pausedMs
   end
   if data.total and data.passed then
     fields.tests = { passed = data.passed, total = data.total, ok = data.ok == true }

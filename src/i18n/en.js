@@ -13,6 +13,8 @@ Practice
   hint [id]             reveals the next hint, costs XP
   preview [id]          React: see your component in the browser, it reloads on save. --again rewrites it
   skip [id]             leave it for today, it comes back tomorrow
+  pause [id]            pauses the lesson: the clock stops until btb resume
+  resume                carries on with the paused lesson, the paused time does not count
   reveal [id]           the reference solution, only after solving or skipping
   review [id]           Claude grades your solution, only after solving. --again for a new review
   greet                 your coach greets you with yesterday and today. --again for a new one
@@ -229,5 +231,10 @@ Coach
   redoGhost: (verdict, time, ghost) =>
     ({ ahead: `You beat your ghost: ${time} against ${ghost}.`, behind: `Your ghost is still ahead: ${time} against ${ghost}.`, tied: `Tied with your ghost: ${time}.` })[verdict],
   afterFailRedo: (id) => `Adjust and run btb submit ${id} --redo again.`,
+  paused: (title) => `⏸ ${title} is paused. The clock is not running. When you are back: btb resume`,
+  alreadyPaused: (title) => `${title} is already paused. To carry on: btb resume`,
+  resumed: (title, time) => `▶ Back to ${title}. It was paused for ${time}.`,
+  notPaused: "Nothing is paused.",
+  pausedFirst: (title) => `${title} is paused. btb resume first.`,
   finishFirst: "Finish this one first, or give up with btb skip. Then we move on to the next.",
 };

@@ -27,3 +27,14 @@ export function summonedPersona(draft, { character, franchise, bond }, world) {
   const summoned = bond ? { franchise, bond } : { franchise };
   return { name: character, voice: draft.voice, summoned, world, lines: draft.lines, texts: draft.texts };
 }
+
+/**
+ * Whether a summoned coach was drafted with another bond than the one asked for now.
+ * @param {{ summoned?: { bond?: string } } | null} persona
+ * @param {string | undefined} bond
+ * @returns {boolean} false for a persona that was never summoned
+ */
+export function bondChanged(persona, bond) {
+  if (!persona?.summoned) return false;
+  return (persona.summoned.bond ?? undefined) !== bond;
+}

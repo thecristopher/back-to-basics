@@ -56,7 +56,7 @@ export function pickFeatured(faces, lore, random = Math.random) {
  * @param {{ name: string, voice?: string, partner?: boolean, world?: { franchise: string, supporting?: string[], places?: string[], lore?: Record<string, string[]> } } | null} persona
  * @param {{ leads?: string[], supporting?: string[] } | null} cast from btb.config.json
  * @param {() => number} [random] returns [0, 1)
- * @returns {{ leads: string[], supporting: string[], coach?: string, partner?: string, voice?: string, franchise?: string, places?: string[], featured?: string | null, scenes?: string[] } | null}
+ * @returns {{ leads: string[], supporting: string[], coach?: string, partner?: string, voice?: string, bond?: string, franchise?: string, places?: string[], featured?: string | null, scenes?: string[] } | null}
  */
 export function castFor(persona, cast, random = Math.random) {
   const world = persona?.world;
@@ -69,6 +69,7 @@ export function castFor(persona, cast, random = Math.random) {
     coach: persona.name,
     partner: persona.partner ? persona.name : undefined,
     voice: persona.voice,
+    ...(persona.summoned?.bond ? { bond: persona.summoned.bond } : {}),
     franchise: world.franchise,
     places: world.places ?? [],
     featured,
@@ -85,6 +86,14 @@ function sceneLines(cast) {
   ];
 }
 
+// a coach with a bond gives the exercise its personality, the bond only slips through in a detail
+function roleLines(cast) {
+  return [
+    `- ${cast.coach} sets the personality of the exercise: the stakes, the tone and the way the statement is told sound like ${cast.coach}. The learner is the protagonist, spoken to as you.`,
+    `- Who the coach is to the learner: ${cast.bond} At most one small detail of that slips through per exercise, the role comes first.`,
+  ];
+}
+
 // only a partner shares the soft romance, any other coach of the day is an ally, whatever the theme says
 function bondLine(cast) {
   if (cast.partner) {
@@ -98,7 +107,7 @@ function worldLines(cast) {
   const places = cast.places.length > 0 ? ` Places and things to draw from: ${cast.places.join(", ")}.` : "";
   return [
     ...sceneLines(cast),
-    bondLine(cast),
+    ...(cast.bond ? roleLines(cast) : [bondLine(cast)]),
     "- Supporting characters show up as friends, allies, rivals or coworkers, never in a romance.",
     `- Every character, place and item comes from ${cast.franchise} only, never from another franchise.${places}`,
   ];

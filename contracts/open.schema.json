@@ -79,6 +79,17 @@
       "type": "integer",
       "description": "ms since the epoch"
     },
+    "pausedMs": {
+      "type": "integer",
+      "description": "ms the round stood paused, left out of the clock"
+    },
+    "pausedAt": {
+      "type": [
+        "integer",
+        "null"
+      ],
+      "description": "ms since the epoch the lesson is paused since, null when it is running"
+    },
     "hintsLeft": {
       "type": "integer"
     },

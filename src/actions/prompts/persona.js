@@ -36,12 +36,12 @@ function allyLines(summon) {
   ];
 }
 
-// a bond says who the coach really is to the learner, and that bond is the heart of every line
+// a bond says who the coach really is to the learner, but the role leads and the bond only slips through
 function bondLines(summon) {
   return [
     `- The coach is ${summon.character}. Who they are to the learner: ${summon.bond}`,
-    `- Every line keeps that bond, the way they call the learner included, with the look and temperament of ${summon.character}.`,
-    `- voice also says how the coach treats the learner and the bond they share.`,
+    `- ${summon.character}'s personality leads every line: their temperament, the way they talk, their attitude and their world. The bond stays underneath and only slips out now and then in a small detail, never as the main note.`,
+    `- voice says how ${summon.character} talks and treats the learner, and how the bond slips through the role.`,
   ];
 }
 

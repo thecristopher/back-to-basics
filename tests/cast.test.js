@@ -75,6 +75,14 @@ test("Malenia's world never borrows a face from the config's cast", () => {
   assert.deepEqual(picked.places, []);
 });
 
+test("Inde playing Malenia gives the exercise Malenia's personality, the bond only in a detail", () => {
+  const inde = { name: "Malenia", voice: "Calm and relentless.", summoned: { franchise: "Inde", bond: "Inde Navarrete, his wife." }, world: { franchise: "Inde", supporting: [] } };
+  const lines = castLines(castFor(inde, null, () => 0)).join("\n");
+  assert.match(lines, /Malenia sets the personality of the exercise/);
+  assert.match(lines, /Who the coach is to the learner: Inde Navarrete, his wife\. At most one small detail/);
+  assert.doesNotMatch(lines, /as an ally/);
+});
+
 test("a persona without a world falls back to the config's cast", () => {
   assert.deepEqual(castFor({ name: "Wesker" }, cast, () => 0), { leads: ["Claire Redfield"], supporting: ["Leon", "Jill", "Ada"] });
 });
