@@ -107,12 +107,14 @@ function M.fields(data)
     -- the run failed like a known mistake, a hint aimed at it is waiting
     fields.nudgeReady = data.nudgeReady == true
   end
-  if data.hints then
+  -- a hint answer lists the hints shown, a passed submit only counts them
+  local shown = type(data.hints) == "table"
+  if shown then
     fields.nudgeReady = false
   end
   if data.hintsLeft then
     fields.hintsLeft = data.hintsLeft
-  elseif data.hints and data.total then
+  elseif shown and data.total then
     fields.hintsLeft = math.max(0, data.total - #data.hints)
   end
   return fields
