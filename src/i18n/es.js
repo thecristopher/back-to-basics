@@ -235,6 +235,7 @@ Coach
   alreadyPaused: (title) => `${title} ya está en pausa. Para seguir: btb resume`,
   resumed: (title, time) => `▶ Seguimos con ${title}. Estuvo en pausa ${time}.`,
   notPaused: "No hay nada en pausa.",
+  movedHome: (dir) => `Tu avance ya no vive en el repo, lo mudé a ${dir}.`,
   pausedFirst: (title) => `${title} está en pausa. Primero btb resume.`,
   finishFirst: "Primero termina este, o ríndete con btb skip. Después seguimos con el que sigue.",
 };

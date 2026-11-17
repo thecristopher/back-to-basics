@@ -10,6 +10,7 @@ import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { promisify } from "node:util";
 import { checkRates, gradeExercise } from "../src/actions/evals.js";
+import { loadConfig } from "../src/lib/config.js";
 import { toDay } from "../src/utils/dates.js";
 
 const run = promisify(execFile);
@@ -143,10 +144,12 @@ async function main() {
   const only = flagOf("only");
   const scenarios = only ? all.filter((scenario) => scenario.name === only) : all;
   const config = existsSync(join(ROOT, "btb.config.json")) ? await readJson(join(ROOT, "btb.config.json")) : {};
+  // the real data folder only lends its installed runtimes and keeps the report, progress is never touched
+  const home = await loadConfig(ROOT);
   const claude = config.claude?.command ?? ["claude", "-p"];
   const report = await runEvals(scenarios, {
     claude,
-    runtimes: join(ROOT, ".btb/runtimes"),
+    runtimes: join(home.dataDir, "runtimes"),
     onResult: (result) => {
       const failed = Object.entries(result.checks).filter(([, held]) => !held).map(([name]) => name);
       console.log(`${result.ok ? "✓" : "✗"} ${result.name}  ${result.seconds}s  fixes ${result.fixRounds}${failed.length ? `  failed: ${failed.join(", ")}` : ""}`);
@@ -154,7 +157,7 @@ async function main() {
       result.fixes.forEach((problems, round) => problems.forEach((problem) => console.log(`    fix ${round + 1}: ${problem.slice(0, 300)}`)));
     },
   });
-  const out = flagOf("out") ?? join(ROOT, ".btb/evals", `report-${report.at.replace(/[:.]/g, "-")}.json`);
+  const out = flagOf("out") ?? join(home.dataDir, "evals", `report-${report.at.replace(/[:.]/g, "-")}.json`);
   await mkdir(dirname(out), { recursive: true });
   await writeFile(out, `${JSON.stringify(report, null, 2)}\n`);
   console.log(`\n${report.passed}/${report.total} scenarios held every check. Report: ${out}`);

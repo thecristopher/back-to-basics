@@ -235,6 +235,7 @@ Coach
   alreadyPaused: (title) => `${title} is already paused. To carry on: btb resume`,
   resumed: (title, time) => `▶ Back to ${title}. It was paused for ${time}.`,
   notPaused: "Nothing is paused.",
+  movedHome: (dir) => `Your progress no longer lives in the repo, it moved to ${dir}.`,
   pausedFirst: (title) => `${title} is paused. btb resume first.`,
   finishFirst: "Finish this one first, or give up with btb skip. Then we move on to the next.",
 };

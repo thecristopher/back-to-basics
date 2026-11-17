@@ -20,7 +20,7 @@ import { bondChanged } from "./actions/summon.js";
 import { loadPersona, speak, summonPersona } from "./lib/personas.js";
 import { loadState, saveState } from "./lib/state.js";
 import { loadTracks } from "./lib/tracks.js";
-import { archiveOldModel } from "./lib/upgrade.js";
+import { adoptRepoData, archiveOldModel } from "./lib/upgrade.js";
 import { toDay } from "./utils/dates.js";
 import { createPaint } from "./utils/text.js";
 
@@ -92,6 +92,7 @@ async function run(argv) {
   const { command, args, flags } = parseArgs(argv);
   const config = await loadConfig(ROOT);
   const t = createT(config.language);
+  for (const dir of await adoptRepoData(config)) process.stderr.write(`${t.movedHome(dir)}\n`);
   if (command === "help" || flags.help) return { text: [t.help] };
   const handler = COMMANDS[command];
   if (!handler) return { code: 1, data: { error: t.unknownCommand(command) }, text: [t.unknownCommand(command)] };

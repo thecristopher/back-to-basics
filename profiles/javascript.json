@@ -12,6 +12,7 @@
       "importHint": "import { name } from \"./solution.ts\";"
     }
   },
+  "sandbox": { "image": "docker.io/library/node:24-slim" },
   "check": [
     [
       "{node}",

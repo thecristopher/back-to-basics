@@ -5,7 +5,7 @@ import { expandCommand } from "../actions/command.js";
 import { runCommand } from "./exec.js";
 import { readJsonIfExists, writeJson } from "./files.js";
 
-const SETUP_TIMEOUT_MS = 10 * 60 * 1000;
+export const SETUP_TIMEOUT_MS = 10 * 60 * 1000;
 
 function learnedFile(config, id) {
   return join(config.dataDir, "profiles", `${id}.json`);
@@ -85,9 +85,20 @@ export async function ensureRuntime(config, profile, onInstall) {
   if (existsSync(join(dir, profile.runtime.ready))) return dir;
   onInstall(profile.name, dir);
   await mkdir(dir, { recursive: true });
-  for (const [name, file] of Object.entries(profile.runtime.files ?? {})) await writeFile(join(dir, name), await runtimeFileContent(config, profile, file));
+  for (const [name, content] of Object.entries(await runtimeFiles(config, profile))) await writeFile(join(dir, name), content);
   await runSteps(profile.runtime.setup ?? [], dir);
   return dir;
+}
+
+/**
+ * The files a profile's runtime starts with, by name, with their content read.
+ * @param {object} config
+ * @param {object} profile
+ * @returns {Promise<Record<string, string>>}
+ */
+export async function runtimeFiles(config, profile) {
+  const entries = Object.entries(profile.runtime?.files ?? {});
+  return Object.fromEntries(await Promise.all(entries.map(async ([name, file]) => [name, await runtimeFileContent(config, profile, file)])));
 }
 
 /**

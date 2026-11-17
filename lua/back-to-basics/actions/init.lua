@@ -161,19 +161,32 @@ function M.working(messages, command)
   return messages["working_" .. command] or messages.working
 end
 
+---btb's home, where progress and solutions live by default: $XDG_DATA_HOME/btb or ~/.local/share/btb.
+---@param env { XDG_DATA_HOME?: string, HOME?: string }
+---@return string
+function M.btb_home(env)
+  local share = env.XDG_DATA_HOME
+  if not share or share == "" then
+    share = (env.HOME or "") .. "/.local/share"
+  end
+  return share .. "/btb"
+end
+
 ---What the plugin needs from btb.config.json: the language and where solutions live.
 ---@param config table|nil the decoded btb.config.json, nil when there is none
 ---@param root string the back-to-basics folder
+---@param env? { XDG_DATA_HOME?: string, HOME?: string } vim.env when nil
 ---@return { language: string, workspace: string, data_dir: string }
-function M.settings(config, root)
+function M.settings(config, root, env)
   config = config or {}
+  local home = M.btb_home(env or { XDG_DATA_HOME = vim.env.XDG_DATA_HOME, HOME = vim.env.HOME })
   local function absolute(path)
     return path:sub(1, 1) == "/" and path or (root .. "/" .. path)
   end
   return {
     language = config.language or "es",
-    workspace = absolute(config.workspace or "workspace"),
-    data_dir = absolute(config.dataDir or ".btb"),
+    workspace = absolute(config.workspace or (home .. "/workspace")),
+    data_dir = absolute(config.dataDir or (home .. "/data")),
   }
 end
 

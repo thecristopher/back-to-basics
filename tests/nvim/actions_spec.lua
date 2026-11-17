@@ -7,20 +7,32 @@ describe("back-to-basics actions", function()
       assert.are.same({
         language = "en",
         workspace = "/home/inde/btb/dojo",
-        data_dir = "/home/inde/btb/.btb",
+        data_dir = vim.env.HOME .. "/.local/share/btb/data",
       }, settings)
     end)
 
     it("keeps an absolute workspace and defaults to Spanish", function()
-      local settings = actions.settings({ workspace = "/tmp/claire" }, "/home/inde/btb")
-      assert.are.same(
-        { language = "es", workspace = "/tmp/claire", data_dir = "/home/inde/btb/.btb" },
-        settings
+      local settings = actions.settings(
+        { workspace = "/tmp/claire" },
+        "/home/inde/btb",
+        { HOME = "/home/inde" }
       )
+      assert.are.same({
+        language = "es",
+        workspace = "/tmp/claire",
+        data_dir = "/home/inde/.local/share/btb/data",
+      }, settings)
     end)
 
-    it("works without a config file", function()
-      assert.are.equal("/r/workspace", actions.settings(nil, "/r").workspace)
+    it("keeps Claire's solutions in btb's home without a config file", function()
+      local settings = actions.settings(nil, "/r", { HOME = "/home/claire" })
+      assert.are.equal("/home/claire/.local/share/btb/workspace", settings.workspace)
+      assert.are.equal("/home/claire/.local/share/btb/data", settings.data_dir)
+    end)
+
+    it("follows XDG_DATA_HOME when Malenia sets it", function()
+      local env = { XDG_DATA_HOME = "/haligtree/share", HOME = "/home/malenia" }
+      assert.are.equal("/haligtree/share/btb/data", actions.settings(nil, "/r", env).data_dir)
     end)
 
     it("finds the data folder where the config puts it", function()
