@@ -59,7 +59,7 @@ describe("back-to-basics setup", function()
     local file = root .. "/workspace/node/love-note/solution.js"
     vim.fn.mkdir(vim.fs.dirname(file), "p")
     vim.fn.writefile({ "export const love = () => 'Inde';" }, file)
-    btb.setup({ root = root, keys = false, forge_ahead = false })
+    btb.setup({ root = root, workspace = root .. "/workspace", keys = false, forge_ahead = false })
     vim.cmd.edit(file)
     assert.are.equal("node/love-note", vim.b.btb_exercise)
     vim.cmd("bwipeout!")
@@ -74,7 +74,7 @@ describe("back-to-basics setup", function()
     if not vim.uv.fs_symlink(real, link, { dir = true, junction = true }) then
       return pending("this system does not allow symlinks")
     end
-    btb.setup({ root = link, keys = false, forge_ahead = false })
+    btb.setup({ root = link, workspace = link .. "/workspace", keys = false, forge_ahead = false })
     vim.cmd.edit(file)
     assert.are.equal("node/anniversary", vim.b.btb_exercise)
     vim.cmd("bwipeout!")

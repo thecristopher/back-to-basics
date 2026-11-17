@@ -8,6 +8,7 @@ local hint_actions = require("back-to-basics.actions.hint")
 local active = require("back-to-basics.actions.active")
 local cli = require("back-to-basics.cli")
 local lesson = require("back-to-basics.lesson")
+local pause_lesson = require("back-to-basics.pause")
 local library = require("back-to-basics.library")
 local preview = require("back-to-basics.preview")
 local ui = require("back-to-basics.ui")
@@ -277,6 +278,7 @@ local function open_exercise(data)
     return show(data, "back-to-basics")
   end
   M.focus(ui.open_exercise(data))
+  pause_lesson.apply(data.id, winbar_actions.paused_at(data) ~= false)
   M.forge_ahead()
 end
 
@@ -495,6 +497,37 @@ function M.preview(id)
   preview.open(opts, id, notify)
 end
 
+-- the pause answer locks or frees the solution, and a paused clock forgets its last sign of life
+local function pause_answered(paused)
+  return function(data)
+    if data.error then
+      return notify(data.error, vim.log.levels.WARN)
+    end
+    pause_lesson.apply(data.id, paused)
+    active.pause(clock_of(data.id))
+    announce(data, actions.text_lines(data))
+  end
+end
+
+---Pauses the lesson, the current buffer's exercise by default: the clock stops and the solution
+---goes read only. Asked again while paused, it resumes.
+---@param id? string
+function M.pause(id)
+  if pause_lesson.current() then
+    return M.resume()
+  end
+  id = id or current_id()
+  if not id then
+    return notify(opts.messages.not_exercise, vim.log.levels.WARN)
+  end
+  run({ "pause", id }, pause_answered(true))
+end
+
+---Resumes the paused lesson, the time it stood still never counts.
+function M.resume()
+  run({ "resume" }, pause_answered(false))
+end
+
 ---Opens your solution beside the reference as a diff, the current buffer's exercise by default.
 ---@param id? string
 function M.compare(id)
@@ -542,6 +575,12 @@ M.subcommands = {
   compare = function(args)
     M.compare(args[1])
   end,
+  pause = function(args)
+    M.pause(args[1])
+  end,
+  resume = function()
+    M.resume()
+  end,
   preview = function(args)
     M.preview(args[1])
   end,
@@ -581,6 +620,7 @@ local KEYS = {
   { "T", "test", "Try the tests without counting an attempt" },
   { "h", "hint", "Next hint" },
   { "x", "skip", "Skip for today" },
+  { "z", "pause", "Pause or resume the lesson" },
   { "v", "reveal", "Reveal the reference" },
   { "d", "compare", "Your solution beside the reference" },
   { "o", "preview", "See the React component in the browser" },
@@ -642,7 +682,7 @@ local function set_autocmds()
       group = group,
       callback = function(event)
         local id = vim.b[event.buf].btb_exercise
-        if id and vim.b[event.buf].btb_redo ~= true then
+        if id and vim.b[event.buf].btb_redo ~= true and not pause_lesson.holds(event.buf) then
           local edited = event.event == "TextChanged" or event.event == "TextChangedI"
           active.touch(clock_of(id), vim.uv.now() / 1000, edited)
         end

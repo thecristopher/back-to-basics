@@ -59,6 +59,7 @@ export function applyPass(record, { outcome, seconds, today }) {
   record.bestSeconds = fastest(record.bestSeconds, seconds);
   record.round = freshRound();
   record.startedAt = null;
+  delete record.pausedMs;
 }
 
 /**
@@ -71,6 +72,7 @@ export function applySkip(record, today) {
   record.skips += 1;
   record.round = freshRound();
   record.startedAt = null;
+  delete record.pausedMs;
 }
 
 /**

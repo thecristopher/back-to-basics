@@ -5,6 +5,7 @@ import { isUnfinished, nextPending, slotFor, undrawnSlotTrack } from "../actions
 import { daySummary } from "../actions/recap.js";
 import { conceptTitle } from "../actions/graph.js";
 import { noteResult, standingOf } from "../actions/mastery.js";
+import { roundSeconds } from "../actions/pause.js";
 import { applyPass, applySkip, awardXp, noteActivity } from "../actions/record.js";
 import { likelyMistakes, nudgeFor } from "../actions/mutants.js";
 import { lastRun, partialFailures, runEntry, runsThisRound, trippedThisRound } from "../actions/runs.js";
@@ -102,10 +103,6 @@ export async function start(ctx, [query]) {
   return openExercise(ctx, exercise);
 }
 
-function elapsedSeconds(startedAt) {
-  return startedAt ? Math.round((Date.now() - startedAt) / 1000) : null;
-}
-
 function afterFailLine(t, data) {
   if (data.redo) return t.afterFailRedo(data.id);
   if (data.placement) return t.afterFailPlacement;
@@ -176,7 +173,7 @@ function redoPassed(ctx, exercise, result) {
   delete ctx.state.redos[exercise.id];
   const startedAt = ctx.state.redoStarts?.[exercise.id];
   if (ctx.state.redoStarts) delete ctx.state.redoStarts[exercise.id];
-  const seconds = elapsedSeconds(startedAt);
+  const seconds = roundSeconds(startedAt, 0, Date.now());
   const ghostSeconds = ctx.state.exercises[exercise.id]?.bestSeconds ?? null;
   const ghost = ghostVerdict(seconds, ghostSeconds);
   const data = { id: exercise.id, title: exercise.title, ok: true, redo: true, passed: result.passed, total: result.tests.length, seconds, ghostSeconds, ghost };
@@ -265,7 +262,7 @@ async function passed(ctx, exercise, record, result) {
   const levelBefore = levelNow(ctx, track)?.level ?? null;
   const round = { ...record.round };
   const outcome = roundOutcome(round, ctx.config.cleanMaxFailures);
-  const seconds = elapsedSeconds(record.startedAt);
+  const seconds = roundSeconds(record.startedAt, record.pausedMs, Date.now());
   const evidence = await roundEvidence(ctx, exercise, record.startedAt);
   const xp = xpFor({ level: Math.max(exercise.level, exercise.difficulty ?? 1), outcome, hints: round.hints });
   applyPass(record, { outcome, seconds, today: ctx.today });

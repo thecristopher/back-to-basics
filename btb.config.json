@@ -10,6 +10,7 @@
   "persona": "claire",
   "fromBasics": true,
   "placementSize": 3,
+  "sandbox": "auto",
   "theme": "tú eres el protagonista y se te habla de tú, con un toque romántico suave solo entre tú y tu coach (notas de amor, citas, aniversarios, playlists compartidas), dentro del mundo de su franquicia: sus lugares, objetos y misiones.",
   "goals": [
     { "title": "Node de vuelta a la base", "track": "node", "level": 3, "by": "2026-12-15" },

@@ -2,7 +2,7 @@ import { join } from "node:path";
 import { exerciseLine, speech } from "../actions/moments.js";
 import { chooseLine, isPersonaName, linesFor, momentOf, personaProblems } from "../actions/persona.js";
 import { personaPrompt } from "../actions/prompts/persona.js";
-import { borrowedWorld, summonedPersona } from "../actions/summon.js";
+import { bondChanged, borrowedWorld, summonedPersona } from "../actions/summon.js";
 import { askJson } from "./claude.js";
 import { listJsonNames, readJsonIfExists, writeJson } from "./files.js";
 import { onlyOnce } from "./lock.js";
@@ -80,7 +80,10 @@ async function draftSummon(config, { id, character, franchise, bond }, log) {
  */
 export async function summonPersona(config, who, log) {
   const lock = join(config.dataDir, "personas", `${who.id}.lock`);
-  const ready = () => loadPersona(config, who.id);
+  const ready = async () => {
+    const persona = await loadPersona(config, who.id);
+    return persona && !bondChanged(persona, who.bond) ? persona : null;
+  };
   return onlyOnce(lock, () => draftSummon(config, who, log), ready, config.claude.timeoutMs);
 }
 

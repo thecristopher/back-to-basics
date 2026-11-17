@@ -1,6 +1,6 @@
 import { existsSync } from "node:fs";
-import { mkdir, rename } from "node:fs/promises";
-import { join } from "node:path";
+import { cp, mkdir, rename, rm } from "node:fs/promises";
+import { dirname, join } from "node:path";
 import { readJsonIfExists } from "./files.js";
 
 /** The progress model this version of btb reads. */
@@ -31,4 +31,45 @@ export async function archiveOldModel(config, now = new Date()) {
   }
   if (existsSync(config.workspaceDir)) await rename(config.workspaceDir, join(archive, "workspace"));
   return archive;
+}
+
+// a different disk cannot take a rename, the folder is copied and the original removed instead
+async function move(from, to) {
+  await mkdir(dirname(to), { recursive: true });
+  try {
+    await rename(from, to);
+  } catch (error) {
+    if (error.code !== "EXDEV") throw error;
+    await cp(from, to, { recursive: true });
+    await rm(from, { recursive: true, force: true });
+  }
+}
+
+async function adoptOne(from, to) {
+  if (!from || !existsSync(from) || existsSync(to)) return false;
+  try {
+    await move(from, to);
+    return true;
+  } catch (error) {
+    // another btb started at the same time already moved it
+    if (error.code === "ENOENT") return false;
+    throw error;
+  }
+}
+
+/**
+ * Moves the progress and solutions that lived inside the repo to btb's home, once. Installed
+ * runtimes stay behind: a Python venv keeps absolute paths and breaks when moved, so it is
+ * installed again the next time it is needed.
+ * @param {{ dataDir: string, workspaceDir: string, legacy?: { dataDir: string | null, workspaceDir: string | null } }} config
+ * @returns {Promise<string[]>} the folders that moved
+ */
+export async function adoptRepoData(config) {
+  const moved = [];
+  if (await adoptOne(config.legacy?.dataDir, config.dataDir)) {
+    await rm(join(config.dataDir, "runtimes"), { recursive: true, force: true });
+    moved.push(config.dataDir);
+  }
+  if (await adoptOne(config.legacy?.workspaceDir, config.workspaceDir)) moved.push(config.workspaceDir);
+  return moved;
 }

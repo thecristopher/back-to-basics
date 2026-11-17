@@ -4,7 +4,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { test } from "node:test";
 import { personaPrompt } from "../src/actions/prompts/persona.js";
-import { borrowedWorld, summonedPersona } from "../src/actions/summon.js";
+import { bondChanged, borrowedWorld, summonedPersona } from "../src/actions/summon.js";
 import { onlyOnce } from "../src/lib/lock.js";
 
 const claire = {
@@ -56,6 +56,27 @@ test("summoning Inde as Malenia with a bond keeps the love and drops the ally ru
   assert.match(prompt, /Who they are to the learner: Inde Navarrete, the learner's wife/);
   assert.doesNotMatch(prompt, /never a romance/);
   assert.match(prompt, /"lore":\["scene","scene","scene"\]/);
+});
+
+test("Inde playing Malenia lets the role lead every line and the bond only slip through", () => {
+  const bond = "Inde Navarrete, the learner's wife, cosplaying Malenia.";
+  const prompt = personaPrompt({ description: "Malenia", language: "es", summon: { character: "Malenia", franchise: "Inde", bond, partners: [] } });
+  assert.match(prompt, /Malenia's personality leads every line/);
+  assert.match(prompt, /only slips out now and then in a small detail, never as the main note/);
+});
+
+test("a coach summoned with another bond counts as changed", () => {
+  const persona = { summoned: { franchise: "Inde", bond: "his wife" } };
+  assert.equal(bondChanged(persona, "his wife, playing it cool"), true);
+  assert.equal(bondChanged(persona, "his wife"), false);
+});
+
+test("Leon summoned with no bond stays the same when none is asked", () => {
+  assert.equal(bondChanged({ summoned: { franchise: "Resident Evil" } }, undefined), false);
+});
+
+test("Claire, never summoned, is never changed by a bond", () => {
+  assert.equal(bondChanged({ name: "Claire Redfield", partner: true }, "anything"), false);
 });
 
 test("a summoned coach with a bond keeps it beside the franchise", () => {

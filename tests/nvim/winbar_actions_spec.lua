@@ -56,13 +56,17 @@ describe("back-to-basics winbar actions", function()
   end)
 
   describe("fields", function()
-    it("takes the title, level and clock from an opened exercise", function()
+    it("takes the title, level, clock and pause from an opened exercise", function()
       local data =
         { id = "x", path = "/w/x.js", title = "Haligtree", level = 3, startedAt = 7, hintsLeft = 2 }
-      assert.are.same(
-        { title = "Haligtree", level = 3, startedAt = 7, hintsLeft = 2 },
-        winbar.fields(data)
-      )
+      assert.are.same({
+        title = "Haligtree",
+        level = 3,
+        startedAt = 7,
+        hintsLeft = 2,
+        pausedMs = 0,
+        pausedAt = false,
+      }, winbar.fields(data))
     end)
 
     it("takes the ghost and the hint price from an opened redo", function()
@@ -85,6 +89,38 @@ describe("back-to-basics winbar actions", function()
 
     it("ignores an answer about no exercise", function()
       assert.is_nil(winbar.fields({ xp = 40 }))
+    end)
+  end)
+
+  describe("paused clock", function()
+    local letter =
+      { id = "node/love-letter", title = "Love letter for Inde", startedAt = 0, pausedMs = 60000 }
+
+    it("leaves the time Claire paused out of the clock", function()
+      assert.are.equal(9 * 60000, winbar.clock_ms(letter, 10 * 60000))
+    end)
+
+    it("stands still while Malenia's lesson is paused", function()
+      local paused = vim.tbl_extend("force", letter, { pausedAt = 5 * 60000 })
+      assert.are.equal(4 * 60000, winbar.clock_ms(paused, 30 * 60000))
+    end)
+
+    it("says the lesson is paused in the winbar", function()
+      local paused = vim.tbl_extend("force", letter, { pausedAt = 5 * 60000 })
+      local text = winbar.text(paused, 30 * 60000, messages, false)
+      assert.truthy(text:find("⏸ 4 min · paused", 1, true))
+    end)
+
+    it("takes the pause from btb's answer and frees it on resume", function()
+      local fields = winbar.fields({ id = "node/love-letter", paused = true, pausedAt = 1000 })
+      assert.are.equal(1000, fields.pausedAt)
+      fields = winbar.fields({ id = "node/love-letter", paused = false, pausedMs = 7000 })
+      assert.are.equal(false, fields.pausedAt)
+      assert.are.equal(7000, fields.pausedMs)
+    end)
+
+    it("reads json null as running", function()
+      assert.are.equal(false, winbar.paused_at({ pausedAt = vim.NIL }))
     end)
   end)
 

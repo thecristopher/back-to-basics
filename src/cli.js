@@ -4,6 +4,7 @@ import { parseArgs } from "./actions/args.js";
 import { debrief, greet, prepare } from "./commands/day.js";
 import { brief, lesson, lessons, redo } from "./commands/lessons.js";
 import { forge, learn, path, setup } from "./commands/path.js";
+import { blockedByPause, pause, resume } from "./commands/pause.js";
 import { persona } from "./commands/persona.js";
 import { placement } from "./commands/placement.js";
 import { hint, next, reveal, skip, start, submit, test } from "./commands/practice.js";
@@ -15,16 +16,17 @@ import { loadCatalog } from "./lib/catalog.js";
 import { loadConfig } from "./lib/config.js";
 import { createT } from "./lib/i18n.js";
 import { coachName } from "./actions/persona.js";
+import { bondChanged } from "./actions/summon.js";
 import { loadPersona, speak, summonPersona } from "./lib/personas.js";
 import { loadState, saveState } from "./lib/state.js";
 import { loadTracks } from "./lib/tracks.js";
-import { archiveOldModel } from "./lib/upgrade.js";
+import { adoptRepoData, archiveOldModel } from "./lib/upgrade.js";
 import { toDay } from "./utils/dates.js";
 import { createPaint } from "./utils/text.js";
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
 
-const COMMANDS = { today, next, start, submit, test, hint, skip, reveal, review, placement, path, forge, learn, setup, status, plan, list, persona, lesson, lessons, brief, redo, recall, greet, debrief, prepare, preview };
+const COMMANDS = { today, next, start, submit, test, hint, skip, reveal, review, placement, path, forge, learn, setup, status, plan, list, persona, lesson, lessons, brief, redo, recall, greet, debrief, prepare, preview, pause, resume };
 
 // --persona=none silences the one in btb.config.json for a single run, and --character with
 // --franchise summons a character who has no persona yet as the coach of the day, --bond saying
@@ -36,11 +38,14 @@ function bondOf(flags) {
 async function personaFor(config, t, flags) {
   const name = typeof flags.persona === "string" ? flags.persona : config.persona;
   if (!name || name === "none") return null;
+  const summoning = typeof flags.character === "string" && typeof flags.franchise === "string";
+  const bond = bondOf(flags);
   const found = await loadPersona(config, name);
-  if (found) return found;
-  if (typeof flags.character === "string" && typeof flags.franchise === "string") {
+  // a coach summoned with another bond is summoned again, so who she is to the learner stays current
+  if (found && !(summoning && bondChanged(found, bond))) return found;
+  if (summoning) {
     const log = (character) => process.stderr.write(`${t.summoning(character)}\n`);
-    const summoned = await summonPersona(config, { id: name, character: flags.character, franchise: flags.franchise, bond: bondOf(flags) }, log);
+    const summoned = await summonPersona(config, { id: name, character: flags.character, franchise: flags.franchise, bond }, log);
     if (summoned) return summoned;
   }
   throw new Error(t.unknownPersona(name));
@@ -72,6 +77,9 @@ async function createContext(config, t, flags) {
 
 // these run in the background from editors while the learner keeps practicing, so they never write progress.
 // preview runs for as long as the browser is open, saving at the end would undo every submit meanwhile
+// a paused lesson keeps its clock still, so nothing that counts the round runs until btb resume
+const PAUSE_BLOCKED = new Set(["submit", "test", "hint", "skip"]);
+
 const READS_PROGRESS_ONLY = new Set(["forge", "brief", "lesson", "lessons", "test", "recall", "greet", "debrief", "prepare", "preview"]);
 
 function print(report, json) {
@@ -84,13 +92,15 @@ async function run(argv) {
   const { command, args, flags } = parseArgs(argv);
   const config = await loadConfig(ROOT);
   const t = createT(config.language);
+  for (const dir of await adoptRepoData(config)) process.stderr.write(`${t.movedHome(dir)}\n`);
   if (command === "help" || flags.help) return { text: [t.help] };
   const handler = COMMANDS[command];
   if (!handler) return { code: 1, data: { error: t.unknownCommand(command) }, text: [t.unknownCommand(command)] };
   const ctx = await createContext(config, t, flags);
   leaveLockedTracks(ctx);
   try {
-    return speak(ctx, command, await handler(ctx, args, flags));
+    const blocked = PAUSE_BLOCKED.has(command) ? blockedByPause(ctx) : null;
+    return speak(ctx, command, blocked ?? (await handler(ctx, args, flags)));
   } finally {
     // whatever was answered before an error is kept
     if (!READS_PROGRESS_ONLY.has(command)) await saveState(config.statePath, ctx.state);

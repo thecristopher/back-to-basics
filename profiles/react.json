@@ -38,6 +38,7 @@
       ]
     ]
   },
+  "sandbox": { "image": "docker.io/library/node:24-slim" },
   "check": [
     [
       "npm",

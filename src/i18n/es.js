@@ -13,6 +13,8 @@ Práctica
   hint [id]             revela la siguiente pista, cuesta XP
   preview [id]          React: ve tu componente en el navegador, se recarga al guardar. --again lo reescribe
   skip [id]             lo dejas por hoy y regresa mañana
+  pause [id]            pausa la lección: el reloj se detiene hasta btb resume
+  resume                sigue la lección pausada, el tiempo en pausa no cuenta
   reveal [id]           la solución de referencia, solo después de resolver o saltar
   review [id]           Claude califica tu solución, solo después de resolver. --again para otra
   greet                 tu coach te saluda con lo de ayer y lo de hoy. --again para otro
@@ -229,5 +231,11 @@ Coach
   redoGhost: (verdict, time, ghost) =>
     ({ ahead: `Le ganaste a tu fantasma: ${time} contra ${ghost}.`, behind: `Tu fantasma sigue adelante: ${time} contra ${ghost}.`, tied: `Empate con tu fantasma: ${time}.` })[verdict],
   afterFailRedo: (id) => `Ajusta y corre btb submit ${id} --redo otra vez.`,
+  paused: (title) => `⏸ ${title} en pausa. El reloj no corre. Cuando vuelvas: btb resume`,
+  alreadyPaused: (title) => `${title} ya está en pausa. Para seguir: btb resume`,
+  resumed: (title, time) => `▶ Seguimos con ${title}. Estuvo en pausa ${time}.`,
+  notPaused: "No hay nada en pausa.",
+  movedHome: (dir) => `Tu avance ya no vive en el repo, lo mudé a ${dir}.`,
+  pausedFirst: (title) => `${title} está en pausa. Primero btb resume.`,
   finishFirst: "Primero termina este, o ríndete con btb skip. Después seguimos con el que sigue.",
 };
