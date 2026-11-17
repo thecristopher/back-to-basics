@@ -38,6 +38,9 @@ M.MESSAGES = {
     library_keys = "<CR> coach · l lección · o abrir · s mía · R revisión · v referencia · r otra vez",
     clean = "Limpio",
     struggled = "Con batalla",
+    what_you_learned = "Lo que aprendiste",
+    closing_prompt = "Para cerrar, con tus palabras",
+    level_up = "▲ ¡Subiste de nivel! Nivel %d superado ▲",
     winbar_level = "nivel %d",
     winbar_paused = "en pausa",
     winbar_hints = "%d pistas",
@@ -95,6 +98,9 @@ M.MESSAGES = {
     library_keys = "<CR> coach · l lesson · o open · s mine · R review · v reference · r redo",
     clean = "Clean",
     struggled = "Hard fought",
+    what_you_learned = "What you learned",
+    closing_prompt = "To close, in your own words",
+    level_up = "▲ Level up! Level %d passed ▲",
     winbar_level = "level %d",
     winbar_paused = "paused",
     winbar_hints = "%d hints",
@@ -301,14 +307,26 @@ function M.pass_line(messages, data)
   return ("✓ %s · %s · +%d XP"):format(data.title or data.id, outcome, data.xp or 0)
 end
 
----The notification of a pass: the XP it paid and, when the coach speaks here, their comment under it.
+---The pass line with what the lesson taught under it, when it taught something.
+---@param messages table<string, string>
+---@param data table btb submit --json of a pass
+---@return string
+local function pass_summary(messages, data)
+  local summary = M.pass_line(messages, data)
+  if type(data.takeaway) ~= "string" or data.takeaway == "" then
+    return summary
+  end
+  return ("%s\n\n%s: %s"):format(summary, messages.what_you_learned, data.takeaway)
+end
+
+---The notification of a pass: the XP it paid, what the lesson taught and, when the coach speaks here, their comment under it.
 ---@param messages table<string, string>
 ---@param data table btb submit --json of a pass
 ---@param with_line boolean the coach's line goes in the notice, not on a stage or a toast
 ---@return { title: string, message: string }
 function M.pass_notice(messages, data, with_line)
   local persona = data.persona
-  local summary = M.pass_line(messages, data)
+  local summary = pass_summary(messages, data)
   if not with_line or not persona or not persona.line then
     return { title = "back-to-basics", message = summary }
   end
@@ -329,7 +347,7 @@ end
 
 ---Payload of the User BtbResult event, so the rest of the config can react to a submit.
 ---@param data table btb submit --json
----@return { id: string, title: string|nil, ok: boolean, outcome: string|nil, xp: number, level_up: number|nil, mastered: boolean, placement_finished: boolean, redo: boolean, day: table|nil }
+---@return { id: string, title: string|nil, ok: boolean, outcome: string|nil, xp: number, takeaway: string|nil, level_up: number|nil, mastered: boolean, placement_finished: boolean, redo: boolean, day: table|nil }
 function M.event_data(data)
   local placement = type(data.placement) == "table" and data.placement or {}
   return {
@@ -340,6 +358,7 @@ function M.event_data(data)
     xp = data.xp or 0,
     level_up = data.levelUp,
     mastered = data.mastered == true,
+    takeaway = data.takeaway,
     placement_finished = placement.finished == true,
     redo = data.redo == true,
     -- the pass that ends the day carries its summary, so the config can close the day its own way

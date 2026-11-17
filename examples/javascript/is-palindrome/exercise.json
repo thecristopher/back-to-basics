@@ -12,6 +12,7 @@
     "Una expresión regular como /[^a-z0-9]/g te ayuda a quitar lo que sobra.",
     "Compara el texto limpio con su reverso, o recórrelo con un índice desde cada orilla."
   ],
+  "takeaway": "Dos índices que caminan desde las orillas hacia el centro comparan un texto contra sí mismo sin copiarlo ni voltearlo. Limpia el texto antes de comparar.",
   "files": {
     "solution": "solution.js",
     "test": "solution.test.js"

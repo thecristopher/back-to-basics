@@ -49,6 +49,22 @@ export function pickFeatured(faces, lore, random = Math.random) {
   return drawFrom(faces.filter((face) => lore[face]?.length > 0), 1, random)[0] ?? null;
 }
 
+// half the exercises of a coach with guests bring one of them in, so the visit stays a surprise
+const GUEST_CHANCE = 0.5;
+
+/**
+ * The guest who drops into one exercise, null on most of them or when the coach has none.
+ * @param {Record<string, string> | undefined} guests name and what they bring, from relations.json
+ * @param {() => number} [random] returns [0, 1)
+ * @returns {{ name: string, note: string } | null}
+ */
+export function pickGuest(guests, random = Math.random) {
+  const names = Object.keys(guests ?? {});
+  if (names.length === 0 || random() >= GUEST_CHANCE) return null;
+  const name = drawFrom(names, 1, random)[0];
+  return { name, note: guests[name] };
+}
+
 /**
  * The cast of one exercise. A persona with a world casts it alone: she coaches, the learner's partner
  * when she is one, and the supporting faces, places and scenes all come from her franchise. One of
@@ -56,7 +72,7 @@ export function pickFeatured(faces, lore, random = Math.random) {
  * @param {{ name: string, voice?: string, partner?: boolean, world?: { franchise: string, supporting?: string[], places?: string[], lore?: Record<string, string[]> } } | null} persona
  * @param {{ leads?: string[], supporting?: string[] } | null} cast from btb.config.json
  * @param {() => number} [random] returns [0, 1)
- * @returns {{ leads: string[], supporting: string[], coach?: string, partner?: string, voice?: string, bond?: string, franchise?: string, places?: string[], featured?: string | null, scenes?: string[] } | null}
+ * @returns {{ leads: string[], supporting: string[], coach?: string, partner?: string, voice?: string, bond?: string, franchise?: string, places?: string[], featured?: string | null, scenes?: string[], guest?: { name: string, note: string } | null } | null}
  */
 export function castFor(persona, cast, random = Math.random) {
   const world = persona?.world;
@@ -74,6 +90,7 @@ export function castFor(persona, cast, random = Math.random) {
     places: world.places ?? [],
     featured,
     scenes: featured ? drawFrom(lore[featured], 3, random) : [],
+    guest: pickGuest(persona.guests, random),
   };
 }
 
@@ -102,14 +119,26 @@ function bondLine(cast) {
   return `- ${cast.coach} coaches the learner today as an ally, true to who they are in the games. The learner is the protagonist, spoken to as you. There is no romance with ${cast.coach} or anyone else in this exercise, whatever the theme says.`;
 }
 
+// a guest is the one face allowed from outside the world, and the coach reacts to them in character
+function guestLines(cast) {
+  if (!cast.guest) return [];
+  const { name, note } = cast.guest;
+  return [
+    `- ${name} drops into this exercise as a guest, the one character allowed from outside ${cast.franchise}, in a small moment of the readme or the test data, never as the lead: ${note}`,
+    `- ${cast.coach} notices and reacts in their own voice, without leaving their role.`,
+  ];
+}
+
 function worldLines(cast) {
   if (!cast.franchise) return [];
   const places = cast.places.length > 0 ? ` Places and things to draw from: ${cast.places.join(", ")}.` : "";
+  const besides = cast.guest ? `, besides ${cast.guest.name}` : "";
   return [
     ...sceneLines(cast),
     ...(cast.bond ? roleLines(cast) : [bondLine(cast)]),
     "- Supporting characters show up as friends, allies, rivals or coworkers, never in a romance.",
-    `- Every character, place and item comes from ${cast.franchise} only, never from another franchise.${places}`,
+    ...guestLines(cast),
+    `- Every character, place and item comes from ${cast.franchise} only, never from another franchise${besides}.${places}`,
   ];
 }
 

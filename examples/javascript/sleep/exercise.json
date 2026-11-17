@@ -12,6 +12,7 @@
     "setTimeout llama una función después de ms milisegundos.",
     "Pásale resolve directo a setTimeout."
   ],
+  "takeaway": "Envolver una API de callbacks en new Promise y llamar resolve dentro del callback la vuelve usable con await.",
   "files": {
     "solution": "solution.js",
     "test": "solution.test.js"

@@ -34,6 +34,8 @@ M.defaults = {
   auto_advance = true,
   -- how long the pass gets on screen before the coach takes the stage with what comes next
   advance_ms = 1500,
+  -- a pass asks the question that closes its lesson and the coach answers it, false goes straight on
+  close_lesson = true,
   -- how long the pass notice with the XP and the coach's comment stays on screen
   notice_ms = 7000,
   -- forge the next new exercise in the background, so next never waits on Claude, and have the
@@ -329,10 +331,22 @@ local function passed(data, after)
     return announce(data, actions.text_lines(data))
   end
   notify_pass(data, after)
-  if after then
-    return lesson.advance(host, data, opts.advance_ms)
+  -- once the coach answered on the stage the pass was seen, so what comes next opens right away
+  local function carry_on(staged)
+    if after then
+      return lesson.advance(host, data, staged and 0 or opts.advance_ms)
+    end
+    M.forge_ahead()
   end
-  M.forge_ahead()
+  local function celebrate(closed)
+    lesson.celebrate(host, data, function(celebrated)
+      carry_on(closed or celebrated)
+    end)
+  end
+  if not opts.close_lesson then
+    return celebrate(false)
+  end
+  lesson.close(host, data, celebrate)
 end
 
 -- the failing tests go on their lines and an onsite fight reaches the config, whatever the run was

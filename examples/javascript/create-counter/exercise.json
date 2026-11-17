@@ -12,6 +12,7 @@
     "Regresa un objeto con cuatro funciones que leen y cambian esa misma variable.",
     "reset necesita saber el valor inicial, guárdalo también."
   ],
+  "takeaway": "Una función recuerda las variables del lugar donde nació. Ese closure te da estado privado: nadie de afuera lo toca si no le das una función para hacerlo.",
   "files": {
     "solution": "solution.js",
     "test": "solution.test.js"

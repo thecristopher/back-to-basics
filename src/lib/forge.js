@@ -93,6 +93,7 @@ async function saveExercise(ctx, track, draft, meta) {
     minutes: Math.round(draft.minutes),
     concepts: draft.concepts.map(String),
     hints: draft.hints.map(withoutEmDashes),
+    takeaway: withoutEmDashes(draft.takeaway),
     example: draft.example,
     format: meta.format?.bugHunt ? "debug" : "build",
     ...(meta.format?.complexity ? { declaresComplexity: true } : {}),

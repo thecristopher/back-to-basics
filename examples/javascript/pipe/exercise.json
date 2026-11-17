@@ -12,6 +12,7 @@
     "pipe regresa una función nueva que recibe el valor inicial.",
     "fns.reduce((value, fn) => fn(value), input) pasa el resultado de una a la siguiente."
   ],
+  "takeaway": "reduce carga un acumulador de paso en paso. Si el acumulador es un valor y cada elemento una función, encadenas funciones de izquierda a derecha.",
   "files": {
     "solution": "solution.js",
     "test": "solution.test.js"

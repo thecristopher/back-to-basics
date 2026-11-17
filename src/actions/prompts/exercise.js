@@ -5,7 +5,13 @@ import { MOMENTS_SCHEMA, momentGuide } from "./moments.js";
 
 const DRAFT =
   '"slug":"kebab-case-name","title":"...","difficulty":1,"minutes":10,' +
-  '"concepts":["..."],"hints":["..."],"example":{"call":"the call of the worked example","result":"its result"},"readme":"markdown statement that explains the problem","lesson":"markdown lesson on the concept","starter":"code","reference":"code","test":"code"';
+  '"concepts":["..."],"hints":["..."],"example":{"call":"the call of the worked example","result":"its result"},"readme":"markdown statement that explains the problem","lesson":"markdown lesson on the concept","takeaway":"the one idea the learner keeps","starter":"code","reference":"code","test":"code"';
+
+/**
+ * What the card that closes a lesson teaches: one real idea, not a recap of the exercise.
+ */
+export const TAKEAWAY_RULE =
+  '- "takeaway" is what the lesson leaves the learner once the tests pass, shown on the card that closes it: 1 or 2 plain sentences in the prose language with the real idea worth keeping (the rule, the why, or the trap to avoid), true beyond this exercise. Never a recap of the story, never praise, never the solution\'s code.';
 
 /**
  * How the readme explains the problem: a patient walk through, never a cryptic spec.
@@ -275,6 +281,7 @@ export function exercisePrompt(input) {
     EXAMPLE_RULE,
     ...HINT_RULES,
     "- The lesson teaches the concept behind the exercise so the learner can come back to it later: what it is, a small example on a different problem, the typical mistakes and one question to think about. It never solves the exercise.",
+    TAKEAWAY_RULE,
     theme ? `- Test data and examples: ${theme}` : null,
     ...castLines(input.cast ?? null),
     ...momentLines(input.cast),

@@ -12,6 +12,7 @@
     "Si el grupo aún no existe en el objeto, créalo como arreglo vacío antes de hacer push.",
     "(groups[key] ??= []).push(item) crea el grupo y agrega en una línea."
   ],
+  "takeaway": "Recibir una función como parámetro separa el recorrido del criterio: tu código camina la lista y quien llama decide cómo se agrupa.",
   "files": {
     "solution": "solution.js",
     "test": "solution.test.js"

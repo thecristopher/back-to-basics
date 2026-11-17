@@ -34,3 +34,9 @@ test("the moments prompt asks Claire for her line at each moment of this exercis
   assert.match(prompt, /Never a line that fits any exercise/);
   assert.match(prompt, /"passed_struggled":"\.\.\."\}/);
 });
+
+test("answered right after the pass, the recall knows Inde just solved it", () => {
+  const prompt = recallPrompt({ title: "Cartas de amor", question: "¿Qué recuerda la carta?", answer: "Su scope", lesson, language: "es", closing: true });
+  assert.match(prompt, /They just made the tests of the exercise below pass/);
+  assert.doesNotMatch(prompt, /on an earlier day/);
+});

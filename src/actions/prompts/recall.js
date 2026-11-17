@@ -7,14 +7,18 @@ function personaLines(persona) {
 
 /**
  * The prompt that has the coach answer what the learner remembered of an exercise solved on an earlier day.
- * @param {{ title: string, question: string, answer: string, lesson: string, language: string, persona?: { name: string, voice: string } | null }} input
+ * @param {{ title: string, question: string, answer: string, lesson: string, language: string, persona?: { name: string, voice: string } | null, closing?: boolean }} input
+ *   closing when they answer right after passing, instead of on a later day
  * @returns {string}
  */
-export function recallPrompt({ title, question, answer, lesson, language, persona }) {
+export function recallPrompt({ title, question, answer, lesson, language, persona, closing }) {
+  const when = closing
+    ? "They just made the tests of the exercise below pass. To close the lesson they answered, in their own words, the question that ends it."
+    : "They solved the exercise below on an earlier day. Before today's practice they answered, from memory, the question that closes its lesson.";
   return [
     "BTB_TASK: recall",
     "You coach someone rebuilding their programming fundamentals by hand, with no AI while solving.",
-    "They solved the exercise below on an earlier day. Before today's practice they answered, from memory, the question that closes its lesson.",
+    when,
     "Give them feedback on that answer, judged against the lesson:",
     "- What they got right, what is missing or wrong, and the key idea in one line.",
     "- A wrong answer is called wrong, kindly. A right one is not padded.",

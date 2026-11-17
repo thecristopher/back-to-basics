@@ -12,6 +12,7 @@
     "Cuenta con un dict recorriendo las palabras ya limpias: `counts[word] = counts.get(word, 0) + 1`. Para limpiar, `text.lower()` y quedarte solo con letras y espacios antes de `split()`.",
     "Para ordenar usa `sorted(counts.items(), key=lambda pair: (-pair[1], pair[0]))` y corta con `[:n]`. El signo menos pone primero las más frecuentes y la palabra desempata en orden alfabético."
   ],
+  "takeaway": "Un dict con get(llave, 0) cuenta sin KeyError, y sorted con key ordena por lo que tú digas. Juntos responden cualquier pregunta de lo más frecuente.",
   "files": {
     "solution": "solution.py",
     "test": "test_solution.py"

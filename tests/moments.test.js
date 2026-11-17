@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { cleanMoments, EXERCISE_MOMENTS, exerciseLine, lacksMoments, speech, withMoments } from "../src/actions/moments.js";
+import { cleanMoments, EXERCISE_MOMENTS, exerciseLine, lacksMoments, levelUpLine, speech, withMoments } from "../src/actions/moments.js";
 
 function linesOf(prefix) {
   return Object.fromEntries(EXERCISE_MOMENTS.map((moment) => [moment, `${prefix} ${moment}`]));
@@ -50,7 +50,18 @@ test("a line the round cannot fill, another coach or a greeting has no exercise 
   assert.equal(exerciseLine(herbs, "claire", "greet", {}), null);
 });
 
-test("the exercise's line speaks alone, a level up or the end of the day add theirs after it", () => {
+test("a level up keeps Claire's line apart from the one about the exercise", () => {
+  assert.equal(speech("level_up", "Hierbas limpias.", "Nivel 2, Inde."), "Hierbas limpias.");
+  assert.equal(levelUpLine("level_up", "Hierbas limpias.", "Nivel 2, Inde."), "Nivel 2, Inde.");
+});
+
+test("a level up with no exercise line says its own line once, not twice", () => {
+  assert.equal(speech("level_up", null, "Nivel 2, Inde."), "Nivel 2, Inde.");
+  assert.equal(levelUpLine("level_up", null, "Nivel 2, Inde."), null);
+  assert.equal(levelUpLine("passed_clean", "Hierbas limpias.", "Bien."), null);
+});
+
+test("the exercise's line speaks alone, the end of the day adds its line after it", () => {
   assert.equal(speech("passed_clean", "Hierbas limpias.", "Ese es mi chico."), "Hierbas limpias.");
   assert.equal(speech("debrief", "Hierbas limpias.", "Súbete a la moto."), "Hierbas limpias. Súbete a la moto.");
   assert.equal(speech("ready", null, "Lee todo."), "Lee todo.");

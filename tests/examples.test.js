@@ -43,6 +43,7 @@ for (const id of await listDirs(join(ROOT, "examples"))) {
       });
 
     test(`${id}/${slug} has what Claude is asked to write`, async () => {
+      assert.ok(meta.takeaway?.trim(), "takeaway is missing");
       assert.ok(meta.title && meta.minutes > 0 && meta.hints.length > 0 && meta.concepts.length > 0);
       assert.ok((await readFile(files.lesson, "utf8")).trim().length > 0, "lesson.md is missing");
     });

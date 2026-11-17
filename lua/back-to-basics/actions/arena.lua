@@ -113,6 +113,38 @@ function M.recall_text(answers, messages)
   return messages.recall_header .. "\n\n" .. table.concat(blocks, "\n\n")
 end
 
+---What the stage says once the lesson's closing question is answered: the question and the answer,
+---the coach's feedback and the idea the lesson leaves.
+---@param passed table btb submit --json of a pass, with question and takeaway
+---@param answer string what the learner wrote, may be blank
+---@param feedback string|nil the coach's answer from btb recall --closing
+---@param messages table<string, string>
+---@return string
+function M.closing_text(passed, answer, feedback, messages)
+  local given = vim.trim(answer) ~= "" and answer or messages.recall_blank
+  local blocks = { ("%s\n› %s"):format(passed.question, given) }
+  if feedback and vim.trim(feedback) ~= "" then
+    table.insert(blocks, vim.trim(feedback))
+  end
+  if type(passed.takeaway) == "string" and passed.takeaway ~= "" then
+    table.insert(blocks, ("%s\n%s"):format(messages.what_you_learned, passed.takeaway))
+  end
+  return table.concat(blocks, "\n\n")
+end
+
+---What the stage says for a level up: the banner and the coach's own line for it, when she has one.
+---@param passed table btb submit --json of a pass that leveled up
+---@param messages table<string, string>
+---@return string
+function M.level_up_text(passed, messages)
+  local banner = messages.level_up:format(passed.levelUp)
+  local line = passed.persona and passed.persona.levelLine
+  if type(line) ~= "string" or line == "" then
+    return banner
+  end
+  return banner .. "\n\n" .. line
+end
+
 local LINE_MENTIONS =
   { "[Ll]ínea%s+(%d+)", "[Ll]ineas?%s+(%d+)", "[Ll]ines?%s+(%d+)", "%f[%w]L(%d+)" }
 

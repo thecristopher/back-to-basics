@@ -71,7 +71,7 @@ export function complexityProblems(draft) {
  * @returns {string[]} empty when the shape is fine
  */
 export function draftProblems(draft, needs = {}) {
-  const keys = ["title", "readme", "lesson", "starter", "reference", "test", ...(needs.preview ? ["preview"] : [])];
+  const keys = ["title", "readme", "lesson", "takeaway", "starter", "reference", "test", ...(needs.preview ? ["preview"] : [])];
   const problems = missingStrings(draft, keys);
   if (!isList(draft?.hints)) problems.push('"hints" must list at least one hint');
   if (!isList(draft?.concepts)) problems.push('"concepts" must list at least one concept');

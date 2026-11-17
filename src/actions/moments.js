@@ -65,8 +65,8 @@ export function exerciseLine(exercise, personaId, moment, data) {
 }
 
 /**
- * Joins the exercise's line with the moment's line: the exercise speaks alone, and a level up or
- * the end of the day add theirs after it.
+ * Joins the exercise's line with the moment's line: the exercise speaks alone, and the end of the
+ * day adds its line after it. A level up keeps its own, see levelUpLine.
  * @param {string} moment
  * @param {string | null} own the exercise's line
  * @param {string | null} line the moment's line, null when none fit
@@ -74,5 +74,16 @@ export function exerciseLine(exercise, personaId, moment, data) {
  */
 export function speech(moment, own, line) {
   if (!own) return line;
-  return AFTER_A_PASS.has(moment) && line ? `${own} ${line}` : own;
+  return moment === "debrief" && line ? `${own} ${line}` : own;
+}
+
+/**
+ * The coach's line for a level up when the exercise already spoke, said on its own moment.
+ * @param {string} moment
+ * @param {string | null} own the exercise's line
+ * @param {string | null} line the level up's line
+ * @returns {string | null} null when there is no level up or the level up line was already the only one
+ */
+export function levelUpLine(moment, own, line) {
+  return moment === "level_up" && own && line ? line : null;
 }

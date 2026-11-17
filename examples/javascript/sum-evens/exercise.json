@@ -13,6 +13,7 @@
     "Recorre numbers con un for...of y pregunta por cada uno si es par con el residuo: `if (n % 2 === 0)`. Con otros datos se ve así: `for (const carta of cartas) { ... }`.",
     "La forma queda `let total = 0; for (const number of numbers) { if (...) total += number; } return total;`. Cuidado con regresar dentro del for: el return va después de recorrerlos todos."
   ],
+  "takeaway": "Para resumir un arreglo empieza con un valor neutro (0 para sumar) y actualízalo en cada vuelta. n % 2 === 0 te dice si un número es par.",
   "files": {
     "solution": "solution.js",
     "test": "solution.test.js"

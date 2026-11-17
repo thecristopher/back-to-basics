@@ -88,6 +88,40 @@
         "null"
       ]
     },
+    "accuracy": {
+      "type": "integer",
+      "description": "percentage of the round's submits that passed"
+    },
+    "hints": {
+      "type": "integer",
+      "description": "hints bought this round"
+    },
+    "streak": {
+      "type": "integer",
+      "description": "days in a row with something solved, today included"
+    },
+    "takeaway": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "description": "the one idea the lesson leaves, shown on the card that closes it"
+    },
+    "dayXp": {
+      "type": "integer",
+      "description": "XP earned today, this pass included"
+    },
+    "dailyGoal": {
+      "type": "integer",
+      "description": "the XP the day aims for"
+    },
+    "question": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "description": "the question that closes the lesson, answered with btb recall --closing"
+    },
     "repeat": {
       "type": "boolean"
     },

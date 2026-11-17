@@ -1,7 +1,8 @@
 import { existsSync } from "node:fs";
 import { readFile } from "node:fs/promises";
-import { ghostVerdict, isOnsite } from "../actions/arena.js";
+import { ghostVerdict, isOnsite, lessonQuestion } from "../actions/arena.js";
 import { isUnfinished, nextPending, slotFor, undrawnSlotTrack } from "../actions/queue.js";
+import { accuracyOf, closingLines, lessonCard, levelUpLines, takeawayOf } from "../actions/complete.js";
 import { daySummary } from "../actions/recap.js";
 import { conceptTitle } from "../actions/graph.js";
 import { noteResult, standingOf } from "../actions/mastery.js";
@@ -10,10 +11,12 @@ import { applyPass, applySkip, awardXp, noteActivity } from "../actions/record.j
 import { likelyMistakes, nudgeFor } from "../actions/mutants.js";
 import { lastRun, partialFailures, runEntry, runsThisRound, trippedThisRound } from "../actions/runs.js";
 import { roundOutcome } from "../actions/schedule.js";
+import { streakDays } from "../actions/streak.js";
 import { generalHintsSeen, hintLines, nudgeLines } from "../actions/hints.js";
 import { HINT_COST, xpFor } from "../actions/xp.js";
 import { exerciseFiles, findExercise } from "../lib/catalog.js";
 import { readJsonIfExists } from "../lib/files.js";
+import { readTextIfExists } from "../lib/library.js";
 import { runTests } from "../lib/runner.js";
 import { appendRun, readRuns } from "../lib/runlog.js";
 import { dayOf, recordOf } from "../lib/state.js";
@@ -191,26 +194,20 @@ function redoFinished(ctx, exercise, result) {
   return { code: 1, data, text: renderFailure(ctx, data) };
 }
 
-function timeLine(t, data) {
-  if (data.seconds === null) return "";
-  const active = data.activeSeconds ? t.activeTime(duration(data.activeSeconds)) : "";
-  return `${t.timeTaken(duration(data.seconds), data.minutes, data.seconds <= data.minutes * 60)}${active}`;
-}
-
 // what an editor measured of the round, only when it measured something
 function activityOf(round) {
   return round.active || round.edits ? { activeSeconds: round.active ?? 0, edits: round.edits ?? 0 } : {};
 }
 
-function renderPass(ctx, exercise, data, placement) {
+function renderPass(ctx, data, placement) {
   const { t, paint } = ctx;
-  const outcome = data.outcome === "clean" ? paint.green(t.clean) : paint.yellow(t.struggled);
   const after = data.day ? ["", ...renderSummary(ctx, data.day)] : [paint.dim(t.afterPass)];
   return [
-    paint.green(t.passed(data.passed, data.total, exercise.title)),
-    `${outcome}   +${data.xp} XP   ${timeLine(t, data)}`,
+    ...lessonCard(ctx, data),
+    ...closingLines(ctx, data),
+    ...levelUpLines(ctx, data, ctx.coach),
+    "",
     ...conceptNote(ctx, data),
-    ...(data.levelUp ? [paint.green(t.levelUp(ctx.coach, data.levelUp))] : []),
     ...renderPlacementNote(ctx, placement),
     ...after,
   ];
@@ -291,8 +288,21 @@ async function passed(ctx, exercise, record, result) {
     levelUp,
     placement,
     day: finishedDay(ctx, day, placement),
+    // what closes the lesson: how sure the round was and the one idea it leaves behind
+    accuracy: accuracyOf(round),
+    hints: round.hints,
+    streak: streakDays(ctx.state.days, ctx.today),
+    dayXp: day.xp,
+    dailyGoal: ctx.config.dailyGoalXp,
+    ...(await closingOf(exercise)),
   };
-  return { data, text: renderPass(ctx, exercise, data, placement) };
+  return { data, text: renderPass(ctx, data, placement) };
+}
+
+// the lesson's last word: the idea it leaves and the question that checks it stuck
+async function closingOf(exercise) {
+  const lesson = await readTextIfExists(exerciseFiles(exercise).lesson);
+  return { takeaway: takeawayOf(exercise, lesson), question: lessonQuestion(lesson) };
 }
 
 // what the run log tells about the round: which tests tripped the learner, how many runs it took,
