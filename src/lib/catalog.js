@@ -112,6 +112,7 @@ export async function loadExample(config, profileId, preferred) {
     minutes: exercise.minutes,
     concepts: exercise.concepts,
     hints: exercise.hints,
+    ...(exercise.takeaway ? { takeaway: exercise.takeaway } : {}),
     ...(exercise.example ? { example: exercise.example } : {}),
     readme: await read(files.readme),
     lesson: await read(files.lesson),

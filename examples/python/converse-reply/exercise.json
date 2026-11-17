@@ -13,6 +13,7 @@
     "La respuesta trae el texto en response[\"output\"][\"message\"][\"content\"], una lista de bloques: junta los que tengan \"text\".",
     "stopReason y usage[\"totalTokens\"] vienen en la raíz de la respuesta."
   ],
+  "takeaway": "converse tiene la misma forma para cualquier modelo de Bedrock: messages entra con content blocks y la respuesta sale en output.message.content. Lee los bloques, no asumas uno solo.",
   "files": {
     "solution": "solution.py",
     "test": "test_solution.py"

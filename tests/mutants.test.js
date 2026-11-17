@@ -30,7 +30,7 @@ test("a mutant that is the reference or the empty starter is no mistake at all",
 
 test("mutants are only required when the tests report by name", () => {
   const example = { call: "playlistMinutes([])", result: "0" };
-  const bare = { ...draft, title: "t", readme: "playlistMinutes([]) // 0", lesson: "l", test: "playlistMinutes([]), 0", example, hints: ["h"], concepts: ["c"], minutes: 5, mutants: undefined };
+  const bare = { ...draft, title: "t", readme: "playlistMinutes([]) // 0", lesson: "l", takeaway: "t", test: "playlistMinutes([]), 0", example, hints: ["h"], concepts: ["c"], minutes: 5, mutants: undefined };
   assert.deepEqual(draftProblems(bare), []);
   assert.equal(draftProblems(bare, { mutants: true }).length, 1);
 });

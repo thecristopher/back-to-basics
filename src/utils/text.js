@@ -28,7 +28,8 @@ export function createPaint(enabled) {
  * @returns {string}
  */
 export function bar(done, total, width = 10) {
-  const filled = total === 0 ? 0 : Math.round((done / total) * width);
+  // past the goal the bar is simply full
+  const filled = total === 0 ? 0 : Math.min(width, Math.max(0, Math.round((done / total) * width)));
   return "█".repeat(filled) + "░".repeat(width - filled);
 }
 

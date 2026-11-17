@@ -1,7 +1,8 @@
 import { join } from "node:path";
-import { exerciseLine, speech } from "../actions/moments.js";
+import { exerciseLine, levelUpLine, speech } from "../actions/moments.js";
 import { chooseLine, isPersonaName, linesFor, momentOf, personaProblems } from "../actions/persona.js";
 import { personaPrompt } from "../actions/prompts/persona.js";
+import { relationFor, withRelation } from "../actions/relations.js";
 import { bondChanged, borrowedWorld, summonedPersona } from "../actions/summon.js";
 import { askJson } from "./claude.js";
 import { listJsonNames, readJsonIfExists, writeJson } from "./files.js";
@@ -11,8 +12,13 @@ function createdFile(config, name) {
   return join(config.dataDir, "personas", `${name}.json`);
 }
 
+// the learner's own relations live beside progress, so who has a crush on whom never lands in git
+function relationsFile(config) {
+  return join(config.dataDir, "relations.json");
+}
+
 /**
- * Loads a persona: one made with btb persona new first, then a bundled one.
+ * Loads a persona: one made with btb persona new first, then a bundled one, with what relations.json adds to it.
  * @param {object} config
  * @param {string} name
  * @returns {Promise<object | null>} null when there is no persona by that name
@@ -24,7 +30,8 @@ export async function loadPersona(config, name) {
   if (!persona) return null;
   const problems = personaProblems(persona);
   if (problems.length > 0) throw new Error(`Persona "${name}" is not valid: ${problems.join("; ")}`);
-  return { ...persona, id: name };
+  const relation = relationFor(await readJsonIfExists(relationsFile(config)), name);
+  return { ...withRelation(persona, relation), id: name };
 }
 
 /**
@@ -89,7 +96,8 @@ export async function summonPersona(config, who, log) {
 
 /**
  * Has the persona react to a command's answer: data.persona carries the line, and the terminal prints it.
- * Each moment of an exercise is said with the line this coach wrote for it, when there is one.
+ * Each moment of an exercise is said with the line this coach wrote for it, when there is one, and a
+ * level up keeps the coach's line for it apart in data.persona.levelLine.
  * The last line per moment is kept in state so the same one never comes twice in a row.
  * @param {object} ctx needs persona, state, config, json, paint, catalog
  * @param {string} command
@@ -106,8 +114,10 @@ export function speak(ctx, command, report) {
   const line = speech(moment, own, chosen?.line ?? null);
   if (!line) return report;
   if (chosen) ctx.state.persona[key] = chosen.index;
-  const persona = { id: ctx.persona.id, name: ctx.persona.name, portrait: ctx.persona.portrait ?? null, moment, line };
+  const levelLine = levelUpLine(moment, own, chosen?.line ?? null);
+  const persona = { id: ctx.persona.id, name: ctx.persona.name, portrait: ctx.persona.portrait ?? null, moment, line, ...(levelLine ? { levelLine } : {}) };
+  const said = [persona.line, ...(levelLine ? [levelLine] : [])].map((spoken) => `${ctx.paint.bold(persona.name)}: ${spoken}`);
   // editors get the line in data and show it their own way, the terminal gets it under the report
-  const text = ctx.json ? report.text : [...report.text, "", `${ctx.paint.bold(persona.name)}: ${persona.line}`];
+  const text = ctx.json ? report.text : [...report.text, "", ...said];
   return { ...report, data: { ...report.data, persona }, text };
 }

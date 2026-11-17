@@ -53,7 +53,7 @@ export async function review(ctx, [query], flags) {
 
 /**
  * `btb recall <id> --answer="..."`: the coach answers what you remembered of the question that closes
- * an exercise's lesson. A blank answer gets the answer back.
+ * an exercise's lesson. A blank answer gets the answer back. --closing when it is answered right after the pass.
  */
 export async function recall(ctx, [query], flags) {
   const target = targetExercise(ctx, query);
@@ -63,7 +63,8 @@ export async function recall(ctx, [query], flags) {
   const question = lesson ? lessonQuestion(lesson) : null;
   if (!question) return failure(ctx.t.noRecallQuestion(exercise.id));
   const answer = typeof flags.answer === "string" ? flags.answer.trim() : "";
-  const prompt = recallPrompt({ title: exercise.title, question, answer, lesson, language: ctx.config.language, persona: ctx.persona });
+  const closing = Boolean(flags.closing);
+  const prompt = recallPrompt({ title: exercise.title, question, answer, lesson, language: ctx.config.language, persona: ctx.persona, closing });
   ctx.log(ctx.paint.dim(ctx.t.recalling(ctx.coach, exercise.title)));
   const feedback = withoutEmDashes((await ask(ctx.config.claude, prompt)).trim());
   return { data: { id: exercise.id, title: exercise.title, question, answer, feedback }, text: [feedback] };

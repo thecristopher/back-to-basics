@@ -12,6 +12,7 @@
     "trim() quita los espacios de las orillas.",
     "split(/\\s+/) corta por uno o más espacios seguidos, así no quedan palabras vacías."
   ],
+  "takeaway": "split y join son la puerta de ida y vuelta entre strings y arreglos: parte, reacomoda con métodos de arreglo y vuelve a unir. Cuida los espacios repetidos al partir.",
   "files": {
     "solution": "solution.js",
     "test": "solution.test.js"

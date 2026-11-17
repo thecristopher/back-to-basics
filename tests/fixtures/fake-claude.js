@@ -16,6 +16,7 @@ function example(slug) {
     minutes: meta.minutes,
     concepts: meta.concepts,
     hints: meta.hints,
+    takeaway: meta.takeaway,
     example: meta.example,
     readme: read("README.md"),
     lesson: read("lesson.md"),

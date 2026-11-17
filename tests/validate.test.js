@@ -6,6 +6,7 @@ const draft = {
   title: "Nota",
   readme: '# Nota\n\n```js\nnota("Claire"); // "Inde"\n```\n',
   lesson: "# Closures",
+  takeaway: "Una función recuerda dónde nació.",
   starter: "x",
   reference: "y",
   test: 'assert.equal(nota( "Claire" ), "Inde");',

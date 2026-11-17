@@ -12,6 +12,7 @@
     "Pasa el texto a minúsculas una sola vez al principio.",
     "counts[char] = (counts[char] ?? 0) + 1 suma uno aunque la llave aún no exista."
   ],
+  "takeaway": "Para contar cosas usa un objeto como diccionario: la cosa es la llave y las veces el valor. Pregunta si la llave ya existe antes de sumarle, o empiezas desde undefined.",
   "files": {
     "solution": "solution.js",
     "test": "solution.test.js"

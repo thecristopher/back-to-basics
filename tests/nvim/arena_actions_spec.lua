@@ -135,4 +135,49 @@ describe("back-to-basics arena actions", function()
       }, arena.review_anchors(review))
     end)
   end)
+
+  describe("closing_text", function()
+    local passed = {
+      question = "What does Claire's love letter remember?",
+      takeaway = "A function remembers where it was born.",
+    }
+
+    it("puts Claire's answer, the coach's feedback and the takeaway on the stage", function()
+      assert.are.equal(
+        "What does Claire's love letter remember?\n› Its scope\n\nRight, its scope.\n\nWhat you learned\nA function remembers where it was born.",
+        arena.closing_text(passed, "Its scope", "Right, its scope.", messages)
+      )
+    end)
+
+    it(
+      "says the answer was blank and still closes with the takeaway when the coach is silent",
+      function()
+        local text = arena.closing_text(passed, "  ", nil, messages)
+        assert.are.equal(
+          "What does Claire's love letter remember?\n› "
+            .. messages.recall_blank
+            .. "\n\nWhat you learned\nA function remembers where it was born.",
+          text
+        )
+      end
+    )
+  end)
+
+  describe("level_up_text", function()
+    it("puts Claire's own level up line under the banner", function()
+      local passed =
+        { levelUp = 2, persona = { name = "Claire Redfield", levelLine = "Nivel 2, Inde." } }
+      assert.are.equal(
+        "▲ Level up! Level 2 passed ▲\n\nNivel 2, Inde.",
+        arena.level_up_text(passed, messages)
+      )
+    end)
+
+    it("keeps only the banner when the coach already said everything in the notice", function()
+      assert.are.equal(
+        "▲ Level up! Level 3 passed ▲",
+        arena.level_up_text({ levelUp = 3 }, messages)
+      )
+    end)
+  end)
 end)

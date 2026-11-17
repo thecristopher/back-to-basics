@@ -12,6 +12,7 @@
     "Revisa primero el caso de 15 (múltiplo de 3 y de 5), si no, nunca llegas a él.",
     "Para el caso normal convierte el número a string con String(i)."
   ],
+  "takeaway": "Cuando varias condiciones pueden ser verdad a la vez, gana la primera que se cumple. Pon siempre el caso más específico arriba.",
   "files": {
     "solution": "solution.js",
     "test": "solution.test.js"

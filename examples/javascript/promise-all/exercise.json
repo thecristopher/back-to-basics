@@ -12,6 +12,7 @@
     "Promise.resolve(value) convierte valores normales en promesas, así tratas todo igual.",
     "Guarda cada resultado en su índice (no con push) y resuelve cuando el contador de pendientes llegue a 0. Ojo con el arreglo vacío."
   ],
+  "takeaway": "Cuando esperas varias promesas, cuenta las pendientes y guarda cada resultado en su índice, no en el orden en que llegan. Al primer rechazo, rechaza todo.",
   "files": {
     "solution": "solution.js",
     "test": "solution.test.js"

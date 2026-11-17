@@ -13,6 +13,7 @@
     "Envuelve la llamada en un `try` dentro de un `for attempt in range(attempts)` y atrapa `botocore.exceptions.ClientError`. El código del error está en `error.response[\"Error\"][\"Code\"]`.",
     "La forma queda `try: return client.converse(**request)` y en el `except`: si es el último intento o no es throttling, `raise`; si no, `sleep(base_delay * 2 ** attempt)`. La trampa es esperar después del último intento: ahí ya no se espera, se relanza."
   ],
+  "takeaway": "Ante un ThrottlingException no reintentes de inmediato: espera base, luego el doble, luego el doble otra vez. Inyectar el reloj hace que ese tiempo se pueda probar sin esperar.",
   "files": {
     "solution": "solution.py",
     "test": "test_solution.py"

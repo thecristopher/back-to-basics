@@ -12,6 +12,7 @@
     "Regresa una function normal (no flecha) para poder recibir el this de quien la llame.",
     "fn.apply(this, args) llama a fn con el mismo this y los mismos argumentos."
   ],
+  "takeaway": "Una función de orden superior envuelve a otra y decide cuándo llamarla. Guarda el resultado en el closure y pasa this y los argumentos tal cual con apply.",
   "files": {
     "solution": "solution.js",
     "test": "solution.test.js"

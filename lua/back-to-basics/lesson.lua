@@ -103,6 +103,53 @@ function M.advance(host, passed, ms)
   open_next(host, wait)
 end
 
+---Closes a lesson the moment it passes: its last question in a float, then the coach answers on the
+---stage with what the lesson taught. <Esc> on the question skips straight to on_done.
+---@param host BtbHost
+---@param passed table btb submit --json of a pass
+---@param on_done fun(staged: boolean) staged when the coach took the stage to answer
+function M.close(host, passed, on_done)
+  if not passed.question or coach.on_stage() then
+    return on_done(false)
+  end
+  local question = coach_actions.wrap(passed.question, math.min(72, vim.o.columns - 10))
+  ui.ask(
+    question,
+    { title = passed.title or passed.id, prompt = host.messages.closing_prompt },
+    function(answer)
+      if answer == nil then
+        return on_done(false)
+      end
+      host.run({ "recall", passed.id, "--closing", "--answer=" .. answer }, function(data)
+        if data.error then
+          host.notify(data.error, vim.log.levels.WARN)
+        end
+        local text = arena.closing_text(passed, answer, data.feedback, host.messages)
+        coach.stage(speaker(host, passed), coach.pages(text), function()
+          on_done(true)
+        end)
+      end, host.progress)
+    end
+  )
+end
+
+---Gives a level up its own moment on the stage, after the lesson closed and before what comes next.
+---@param host BtbHost
+---@param passed table btb submit --json of a pass
+---@param on_done fun(staged: boolean) staged when the stage opened for it
+function M.celebrate(host, passed, on_done)
+  if not passed.levelUp or coach.on_stage() then
+    return on_done(false)
+  end
+  coach.stage(
+    speaker(host, passed),
+    coach.pages(arena.level_up_text(passed, host.messages)),
+    function()
+      on_done(true)
+    end
+  )
+end
+
 -- the coach reads an answer while the next question is typed, the last one shows its wait
 local function answer_back(host, entry, given, is_last, on_back)
   host.run({ "recall", entry.id, "--answer=" .. (given.answer or "") }, function(data)

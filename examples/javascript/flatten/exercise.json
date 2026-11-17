@@ -12,6 +12,7 @@
     "Si es arreglo, aplánalo con la misma función (recursión) y agrega sus elementos al resultado.",
     "Si no es arreglo, agrégalo tal cual. El caso base es un elemento que no es arreglo."
   ],
+  "takeaway": "Una recursión necesita dos cosas: un caso base que responde sin llamarse y un paso que achica el problema. Sin caso base, nunca termina.",
   "files": {
     "solution": "solution.js",
     "test": "solution.test.js"

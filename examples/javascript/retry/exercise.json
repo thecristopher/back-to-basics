@@ -12,6 +12,7 @@
     "Dentro del for, return await fn() sale en cuanto funciona; el catch guarda el error.",
     "Al terminar el for sin éxito, lanza (throw) el último error guardado."
   ],
+  "takeaway": "En una función async, try/catch atrapa las promesas rechazadas igual que los errores normales. Sal del bucle en cuanto algo funcione y lanza el último error si nada lo hizo.",
   "files": {
     "solution": "solution.js",
     "test": "solution.test.js"

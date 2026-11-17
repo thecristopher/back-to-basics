@@ -192,6 +192,15 @@ describe("back-to-basics actions", function()
         actions.pass_notice(messages, data, false)
       )
     end)
+
+    it("closes Claire's lesson with what it taught before her comment", function()
+      local taught =
+        vim.tbl_extend("force", data, { takeaway = "Gana la primera condición que se cumple." })
+      assert.are.same({
+        title = "Claire Redfield",
+        message = "✓ Playlist para Inde · Limpio · +20 XP\n\nLo que aprendiste: Gana la primera condición que se cumple.\n\nAsí se hace, guapo.",
+      }, actions.pass_notice(messages, taught, true))
+    end)
   end)
 
   describe("coach_lines", function()

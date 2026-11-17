@@ -12,6 +12,7 @@
     "En cada llamada cancela el timer anterior con clearTimeout y crea uno nuevo.",
     "cancel es una propiedad de la función regresada: debounced.cancel = () => clearTimeout(timer)."
   ],
+  "takeaway": "Guardar el id de setTimeout en un closure te deja cancelar lo pendiente y reagendarlo. Así solo corre la última llamada después de un rato de calma.",
   "files": {
     "solution": "solution.js",
     "test": "solution.test.js"
