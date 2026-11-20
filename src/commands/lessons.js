@@ -2,10 +2,11 @@ import { existsSync } from "node:fs";
 import { readFile } from "node:fs/promises";
 import { briefPrompt } from "../actions/prompts/lesson.js";
 import { redoStart } from "../actions/arena.js";
+import { briefEdges } from "../actions/briefs.js";
 import { exerciseState } from "../actions/record.js";
 import { exerciseFiles } from "../lib/catalog.js";
 import { ask } from "../lib/claude.js";
-import { briefPath, readTextIfExists, reviewPath, writeText } from "../lib/library.js";
+import { briefPath, readTextIfExists, recentBriefs, reviewPath, writeText } from "../lib/library.js";
 import { prepareRedo, redoPath, solutionPath } from "../lib/workspace.js";
 import { GLYPHS, listHeading } from "./progress.js";
 import { failure, targetExercise, trackOf } from "./shared.js";
@@ -74,7 +75,11 @@ export async function lessons(ctx, [query]) {
   return { data: { lessons: entries }, text: lines };
 }
 
+// enough of the last briefings to see a habit forming, few enough to keep the prompt short
+const EARLIER_BRIEFS = 3;
+
 async function writeBrief(ctx, exercise, lessonText, file) {
+  const earlier = (await recentBriefs(ctx.config, ctx.persona.id, EARLIER_BRIEFS)).map(briefEdges).filter(Boolean);
   const prompt = briefPrompt({
     title: exercise.title,
     readme: await readFile(exerciseFiles(exercise).readme, "utf8"),
@@ -82,6 +87,7 @@ async function writeBrief(ctx, exercise, lessonText, file) {
     persona: ctx.persona,
     review: Boolean(ctx.state.exercises[exercise.id]?.firstSolvedAt),
     language: ctx.config.language,
+    earlier,
   });
   ctx.log(ctx.paint.dim(ctx.t.briefing(ctx.persona.name, exercise.title)));
   const text = (await ask(ctx.config.claude, prompt)).trim();

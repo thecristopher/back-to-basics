@@ -87,6 +87,12 @@ describe("back-to-basics winbar actions", function()
       assert.is_nil(fields.tests)
     end)
 
+    it("takes a pass that only counts Claire's hints without touching the hints left", function()
+      local fields = winbar.fields({ id = "x", ok = true, passed = 4, total = 4, hints = 0 })
+      assert.are.same({ passed = 4, total = 4, ok = true }, fields.tests)
+      assert.is_nil(fields.hintsLeft)
+    end)
+
     it("ignores an answer about no exercise", function()
       assert.is_nil(winbar.fields({ xp = 40 }))
     end)

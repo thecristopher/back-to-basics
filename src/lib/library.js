@@ -1,5 +1,5 @@
 import { existsSync } from "node:fs";
-import { mkdir, readFile, writeFile } from "node:fs/promises";
+import { mkdir, readdir, readFile, stat, writeFile } from "node:fs/promises";
 import { dirname, join } from "node:path";
 import { withoutEmDashes } from "../actions/json.js";
 import { momentsPrompt } from "../actions/prompts/moments.js";
@@ -29,6 +29,22 @@ export function reviewPath(config, exercise) {
  */
 export function briefPath(config, personaId, exercise) {
   return join(config.dataDir, "briefs", personaId, exercise.track, `${exercise.slug}.md`);
+}
+
+/**
+ * The briefings a coach wrote last, newest first, so the next one can sound different.
+ * @param {object} config
+ * @param {string} personaId
+ * @param {number} limit how many to read
+ * @returns {Promise<string[]>} their text, empty when the coach has none
+ */
+export async function recentBriefs(config, personaId, limit) {
+  const dir = join(config.dataDir, "briefs", personaId);
+  if (!existsSync(dir)) return [];
+  const names = (await readdir(dir, { recursive: true })).filter((name) => name.endsWith(".md"));
+  const files = await Promise.all(names.map(async (name) => ({ file: join(dir, name), at: (await stat(join(dir, name))).mtimeMs })));
+  const newest = files.sort((a, b) => b.at - a.at).slice(0, limit);
+  return Promise.all(newest.map(({ file }) => readFile(file, "utf8")));
 }
 
 /**

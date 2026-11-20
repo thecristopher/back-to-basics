@@ -8,6 +8,16 @@ export function generalHintsSeen(round) {
 }
 
 /**
+ * The general hints a round already bought, the ones written for the learner's code where there is one.
+ * @param {{ hints: string[] }} exercise
+ * @param {{ hints: number, nudges?: string[], written?: string[] }} round written holds the hints Claude wrote, by step
+ * @returns {string[]}
+ */
+export function shownHints(exercise, round) {
+  return exercise.hints.slice(0, generalHintsSeen(round)).map((planned, step) => round.written?.[step] || planned);
+}
+
+/**
  * A nudge at the mistake the learner's tests look like, as the terminal shows it.
  * @param {{ nudge: string, header: string, after: string, paint: Record<string, (text: string) => string> }} input
  * @returns {string[]}

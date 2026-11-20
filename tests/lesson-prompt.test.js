@@ -40,3 +40,28 @@ test("neither prompt carries an em dash", () => {
   assert.doesNotMatch(briefPrompt(brief), /\u2014/);
   assert.doesNotMatch(lessonPrompt({ title: "t", concepts: ["c"], readme: "r", reference: "x", language: "en" }), /\u2014/);
 });
+
+test("Claire's feelings always show, in one fresh detail woven into the lesson", () => {
+  assert.match(briefPrompt(brief), /Whatever your voice says you feel for them or about your rivals shows in one detail woven into the lesson/);
+});
+
+test("the brief never closes by sending them to write it", () => {
+  const prompt = briefPrompt(brief);
+  assert.doesNotMatch(prompt, /End by sending them to write it themselves/);
+  assert.match(prompt, /do not close by sending them to write it/);
+});
+
+test("the brief warns about one mistake and leaves the guest scene to the statement", () => {
+  const prompt = briefPrompt(brief);
+  assert.match(prompt, /one typical mistake at most/);
+  assert.match(prompt, /Do not retell it\./);
+});
+
+test("the brief carries how Claire opened and closed her last ones", () => {
+  const earlier = [{ opening: "Inde, hoy toca algo bonito.", closing: "Ahora escribe tú la playlist." }];
+  assert.match(briefPrompt({ ...brief, earlier }), /- opened: Inde, hoy toca algo bonito\. \| closed: Ahora escribe tú la playlist\./);
+});
+
+test("a first brief has no earlier ones to avoid", () => {
+  assert.doesNotMatch(briefPrompt(brief), /Your last briefings/);
+});
