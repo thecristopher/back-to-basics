@@ -145,10 +145,13 @@ const MARKDOWN = {
   review: "## Calificación\nCorrección 9/10, Inde estaría orgullosa.\n",
   lesson: "# Closures\nUna función recuerda dónde nació, como Claire recuerda Raccoon City.\n",
   brief: "Inde, hoy toca algo bonito. Lee bien y escríbelo tú.\n",
+  hint: "Tu código todavía no regresa nada, Inde. Mira qué entrega tu función al final.\n",
   recall: "Casi, Inde: la función recuerda su scope, no una copia.\n",
   greet: "Hola, Inde. Ayer peleaste bonito, hoy seguimos.\n",
   debrief: "Cerramos el día, Inde. Mañana más.\n",
   preview: '```jsx\nimport { LikeButton } from "./solution.jsx";\n\nexport default function Preview() {\n  return <LikeButton initial={14} />;\n}\n```\n',
 };
+// FAKE_CLAUDE_DOWN stands in for a Claude that cannot answer a hint, so the planned one shows
+if (task === "hint" && process.env.FAKE_CLAUDE_DOWN) process.exit(1);
 if (MARKDOWN[task]) process.stdout.write(MARKDOWN[task]);
 else process.stdout.write(JSON.stringify(answers[task]()));

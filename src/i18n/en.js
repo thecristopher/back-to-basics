@@ -218,6 +218,7 @@ Coach
   hasReview: "review",
   lessonsHowTo: "Read one with btb lesson <id>, its review with btb review <id>, solve it again with btb redo <id>",
   briefing: (name, title) => `${name} is getting "${title}" ready for you...`,
+  readingYourCode: "Reading your code for the hint...",
   writingLesson: (who, title) => `${who} is writing the lesson of "${title}"...`,
   lessonsComplete: "Every exercise already has its lesson.",
   rewritingStatement: (who, title) => `${who} is rewriting the statement and hints of "${title}"...`,

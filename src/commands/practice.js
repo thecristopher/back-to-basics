@@ -12,9 +12,11 @@ import { likelyMistakes, nudgeFor } from "../actions/mutants.js";
 import { lastRun, partialFailures, runEntry, runsThisRound, trippedThisRound } from "../actions/runs.js";
 import { roundOutcome } from "../actions/schedule.js";
 import { streakDays } from "../actions/streak.js";
-import { generalHintsSeen, hintLines, nudgeLines } from "../actions/hints.js";
+import { generalHintsSeen, hintLines, nudgeLines, shownHints } from "../actions/hints.js";
+import { hintPrompt } from "../actions/prompts/hint.js";
 import { HINT_COST, xpFor } from "../actions/xp.js";
 import { exerciseFiles, findExercise } from "../lib/catalog.js";
+import { ask } from "../lib/claude.js";
 import { readJsonIfExists } from "../lib/files.js";
 import { readTextIfExists } from "../lib/library.js";
 import { runTests } from "../lib/runner.js";
@@ -317,15 +319,19 @@ async function roundEvidence(ctx, exercise, startedAt) {
   };
 }
 
-async function testsOf(ctx, exercise, solution, kind) {
-  const result = await runTests({
+async function runSolution(ctx, exercise, solutionCode) {
+  return runTests({
     config: ctx.config,
     profile: await profileOf(ctx, trackOf(ctx, exercise.track)),
     files: { solutionFile: exercise.files.solution, testFile: exercise.files.test },
-    solutionCode: await readFile(solution, "utf8"),
+    solutionCode,
     testCode: await readFile(exerciseFiles(exercise).test, "utf8"),
     onInstall: ctx.onInstall,
   });
+}
+
+async function testsOf(ctx, exercise, solution, kind) {
+  const result = await runSolution(ctx, exercise, await readFile(solution, "utf8"));
   // a toolchain that refused to run says nothing about the learner
   if (!result.unsupported && !result.unapproved) await appendRun(ctx.config, runEntry(exercise, kind, result));
   return result;
@@ -390,17 +396,57 @@ async function nudgeOf(ctx, exercise, record) {
 function nudged(ctx, exercise, record, found) {
   record.round.hints += 1;
   record.round.nudges = [...(record.round.nudges ?? []), found.mistake];
-  const shown = exercise.hints.slice(0, generalHintsSeen(record.round));
+  const shown = shownHints(exercise, record.round);
   return {
     data: { id: exercise.id, hints: shown, total: exercise.hints.length, cost: HINT_COST, nudge: found.nudge },
     text: nudgeLines({ nudge: found.nudge, header: ctx.t.nudgeHeader(HINT_COST), after: ctx.t.nudgeAfter, paint: ctx.paint }),
   };
 }
 
+async function hintInput(ctx, exercise, round, step) {
+  const files = exerciseFiles(exercise);
+  const code = await readFile(solutionPath(ctx.config, exercise), "utf8");
+  const result = await runSolution(ctx, exercise, code);
+  return {
+    title: exercise.title,
+    readme: await readFile(files.readme, "utf8"),
+    code,
+    run: { passed: result.passed, total: result.tests.length, failures: result.tests.filter((test) => !test.ok), timedOut: result.timedOut, crashed: result.crashed, stderr: result.stderr },
+    reference: await readFile(files.reference, "utf8"),
+    planned: exercise.hints[step],
+    earlier: shownHints(exercise, round),
+    step: step + 1,
+    total: exercise.hints.length,
+    language: ctx.config.language,
+  };
+}
+
+// the hint reads the learner's code as it is now; the planned one stands in when there is no code yet or Claude fails
+async function writtenHint(ctx, exercise, round, step) {
+  const planned = exercise.hints[step];
+  if (!existsSync(solutionPath(ctx.config, exercise))) return planned;
+  ctx.log(ctx.paint.dim(ctx.t.readingYourCode));
+  try {
+    const text = (await ask(ctx.config.claude, hintPrompt(await hintInput(ctx, exercise, round, step)))).trim();
+    return text || planned;
+  } catch {
+    return planned;
+  }
+}
+
+async function buyHint(ctx, exercise, round) {
+  const step = generalHintsSeen(round);
+  const text = await writtenHint(ctx, exercise, round, step);
+  round.written = [...(round.written ?? [])];
+  round.written[step] = text;
+  round.hints += 1;
+}
+
 /**
  * `btb hint [id]`: reveals the next hint of the round. Each one costs XP, none during placement.
- * When the latest run failed exactly like one of the exercise's known mistakes, the hint points at
- * that mistake first, and the general hints wait for the next one.
+ * Each new hint is written for the learner's code and test results as they are now. When the latest
+ * run failed exactly like one of the exercise's known mistakes, the hint points at that mistake first,
+ * and the general hints wait for the next one.
  */
 export async function hint(ctx, [query]) {
   const target = targetExercise(ctx, query);
@@ -412,8 +458,8 @@ export async function hint(ctx, [query]) {
   if (found) return nudged(ctx, exercise, record, found);
   const seen = generalHintsSeen(record.round);
   const fresh = seen < exercise.hints.length;
-  if (fresh) record.round.hints += 1;
-  const shown = exercise.hints.slice(0, generalHintsSeen(record.round));
+  if (fresh) await buyHint(ctx, exercise, record.round);
+  const shown = shownHints(exercise, record.round);
   const header = fresh ? ctx.t.hintHeader(shown.length, exercise.hints.length, HINT_COST) : ctx.t.noMoreHints;
   return {
     data: { id: exercise.id, hints: shown, total: exercise.hints.length, cost: fresh ? HINT_COST : 0 },

@@ -157,6 +157,16 @@ test("a hint aims first at the known mistake the latest run looks like, then the
   assert.equal(general.hints.length, 1);
 });
 
+test("a hint reads Inde's code as it is now, and falls back to the planned one when Claude is down", async () => {
+  const id = (await btb(["forge", "node", "--count=1"])).forged[0];
+  await btb(["start", id]);
+  const planned = JSON.parse(await readFile(join(sandbox, "data/exercises", id, "exercise.json"), "utf8")).hints;
+  const written = await btb(["hint", id]);
+  assert.deepEqual(written.hints, ["Tu código todavía no regresa nada, Inde. Mira qué entrega tu función al final."]);
+  const fallback = await btb(["hint", id], { FAKE_CLAUDE_DOWN: "1" });
+  assert.deepEqual(fallback.hints, [written.hints[0], planned[1]]);
+});
+
 test("forge leaves progress alone so it can run beside practice", async () => {
   const state = join(sandbox, "data/state.json");
   const before = await readFile(state, "utf8");
