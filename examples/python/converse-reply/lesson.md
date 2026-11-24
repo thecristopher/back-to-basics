@@ -21,4 +21,4 @@ Para probarlo sin AWS, `botocore.stub.Stubber` intercepta el cliente: `add_respo
 - Ignorar `stopReason` y tratar una respuesta cortada por `max_tokens` como completa.
 
 ## Para pensar
-¿Cómo calcularías el costo en dólares de cada llamada con `usage` si el precio de entrada y el de salida son distintos?
+¿Por qué `content` es una lista de bloques y no un string, y qué se pierde si solo lees `content[0]["text"]`?

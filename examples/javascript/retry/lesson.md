@@ -22,4 +22,4 @@ Un bucle con salida temprana (`return` adentro del `for`) termina en cuanto tien
 - Tragarse el último error en lugar de rechazar con él.
 
 ## Para pensar
-¿Cómo agregarías una espera creciente entre intentos sin que los tests tarden de verdad?
+¿Por qué `return fn()` sin `await` dentro del `try` deja escapar el error de una promesa rechazada?

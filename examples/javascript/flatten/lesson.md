@@ -24,4 +24,4 @@ Un acumulador (aquí `total`) junta el resultado mientras recorres. Para arreglo
 - Llamar a la recursión pero no usar lo que regresa.
 
 ## Para pensar
-¿Cómo lo harías sin recursión, con una pila explícita?
+¿Qué pasaría con `contarCartas` si no existiera el caso base, y por qué cada llamada tiene que recibir una caja más chica que la anterior?

@@ -20,4 +20,4 @@ El operador `%` da el residuo de una división: `n % k === 0` dice que `n` es m�
 - Regresar números donde se esperaban strings.
 
 ## Para pensar
-¿Cómo lo escribirías para que agregar una regla nueva (múltiplos de 7) sea una sola línea?
+Si un número es múltiplo de 3 y de 5 a la vez, ¿por qué la condición combinada tiene que revisarse antes que las simples?

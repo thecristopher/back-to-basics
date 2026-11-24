@@ -40,3 +40,8 @@ test("answered right after the pass, the recall knows Inde just solved it", () =
   assert.match(prompt, /They just made the tests of the exercise below pass/);
   assert.doesNotMatch(prompt, /on an earlier day/);
 });
+
+test("the feedback on Inde's recap explains what is missing instead of sending her to run code", () => {
+  const prompt = recallPrompt({ title: "Cartas", question: "¿Qué?", answer: "algo", lesson, language: "es" });
+  assert.match(prompt, /Never send them to run, try or write code to check it/);
+});

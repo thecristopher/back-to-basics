@@ -65,3 +65,9 @@ test("the brief carries how Claire opened and closed her last ones", () => {
 test("a first brief has no earlier ones to avoid", () => {
   assert.doesNotMatch(briefPrompt(brief), /Your last briefings/);
 });
+
+test("a lesson written later follows the same theory shape and closes on a question answered in words", () => {
+  const prompt = lessonPrompt({ title: "Cartas de Claire", concepts: ["closures"], readme: "r", reference: "x", language: "es" });
+  assert.match(prompt, /What it is: the definition in plain words/);
+  assert.match(prompt, /never asks them to run, try, test, write, change, implement or look up anything/);
+});
