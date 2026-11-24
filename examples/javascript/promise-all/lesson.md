@@ -22,4 +22,4 @@ Cuando esperas varias cosas a la vez, cuenta cuántas faltan y guarda cada resul
 - No rechazar en cuanto falla una.
 
 ## Para pensar
-¿Cómo cambiaría para comportarse como `Promise.allSettled`?
+¿Por qué guardar cada resultado en su índice conserva el orden de la entrada, aunque las promesas terminen en otro orden?

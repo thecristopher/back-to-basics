@@ -24,6 +24,7 @@ export function recallPrompt({ title, question, answer, lesson, language, person
     "- A wrong answer is called wrong, kindly. A right one is not padded.",
     "- When the answer is blank they did not remember it: give the answer in two or three sentences and one thing to hold on to.",
     "- 2 to 5 sentences of plain prose, no headings, no code that solves the exercise.",
+    "- Never send them to run, try or write code to check it: whatever is missing is explained right here, in words.",
     `- Write it in ${languageName(language)}. Never use em dashes.`,
     ...personaLines(persona),
     "",

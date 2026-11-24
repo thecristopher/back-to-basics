@@ -1,4 +1,5 @@
 import { languageName } from "./evidence.js";
+import { LESSON_RULES } from "./exercise.js";
 
 /**
  * The prompt that asks Claude for the lesson of an exercise forged before lessons existed.
@@ -12,8 +13,7 @@ export function lessonPrompt({ title, concepts, readme, reference, language, the
     "Write the lesson that goes with this exercise, the page the learner comes back to when they want to review the concept.",
     `Write it in ${languageName(language)}, as markdown. Code identifiers in English. Never use em dashes.`,
     "",
-    "Shape: a title with the concept, what it is in a few lines, a small example on a different problem,",
-    'a "typical mistakes" section and one question to think about. 15 to 30 lines.',
+    ...LESSON_RULES,
     "Never solve the exercise or show code that would pass its tests. The reference is only there so you know what the concept is.",
     theme ? `Examples are about: ${theme}` : null,
     "",

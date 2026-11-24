@@ -163,3 +163,20 @@ test("no prompt carries an em dash", () => {
   const prompts = [exercisePrompt({ ...base, purpose: "practice" }), pathPrompt({ track, profileName: "x", summary, others: [], placement: [], kept: [], language: "es" }), profilePrompt({ language: "Go", platform: "darwin" })];
   for (const prompt of prompts) assert.doesNotMatch(prompt, /\u2014/);
 });
+
+test("the lesson Claire forges teaches the theory first, with examples that build on each other", () => {
+  const prompt = exercisePrompt({ ...base, purpose: "practice" });
+  assert.match(prompt, /How it works: the rules underneath/);
+  assert.match(prompt, /2 or 3 small code examples on problems different from the exercise, each one a step beyond the last/);
+});
+
+test("Malenia's closing question is theory, never a trip to the terminal", () => {
+  const prompt = exercisePrompt({ ...base, purpose: "practice" });
+  assert.match(prompt, /one theory question that checks the learner understood the concept/);
+  assert.match(prompt, /never asks them to run, try, test, write, change, implement or look up anything/);
+});
+
+test("the statement backs what Inde will use with the rule and an example with its result", () => {
+  const prompt = statementPrompt({ title: "Notas", readme: "# Notas", hints: [], reference: "x", test: "y", language: "es" });
+  assert.match(prompt, /the rule that makes it work in plain words, then 1 or 2 tiny examples on other data, each with its result written out/);
+});

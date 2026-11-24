@@ -23,8 +23,30 @@ export const STATEMENT_RULES = [
   "  2. What you will build: the signature, then in plain words what it receives, what each parameter or field means with its type, and what it gives back.",
   "  3. How it behaves: one bullet per behavior the tests check, each with a short reason or a concrete value. Name the edge cases in words (an empty list, a missing prop).",
   "  4. An example, step by step: a code block with a call and its result, then 2 to 4 lines walking through why the result is that one.",
-  "  5. What you will use: the concept or built in behind it, explained in plain words with a tiny example on other data. Never the solution.",
+  "  5. What you will use: the concept or built in behind it, what it is and the rule that makes it work in plain words, then 1 or 2 tiny examples on other data, each with its result written out. Never the solution.",
   "- Define each term the first time it appears. Write real values, never placeholders like NAME or N on their own.",
+];
+
+/**
+ * The question that closes a lesson, asked after the pass and again when the concept comes back
+ * for review. Answered in words, never at the keyboard.
+ */
+export const CLOSING_QUESTION_RULE =
+  "- The lesson's last section is one theory question that checks the learner understood the concept: why something works the way it does, what a short piece of code shown in the question gives back and why, the difference between two ideas, or when to pick one over the other. It is answered in 1 to 3 sentences of their own words with what the lesson taught. It never asks them to run, try, test, write, change, implement or look up anything: no console, no terminal, no new version of the code, no searching outside the lesson.";
+
+/**
+ * How the lesson teaches: the theory first, then examples that build on each other.
+ * Shared with the prompt that writes the lessons of exercises forged before lessons existed.
+ */
+export const LESSON_RULES = [
+  "- The lesson is the page the learner comes back to when they want to understand the concept again. It teaches the theory behind the exercise with examples and never solves the exercise. Markdown, 35 to 70 lines, these sections in this order with headings in the prose language:",
+  "  1. A title with the concept.",
+  "  2. What it is: the definition in plain words, the problem it solves and why it exists. Define each term the first time it appears.",
+  "  3. How it works: the rules underneath, the way a good textbook explains them (the syntax, what the language does step by step, the order things happen in, what it gives back).",
+  "  4. Examples: 2 or 3 small code examples on problems different from the exercise, each one a step beyond the last, each with its result written out and 1 or 2 lines on why it gives that.",
+  "  5. Typical mistakes: 2 to 4 bullets, each with the wrong idea and the right one, at least one of them as a tiny wrong next to right snippet.",
+  "  6. The closing question.",
+  CLOSING_QUESTION_RULE,
 ];
 
 /** The worked example must be one the tests assert, so the reference passing them proves it true. */
@@ -280,7 +302,7 @@ export function exercisePrompt(input) {
     ...STATEMENT_RULES,
     EXAMPLE_RULE,
     ...HINT_RULES,
-    "- The lesson teaches the concept behind the exercise so the learner can come back to it later: what it is, a small example on a different problem, the typical mistakes and one question to think about. It never solves the exercise.",
+    ...LESSON_RULES,
     TAKEAWAY_RULE,
     theme ? `- Test data and examples: ${theme}` : null,
     ...castLines(input.cast ?? null),

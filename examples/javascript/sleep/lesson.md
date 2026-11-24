@@ -24,4 +24,4 @@ El truco es pasar `resolve` como el callback: cuando la API avisa, la promesa se
 - Pasar los argumentos de `setTimeout` en el orden contrario.
 
 ## Para pensar
-¿Cómo harías una versión que se pueda cancelar antes de tiempo?
+¿Qué diferencia hay entre pasarle `resolve` como callback a la API y llamar `resolve()` directo dentro de la promesa?
