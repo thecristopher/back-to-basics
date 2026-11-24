@@ -44,7 +44,9 @@ function M.on_stage()
   return on_stage
 end
 
-local function play(event)
+---Plays the sound the config gives an event: "coach_open", or a moment the coach reacts to.
+---@param event string
+function M.play(event)
   if config.sound then
     pcall(config.sound, event)
   end
@@ -134,7 +136,6 @@ function M.say(persona)
     title_pos = "left",
   })
   vim.wo[toast.win].wrap = true
-  play(persona.moment or "coach_line")
   toast.typing = typewrite(buf, lines, function()
     toast.timer = vim.defer_fn(close_toast, config.toast_ms)
   end)
@@ -190,7 +191,7 @@ function M.stage(persona, pages, on_done)
   local buf, win, portrait_win = open_stage_windows(persona, layout)
   local state = { page = 1, typing = nil, finished = false }
   on_stage = true
-  play("coach_open")
+  M.play("coach_open")
 
   local function finish(confirmed)
     if state.finished then

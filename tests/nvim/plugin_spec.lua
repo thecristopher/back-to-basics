@@ -126,17 +126,17 @@ describe("back-to-basics coach", function()
     coach.toggle()
   end)
 
-  it("plays the moment the coach reacts to", function()
-    local played
+  it("plays the moment the coach reacts to once", function()
+    local played = {}
     btb.setup({
       keys = false,
       forge_ahead = false,
       sound = function(event)
-        played = event
+        table.insert(played, event)
       end,
     })
-    coach.say(claire)
-    assert.are.equal("passed_clean", played)
+    btb.react({ persona = claire })
+    assert.are.same({ "passed_clean" }, played)
   end)
 
   it("closes the stage with q and says the lesson was not confirmed", function()
@@ -204,6 +204,28 @@ describe("back-to-basics after a submit", function()
     btb.submit("node/love-notes")
     assert.are.equal(1, #floats())
     assert.are.equal("Claire Redfield: Casi.", vim.api.nvim_buf_get_lines(0, 0, 1, false)[1])
+  end)
+
+  it("plays Claire's failed moment when the failure shows in a float", function()
+    local played = {}
+    btb.setup({
+      keys = false,
+      forge_ahead = false,
+      coach = { speed = 1 },
+      sound = function(event)
+        table.insert(played, event)
+      end,
+    })
+    answer({
+      submit = {
+        id = "node/love-notes",
+        ok = false,
+        text = { "✗ 1/3" },
+        persona = vim.tbl_extend("force", claire, { moment = "failed", line = "Casi." }),
+      },
+    })
+    btb.submit("node/love-notes")
+    assert.are.same({ "failed" }, played)
   end)
 
   it("takes Inde from a pass to the next briefing on a single stage", function()

@@ -138,10 +138,12 @@ function M.btb(args, on_done)
   run(args, on_done)
 end
 
--- the moment reaches the rest of the config (sounds, for example) even when the line is shown elsewhere
+-- the moment sounds and reaches the rest of the config whether the line shows in a toast, a
+-- float or a notice, so every moment plays exactly once
 local function moment(data)
   local persona = data and data.persona
   if persona and persona.moment then
+    coach.play(persona.moment)
     vim.api.nvim_exec_autocmds("User", { pattern = "BtbMoment", data = persona })
   end
 end
