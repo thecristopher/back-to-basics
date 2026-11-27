@@ -9,6 +9,7 @@ local config = {
   toast_ms = 4500,
   portrait = nil,
   sound = nil,
+  speak = nil,
   messages = {},
 }
 
@@ -18,12 +19,13 @@ local on_stage = false
 ---Takes the coach options and the plugin's strings.
 ---@param coach_opts table
 ---@param messages table<string, string>
----@param hooks { portrait?: fun(buf: integer, win: integer, persona: table), sound?: fun(event: string) }
+---@param hooks { portrait?: fun(buf: integer, win: integer, persona: table), sound?: fun(event: string), speak?: fun(name: string, line: string) }
 function M.setup(coach_opts, messages, hooks)
   config = vim.tbl_extend("force", config, coach_opts or {})
   config.messages = messages
   config.portrait = hooks.portrait
   config.sound = hooks.sound
+  config.speak = hooks.speak
 end
 
 ---Shows or hides the coach.
@@ -110,13 +112,17 @@ local function close_toast()
   toast = { win = nil, timer = nil }
 end
 
----Has the coach say a line in the corner, it fades out on its own.
+---Has the coach say a line: through the config's speak when it has one, in the corner otherwise,
+---where it fades out on its own.
 ---@param persona { name: string, line: string, moment?: string }
 function M.say(persona)
   if not config.enabled or not persona or not persona.line then
     return
   end
   close_toast()
+  if config.speak and pcall(config.speak, persona.name, persona.line) then
+    return
+  end
   local layout = actions.toast_layout(vim.o.columns, 1)
   local lines = actions.wrap(persona.line, layout.width - 2)
   layout = actions.toast_layout(vim.o.columns, #lines)

@@ -52,6 +52,9 @@ M.defaults = {
   portrait = nil,
   -- fun(event) that plays a sound: "coach_open", or the moment the coach reacts to
   sound = nil,
+  -- fun(name, line) where the config shows the coach's quick reactions instead of btb's toast, so
+  -- they land in its own dialogue box and never in a notification. The stage is still btb's
+  speak = nil,
   -- fun(info, buy) asked before a hint is revealed, info is { id, hints_left, cost, nudge_ready };
   -- nudge_ready says a hint aimed at the learner's mistake is waiting. Call buy() to go ahead, nil
   -- reveals it right away
@@ -318,12 +321,17 @@ function M.lessons(track)
 end
 
 -- the XP and the coach's comment stay up while the stage gets ready. The pass that ends the day
--- leaves the coach's line to the summary on the stage, so it is said once
+-- leaves the coach's line to the summary on the stage, so it is said once. A config that speaks
+-- for the coach gets the line in its own place, and the notice keeps only the XP
 local function notify_pass(data, after)
   local with_line = coach.enabled() and after ~= "debrief"
-  local notice = actions.pass_notice(opts.messages, data, with_line)
+  local spoken = with_line and opts.speak ~= nil
+  local notice = actions.pass_notice(opts.messages, data, with_line and not spoken)
   local options = { title = notice.title, id = "back_to_basics_pass", timeout = opts.notice_ms }
   vim.notify(notice.message, vim.log.levels.INFO, options)
+  if spoken then
+    coach.say(data.persona)
+  end
   moment(data)
 end
 
@@ -792,7 +800,11 @@ function M.setup(user_opts)
   opts.workspace = opts.workspace or settings.workspace
   opts.messages = voiced_messages(settings)
   host.messages = opts.messages
-  coach.setup(opts.coach, opts.messages, { portrait = opts.portrait, sound = opts.sound })
+  coach.setup(
+    opts.coach,
+    opts.messages,
+    { portrait = opts.portrait, sound = opts.sound, speak = opts.speak }
+  )
   winbar.setup(opts.messages, opts.keys)
   vim.api.nvim_create_user_command("Btb", function(command)
     dispatch(command.args)

@@ -230,6 +230,7 @@ Every test run puts the failing tests on your solution as warnings, on the line 
 | `coach` | `{ enabled = true, speed = 12, toast_ms = 4500 }` | Whether the coach shows, how fast it types (ms per tick) and how long a reaction stays. |
 | `portrait` | `nil` | `fun(buf, win, persona)` that draws the coach on the left of the stage. Without it the stage is text only. |
 | `sound` | `nil` | `fun(event)` called with `"coach_open"` or the moment the coach reacts to, once per moment whether its line shows in a toast, a float or a notice. |
+| `speak` | `nil` | `fun(name, line)` that shows the coach's quick reactions in the config's own place instead of the toast, the pass notice included, which then keeps only the XP. An error in it falls back to the toast. The stage is still btb's. |
 | `before_hint` | `nil` | `fun(info, buy)` asked before a hint is revealed, with `info` as `{ id, hints_left, cost, nudge_ready }`. Calling `buy()` reveals it, not calling it leaves it. `nil` reveals it right away. |
 
 Six `User` events let the rest of your config join in:

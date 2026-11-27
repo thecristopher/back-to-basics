@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import { momentsPrompt } from "../src/actions/prompts/moments.js";
+import { NO_QUESTION_RULE } from "../src/actions/prompts/day.js";
 import { recallPrompt } from "../src/actions/prompts/recall.js";
 
 const malenia = { name: "Malenia", voice: "Calm and relentless." };
@@ -44,4 +45,9 @@ test("answered right after the pass, the recall knows Inde just solved it", () =
 test("the feedback on Inde's recap explains what is missing instead of sending her to run code", () => {
   const prompt = recallPrompt({ title: "Cartas", question: "¿Qué?", answer: "algo", lesson, language: "es" });
   assert.match(prompt, /Never send them to run, try or write code to check it/);
+});
+
+test("the coach's answer to Inde's love letter question never ends asking back", () => {
+  const prompt = recallPrompt({ title: "Cartas de amor", question: "¿Qué recuerda la carta?", answer: "Su scope", lesson, language: "es" });
+  assert.ok(prompt.includes(NO_QUESTION_RULE));
 });

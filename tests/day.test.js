@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import { lastSession, plannedOf, roundsOf } from "../src/actions/day.js";
-import { debriefPrompt, greetPrompt } from "../src/actions/prompts/day.js";
+import { NO_QUESTION_RULE, debriefPrompt, greetPrompt } from "../src/actions/prompts/day.js";
 import { createT } from "../src/lib/i18n.js";
 
 const byId = {
@@ -51,6 +51,16 @@ test("Malenia's goodbye names the rounds and what cost them", () => {
   assert.match(prompt, /- "Runas": clean/);
   assert.match(prompt, /XP: 30 of a goal of 40/);
   assert.match(prompt, /Concepts that cost them: closures/);
+});
+
+test("Malenia's goodbye ends on a statement, never a question", () => {
+  const prompt = debriefPrompt({ persona: { name: "Malenia", voice: "Calm." }, language: "es", rounds: [], xp: 0, goal: 40, toImprove: [] });
+  assert.ok(prompt.includes(NO_QUESTION_RULE));
+});
+
+test("Claire's greeting for Inde ends on a statement too", () => {
+  const prompt = greetPrompt({ persona: { name: "Claire Redfield", voice: "Warm." }, language: "es", last: null, planned: [], levels: [] });
+  assert.ok(prompt.includes(NO_QUESTION_RULE));
 });
 
 test("Claire's texts replace the CLI's, placeholders filled in order", () => {

@@ -1,11 +1,17 @@
 import { roundLine } from "../day.js";
 import { languageName } from "./evidence.js";
 
+/**
+ * The coach's word ends on a statement: the learner reads it on a screen and has no way to answer.
+ */
+export const NO_QUESTION_RULE = "End on a statement, never on a question: they read this on a screen and cannot answer it.";
+
 function coachLines(persona, language) {
   return [
     `You are ${persona.name}, coaching someone who rebuilds their programming fundamentals by hand, with no AI while solving.`,
     persona.voice,
     `Write it in ${languageName(language)}, in your own voice and personality, as plain prose with no headings. Never use em dashes.`,
+    NO_QUESTION_RULE,
   ];
 }
 
