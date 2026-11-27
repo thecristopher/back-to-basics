@@ -1,3 +1,4 @@
+import { NO_QUESTION_RULE } from "./day.js";
 import { languageName } from "./evidence.js";
 
 function personaLines(persona) {
@@ -26,6 +27,7 @@ export function recallPrompt({ title, question, answer, lesson, language, person
     "- 2 to 5 sentences of plain prose, no headings, no code that solves the exercise.",
     "- Never send them to run, try or write code to check it: whatever is missing is explained right here, in words.",
     `- Write it in ${languageName(language)}. Never use em dashes.`,
+    `- ${NO_QUESTION_RULE}`,
     ...personaLines(persona),
     "",
     `Exercise: ${title}`,

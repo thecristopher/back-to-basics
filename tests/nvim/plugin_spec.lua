@@ -139,6 +139,39 @@ describe("back-to-basics coach", function()
     assert.are.same({ "passed_clean" }, played)
   end)
 
+  it("hands Claire's line to the config's speak instead of the toast", function()
+    vim.wait(1000, function()
+      return #floats() == 0
+    end)
+    local heard
+    btb.setup({
+      keys = false,
+      forge_ahead = false,
+      speak = function(name, line)
+        heard = { name = name, line = line }
+      end,
+    })
+    coach.say(claire)
+    assert.are.same({ name = "Claire Redfield", line = "Limpio, Inde." }, heard)
+    assert.are.equal(0, #floats())
+  end)
+
+  it("falls back to the toast when the config's speak breaks", function()
+    vim.wait(1000, function()
+      return #floats() == 0
+    end)
+    btb.setup({
+      keys = false,
+      forge_ahead = false,
+      coach = { speed = 1, toast_ms = 50 },
+      speak = function()
+        error("Wesker cut the line")
+      end,
+    })
+    coach.say(claire)
+    assert.are.equal(1, #floats())
+  end)
+
   it("closes the stage with q and says the lesson was not confirmed", function()
     local confirmed
     coach.stage(claire, { { "Malenia espera." } }, function(value)
